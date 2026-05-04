@@ -670,7 +670,7 @@ function App() {
 
       {modal?.type === 'view' && (
         <Modal title={`Detalhes — ${modal.cat.nome}`} size="md" onClose={()=>setModal(null)}
-          footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn><Btn variant="secondary" onClick={()=>setModal({type:'edit',cat:modal.cat})} icon="edit">Editar</Btn></>}
+          footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}
         >
           <CatForm initial={modal.cat} readOnly onCancel={()=>setModal(null)} />
         </Modal>
