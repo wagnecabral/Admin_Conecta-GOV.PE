@@ -754,7 +754,7 @@ function App() {
       )}
       {modal?.type==='view' && (
         <Modal title={`Detalhes — ${modal.api.nome}`} size="lg" onClose={()=>setModal(null)}
-          footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn><Btn variant="secondary" onClick={()=>setModal({type:'edit',api:modal.api})} icon="edit">Editar</Btn></>}
+          footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}
         >
           <ApiForm initial={modal.api} readOnly onCancel={()=>setModal(null)}/>
         </Modal>
