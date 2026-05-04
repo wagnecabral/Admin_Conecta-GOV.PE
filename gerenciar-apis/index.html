@@ -439,7 +439,7 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
           </Field>
           <div style={{ gridColumn:'1/-1' }}>
             <Field label="Descrição" required error={errors.descricao}>
-              <TextArea value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2}/>
+              <TextArea value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro}/>
             </Field>
           </div>
         </Section>
@@ -447,22 +447,22 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
         <Section label="Detalhes técnicos">
           <div style={{ gridColumn:'1/-1' }}>
             <Field label="Principais Operações" required error={errors.operacoes}>
-              <TextArea value={form.operacoes} onChange={v=>set('operacoes',v)} placeholder="Ex: GET /usuarios — retorna lista de usuários" rows={3}/>
+              <TextArea value={form.operacoes} onChange={v=>set('operacoes',v)} placeholder="Ex: GET /usuarios — retorna lista de usuários" rows={3} disabled={ro}/>
             </Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
             <Field label="Base/Sistema" required error={errors.baseSistema}>
-              <TextArea value={form.baseSistema} onChange={v=>set('baseSistema',v)} placeholder="Informe o sistema de origem dos dados..." rows={2}/>
+              <TextArea value={form.baseSistema} onChange={v=>set('baseSistema',v)} placeholder="Informe o sistema de origem dos dados..." rows={2} disabled={ro}/>
             </Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
             <Field label="Como acessar a API" required error={errors.comoAcessar}>
-              <TextArea value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3}/>
+              <TextArea value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro}/>
             </Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
             <Field label="Detalhamento Técnico" required error={errors.detalhamento}>
-              <TextArea value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3}/>
+              <TextArea value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro}/>
             </Field>
           </div>
         </Section>
