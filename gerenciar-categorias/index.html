@@ -127,9 +127,9 @@ const TextInput = ({ value, onChange, placeholder, error, disabled }) => (
     onBlur={e=>{ e.target.style.borderColor=error?C.danger:C.border; e.target.style.boxShadow='none'; }} />
 );
 
-const TextArea = ({ value, onChange, placeholder, rows=3 }) => (
-  <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows}
-    style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px', fontSize:14, color:C.textPrimary, background:'#fff', outline:'none', width:'100%', resize:'vertical', fontFamily:'Inter' }}
+const TextArea = ({ value, onChange, placeholder, rows=3, disabled }) => (
+  <textarea value={value} onChange={e=>!disabled && onChange(e.target.value)} placeholder={placeholder} rows={rows} disabled={disabled}
+    style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px', fontSize:14, color:C.textPrimary, background:disabled?C.bg:'#fff', outline:'none', width:'100%', resize:disabled?'none':'vertical', fontFamily:'Inter', cursor:disabled?'not-allowed':'text' }}
     onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
     onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }} />
 );
