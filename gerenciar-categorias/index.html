@@ -369,9 +369,9 @@ function CatForm({ initial, readOnly, onSave, onCancel, isEdit }) {
           <TextInput value={form.nome} onChange={v=>set('nome',v)} placeholder="Ex: Fiscal, Saúde, Segurança..." error={errors.nome} disabled={ro} />
         </Field>
 
-        <Field label="Descrição" required error={errors.descricao} hint="Descreva brevemente o tipo de APIs agrupadas nesta categoria.">
-          <TextArea value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Descreva o propósito desta categoria de APIs..." rows={4} />
-        </Field>
+       <Field label="Descrição" required error={errors.descricao} hint="Descreva brevemente o tipo de APIs agrupadas nesta categoria.">
+  <TextArea value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Descreva o propósito desta categoria de APIs..." rows={4} disabled={ro} />
+</Field>
 
         {ro && (
           <div>
