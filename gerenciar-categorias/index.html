@@ -530,11 +530,9 @@ function App() {
                   </span>
                 </div>
               </div>
-              {hasFilters && (
-                <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}>
-                  <Btn variant="secondary" size="sm" onClick={clearFilters}>Limpar</Btn>
-                </div>
-              )}
+              <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}>
+                <Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar filtros</Btn>
+              </div>
             </div>
             {hasFilters && (
               <div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}>
