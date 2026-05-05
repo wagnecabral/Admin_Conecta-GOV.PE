@@ -635,10 +635,11 @@ function App() {
                 <div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Status</div>
                 <SelectInput value={filters.status||'Todos'} onChange={v=>setFilter('status',v==='Todos'?'':v)}
                   options={[{value:'Todos',label:'Todos'},{value:'Ativo',label:'Ativo'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos"/>
+              </div>
               <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}>
                 <Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar filtros</Btn>
               </div>
-              </div>  
+            </div>
             {hasFilters && (
               <div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}>
                 <Icon name="filter" size={11} color={C.textSecondary}/>{' '}
