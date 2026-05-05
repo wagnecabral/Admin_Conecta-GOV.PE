@@ -75,26 +75,25 @@ function Header({ activePage, onNav, onAdminClick }) {
       padding:'0 24px', display:'flex', alignItems:'center',
       justifyContent:'space-between', height:72,
     }}>
-     <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-  <div style={{ background:'#fff', borderRadius:6, padding:'6px 10px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-    <img src="assets/ati_logo.png" alt="ATI"
-      style={{ height:40, width:'auto', objectFit:'contain' }}
-      onError={e=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
-    />
-    <div style={{ display:'none', alignItems:'center', justifyContent:'center', width:60, height:40 }}>
-      <span style={{ color:'#0034B7', fontSize:14, fontWeight:900 }}>ati</span>
-    </div>
-  </div>
-  <img src="assets/Brasao.png" alt="Brasão de Pernambuco"
-    style={{ height:44, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
-    onError={e=>e.target.style.display='none'}
-  />
-  <img src="assets/Governo.png" alt="Governo de Pernambuco"
-    style={{ height:36, width:'auto', objectFit:'contain' }}
-    onError={e=>e.target.style.display='none'}
-  />
-  </div>     
-</div>
+<div style={{ display:'flex', alignItems:'center', gap:14 }}>
+        <div style={{ background:'#fff', borderRadius:6, padding:'6px 10px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <img src="assets/ati_logo.png" alt="ATI"
+            style={{ height:40, width:'auto', objectFit:'contain' }}
+            onError={e=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+          />
+          <div style={{ display:'none', alignItems:'center', justifyContent:'center', width:60, height:40 }}>
+            <span style={{ color:'#0034B7', fontSize:14, fontWeight:900 }}>ati</span>
+          </div>
+        </div>
+        <img src="assets/Brasao.png" alt="Brasão de Pernambuco"
+          style={{ height:44, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
+          onError={e=>e.target.style.display='none'}
+        />
+        <img src="assets/Governo.png" alt="Governo de Pernambuco"
+          style={{ height:36, width:'auto', objectFit:'contain' }}
+          onError={e=>e.target.style.display='none'}
+        />
+   </div>
       <nav style={{ display:'flex', gap:0, alignItems:'stretch', height:72 }}>
         {navItems.map(item => {
           const isActive = activePage === item;
