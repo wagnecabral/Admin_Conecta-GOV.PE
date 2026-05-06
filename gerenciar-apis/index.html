@@ -166,7 +166,30 @@ const TextArea = ({ value, onChange, placeholder, rows=3, disabled }) => (
     onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
     onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }} />
 );
-
+const TextAreaWithCount = ({ value, onChange, placeholder, rows=3, disabled, maxLength=500 }) => (
+  <div style={{ position:'relative' }}>
+    <textarea
+      value={value}
+      onChange={e=>{ if(!disabled && e.target.value.length <= maxLength) onChange(e.target.value); }}
+      placeholder={placeholder}
+      rows={rows}
+      disabled={disabled}
+      maxLength={maxLength}
+      style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px 24px', fontSize:14, color:C.textPrimary, background:disabled?C.bg:'#fff', outline:'none', width:'100%', resize:disabled?'none':'vertical', fontFamily:'Inter', cursor:disabled?'not-allowed':'text' }}
+      onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
+      onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
+    />
+    {!disabled && (
+      <span style={{
+        position:'absolute', bottom:6, right:10,
+        fontSize:11, fontFamily:'Inter', pointerEvents:'none',
+        color: value.length >= maxLength ? C.danger : value.length >= maxLength*0.9 ? C.warning : C.textSecondary,
+      }}>
+        {value.length}/{maxLength}
+      </span>
+    )}
+  </div>
+);
 const Field = ({ label, required, children, error, hint }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
     <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>
@@ -438,32 +461,32 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
             <TextInput value={form.versao} onChange={v=>set('versao',v)} placeholder="Ex: v1, v2.0" error={errors.versao} disabled={ro}/>
           </Field>
           <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Descrição" required error={errors.descricao}>
-              <TextArea value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro}/>
-            </Field>
+           <Field label="Descrição" required error={errors.descricao}>
+  <TextAreaWithCount value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro} maxLength={1500}/>
+</Field>
           </div>
         </Section>
 
         <Section label="Detalhes técnicos">
           <div style={{ gridColumn:'1/-1' }}>
             <Field label="Principais Operações" required error={errors.operacoes}>
-              <TextArea value={form.operacoes} onChange={v=>set('operacoes',v)} placeholder="Ex: GET /usuarios — retorna lista de usuários" rows={3} disabled={ro}/>
-            </Field>
+  <TextAreaWithCount value={form.operacoes} onChange={v=>set('operacoes',v)} placeholder="Ex: GET /usuarios — retorna lista de usuários" rows={3} disabled={ro} maxLength={500}/>
+</Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Base/Sistema" required error={errors.baseSistema}>
-              <TextArea value={form.baseSistema} onChange={v=>set('baseSistema',v)} placeholder="Informe o sistema de origem dos dados..." rows={2} disabled={ro}/>
-            </Field>
+           <Field label="Base/Sistema" required error={errors.baseSistema}>
+  <TextAreaWithCount value={form.baseSistema} onChange={v=>set('baseSistema',v)} placeholder="Informe o sistema de origem dos dados..." rows={2} disabled={ro} maxLength={500}/>
+</Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Como acessar a API" required error={errors.comoAcessar}>
-              <TextArea value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro}/>
-            </Field>
+           <Field label="Como acessar a API" required error={errors.comoAcessar}>
+  <TextAreaWithCount value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro} maxLength={500}/>
+</Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Detalhamento Técnico" required error={errors.detalhamento}>
-              <TextArea value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro}/>
-            </Field>
+           <Field label="Detalhamento Técnico" required error={errors.detalhamento}>
+  <TextAreaWithCount value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro} maxLength={500}/>
+</Field>
           </div>
         </Section>
 
