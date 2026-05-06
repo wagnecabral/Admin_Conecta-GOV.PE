@@ -22,16 +22,15 @@ input,select,textarea,button { font-family:'Inter',sans-serif; }
 <div id="root"></div>
 <script type="text/babel">
 
-/* ── Mock data ─────────────────────────────────────────────── */
 const ORGAOS = [
-  { id:'1', shortName:'ATI',    name:'Agência Estadual de Tecnologia da Informação' },
-  { id:'2', shortName:'SEFAZ',  name:'Secretaria da Fazenda' },
-  { id:'3', shortName:'SEPLAG', name:'Secretaria de Planejamento e Gestão' },
-  { id:'4', shortName:'SES',    name:'Secretaria de Saúde' },
-  { id:'5', shortName:'SEE',    name:'Secretaria de Educação' },
-  { id:'6', shortName:'SEDS',   name:'Secretaria de Desenvolvimento Social' },
-  { id:'7', shortName:'SERES',  name:'Secretaria de Ressocialização' },
-  { id:'8', shortName:'SECC',   name:'Secretaria de Cultura e Criatividade' },
+  { id:'1', shortName:'ATI',    name:'Agência Estadual de Tecnologia da Informação',    nome_origem:'ATI — Portal de Serviços PE' },
+  { id:'2', shortName:'SEFAZ',  name:'Secretaria da Fazenda',                           nome_origem:'SEFAZ — Cadastro Fiscal' },
+  { id:'3', shortName:'SEPLAG', name:'Secretaria de Planejamento e Gestão',             nome_origem:'SEPLAG — Sistema de Segurança Pública' },
+  { id:'4', shortName:'SES',    name:'Secretaria de Saúde',                             nome_origem:'SES — Sistema de Regulação' },
+  { id:'5', shortName:'SEE',    name:'Secretaria de Educação',                          nome_origem:'SEE — Sistema de Gestão Escolar' },
+  { id:'6', shortName:'SEDS',   name:'Secretaria de Desenvolvimento Social',            nome_origem:'SEDS — Sistema Habitacional' },
+  { id:'7', shortName:'SERES',  name:'Secretaria de Ressocialização',                   nome_origem:'SERES — Sistema Prisional' },
+  { id:'8', shortName:'SECC',   name:'Secretaria de Cultura e Criatividade',            nome_origem:'SECC — Sistema Cultural' },
 ].sort((a,b)=>a.shortName.localeCompare(b.shortName));
 
 const CATEGORIAS = [
@@ -44,18 +43,53 @@ const CATEGORIAS = [
   { id:'7', nome:'Serviços ao Cidadão' },
 ];
 
+const EMPTY_OPS = [{ metodo:'GET', endpoint:'', descricao:'' }];
+
 const INITIAL_APIS = [
-  { id:1, nome:'Catálogo de Serviços',    orgaoId:'1', categoriaId:'7', versao:'v2.1', status:'Ativo',   descricao:'API pública de catálogo de serviços do estado.', operacoes:'GET /servicos — lista todos os serviços\nGET /servicos/{id} — detalhe do serviço', baseSistema:'Portal de Serviços PE', comoAcessar:'Solicitar credenciais via portal ATI. Autenticar via Bearer Token.', detalhamento:'Protocolo HTTPS. Retorna JSON com campos: id, nome, orgao, descricao, status.', contatos:[{nome:'Time ATI', funcao:'Suporte', email:'api@ati.pe.gov.br'}], criado:'15/01/2025', atualizado:'10/04/2025', autor:'João Silva' },
-  { id:2, nome:'Consulta de CPF',         orgaoId:'2', categoriaId:'1', versao:'v1.0', status:'Ativo',   descricao:'Consulta de dados cadastrais via CPF.', operacoes:'GET /cpf/{numero} — retorna dados do cidadão', baseSistema:'SEFAZ — Cadastro Fiscal', comoAcessar:'Solicitar acesso via SEFAZ Digital. Requer convênio assinado.', detalhamento:'Protocolo HTTPS. IP fixo obrigatório.', contatos:[{nome:'SEFAZ Digital', funcao:'TI', email:'digital@sefaz.pe.gov.br'}], criado:'03/02/2025', atualizado:'03/02/2025', autor:'Maria Santos' },
-  { id:3, nome:'Agendamento de Saúde',    orgaoId:'4', categoriaId:'2', versao:'v1.2', status:'Inativo', descricao:'Agendamento de consultas na rede pública.', operacoes:'POST /agendamentos — cria agendamento', baseSistema:'SES — Sistema de Regulação', comoAcessar:'Acesso restrito a sistemas credenciados pela SES.', detalhamento:'OAuth 2.0.', contatos:[], criado:'22/03/2025', atualizado:'22/03/2025', autor:'Carlos Lima' },
-  { id:4, nome:'Boletim de Ocorrência',   orgaoId:'3', categoriaId:'3', versao:'v3.0', status:'Ativo',   descricao:'Registro e consulta de boletins de ocorrência.', operacoes:'POST /bo — registra BO\nGET /bo/{protocolo} — consulta BO', baseSistema:'SEPLAG — Sistema de Segurança Pública', comoAcessar:'Credenciais fornecidas pela SEPLAG.', detalhamento:'HTTPS.', contatos:[{nome:'SEPLAG TI', funcao:'Gestão', email:'ti@seplag.pe.gov.br'}], criado:'10/04/2025', atualizado:'18/04/2025', autor:'Ana Costa' },
-  { id:5, nome:'Emissão de Certidões',    orgaoId:'2', categoriaId:'1', versao:'v1.5', status:'Ativo',   descricao:'Emissão de certidões fiscais e negativas.', operacoes:'GET /certidoes/negativa — emite CND', baseSistema:'SEFAZ — Sistema Tributário', comoAcessar:'Integração via API Key.', detalhamento:'HTTPS.', contatos:[{nome:'SEFAZ', funcao:'Fiscal', email:'sefaz@sefaz.pe.gov.br'}], criado:'05/01/2025', atualizado:'05/01/2025', autor:'Pedro Oliveira' },
-  { id:6, nome:'Matrícula Escolar',       orgaoId:'5', categoriaId:'4', versao:'v2.0', status:'Inativo', descricao:'Matrícula e transferência na rede estadual.', operacoes:'POST /matriculas — realiza matrícula', baseSistema:'SEE — Sistema de Gestão Escolar', comoAcessar:'Disponível apenas para sistemas homologados.', detalhamento:'OAuth 2.0.', contatos:[], criado:'28/03/2025', atualizado:'01/04/2025', autor:'Fernanda Reis' },
-  { id:7, nome:'Licença Ambiental',       orgaoId:'3', categoriaId:'6', versao:'v1.0', status:'Inativo', descricao:'Solicitação de licenças ambientais via CPRH.', operacoes:'POST /licencas — solicita licença', baseSistema:'CPRH — Sistema Ambiental', comoAcessar:'Credenciais via SEPLAG.', detalhamento:'HTTPS + certificado.', contatos:[{nome:'SEPLAG Ambiental', funcao:'Ambiental', email:'ambiental@seplag.pe.gov.br'}], criado:'14/04/2025', atualizado:'14/04/2025', autor:'Lucas Alves' },
-  { id:8, nome:'Programas Habitacionais', orgaoId:'6', categoriaId:'5', versao:'v1.1', status:'Ativo',   descricao:'Inscrições em programas habitacionais estaduais.', operacoes:'POST /inscricoes — realiza inscrição', baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS.', detalhamento:'HTTPS.', contatos:[{nome:'SEDS TI', funcao:'TI', email:'ti@seds.pe.gov.br'}], criado:'20/02/2025', atualizado:'20/02/2025', autor:'Roberta Mendes' },
+  { id:1, nome:'Catálogo de Serviços', orgaoId:'1', categoriaId:'7', versao:'v2.1', status:'Ativo',
+    descricao:'API pública de catálogo de serviços do estado.',
+    operacoes:[{metodo:'GET',endpoint:'/servicos',descricao:'Lista todos os serviços'},{metodo:'GET',endpoint:'/servicos/{id}',descricao:'Detalhe do serviço'}],
+    baseSistema:'ATI — Portal de Serviços PE', comoAcessar:'Solicitar credenciais via portal ATI. Autenticar via Bearer Token.',
+    detalhamento:'Protocolo HTTPS. Retorna JSON com campos: id, nome, orgao, descricao, status.',
+    contatos:[{nome:'Time ATI', funcao:'Suporte', email:'api@ati.pe.gov.br'}], criado:'15/01/2025', atualizado:'10/04/2025', autor:'João Silva' },
+  { id:2, nome:'Consulta de CPF', orgaoId:'2', categoriaId:'1', versao:'v1.0', status:'Ativo',
+    descricao:'Consulta de dados cadastrais via CPF.',
+    operacoes:[{metodo:'GET',endpoint:'/cpf/{numero}',descricao:'Retorna dados do cidadão'}],
+    baseSistema:'SEFAZ — Cadastro Fiscal', comoAcessar:'Solicitar acesso via SEFAZ Digital. Requer convênio assinado.',
+    detalhamento:'Protocolo HTTPS. IP fixo obrigatório.',
+    contatos:[{nome:'SEFAZ Digital', funcao:'TI', email:'digital@sefaz.pe.gov.br'}], criado:'03/02/2025', atualizado:'03/02/2025', autor:'Maria Santos' },
+  { id:3, nome:'Agendamento de Saúde', orgaoId:'4', categoriaId:'2', versao:'v1.2', status:'Inativo',
+    descricao:'Agendamento de consultas na rede pública.',
+    operacoes:[{metodo:'POST',endpoint:'/agendamentos',descricao:'Cria agendamento'}],
+    baseSistema:'SES — Sistema de Regulação', comoAcessar:'Acesso restrito a sistemas credenciados pela SES.',
+    detalhamento:'OAuth 2.0.', contatos:[], criado:'22/03/2025', atualizado:'22/03/2025', autor:'Carlos Lima' },
+  { id:4, nome:'Boletim de Ocorrência', orgaoId:'3', categoriaId:'3', versao:'v3.0', status:'Ativo',
+    descricao:'Registro e consulta de boletins de ocorrência.',
+    operacoes:[{metodo:'POST',endpoint:'/bo',descricao:'Registra BO'},{metodo:'GET',endpoint:'/bo/{protocolo}',descricao:'Consulta BO'}],
+    baseSistema:'SEPLAG — Sistema de Segurança Pública', comoAcessar:'Credenciais fornecidas pela SEPLAG.',
+    detalhamento:'HTTPS.', contatos:[{nome:'SEPLAG TI', funcao:'Gestão', email:'ti@seplag.pe.gov.br'}], criado:'10/04/2025', atualizado:'18/04/2025', autor:'Ana Costa' },
+  { id:5, nome:'Emissão de Certidões', orgaoId:'2', categoriaId:'1', versao:'v1.5', status:'Ativo',
+    descricao:'Emissão de certidões fiscais e negativas.',
+    operacoes:[{metodo:'GET',endpoint:'/certidoes/negativa',descricao:'Emite CND'}],
+    baseSistema:'SEFAZ — Sistema Tributário', comoAcessar:'Integração via API Key.',
+    detalhamento:'HTTPS.', contatos:[{nome:'SEFAZ', funcao:'Fiscal', email:'sefaz@sefaz.pe.gov.br'}], criado:'05/01/2025', atualizado:'05/01/2025', autor:'Pedro Oliveira' },
+  { id:6, nome:'Matrícula Escolar', orgaoId:'5', categoriaId:'4', versao:'v2.0', status:'Inativo',
+    descricao:'Matrícula e transferência na rede estadual.',
+    operacoes:[{metodo:'POST',endpoint:'/matriculas',descricao:'Realiza matrícula'}],
+    baseSistema:'SEE — Sistema de Gestão Escolar', comoAcessar:'Disponível apenas para sistemas homologados.',
+    detalhamento:'OAuth 2.0.', contatos:[], criado:'28/03/2025', atualizado:'01/04/2025', autor:'Fernanda Reis' },
+  { id:7, nome:'Licença Ambiental', orgaoId:'3', categoriaId:'6', versao:'v1.0', status:'Inativo',
+    descricao:'Solicitação de licenças ambientais via CPRH.',
+    operacoes:[{metodo:'POST',endpoint:'/licencas',descricao:'Solicita licença'}],
+    baseSistema:'CPRH — Sistema Ambiental', comoAcessar:'Credenciais via SEPLAG.',
+    detalhamento:'HTTPS + certificado.', contatos:[{nome:'SEPLAG Ambiental', funcao:'Ambiental', email:'ambiental@seplag.pe.gov.br'}], criado:'14/04/2025', atualizado:'14/04/2025', autor:'Lucas Alves' },
+  { id:8, nome:'Programas Habitacionais', orgaoId:'6', categoriaId:'5', versao:'v1.1', status:'Ativo',
+    descricao:'Inscrições em programas habitacionais estaduais.',
+    operacoes:[{metodo:'POST',endpoint:'/inscricoes',descricao:'Realiza inscrição'}],
+    baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS.',
+    detalhamento:'HTTPS.', contatos:[{nome:'SEDS TI', funcao:'TI', email:'ti@seds.pe.gov.br'}], criado:'20/02/2025', atualizado:'20/02/2025', autor:'Roberta Mendes' },
 ];
 
-/* ── Tokens ─────────────────────────────────────────────────── */
 const C = {
   brand:'#0034B7', brandHover:'#337FFF', brandDark:'#001A7A',
   bg:'#F8FAFC', white:'#FFFFFF', border:'#CED2D7', divider:'#E7E9EB',
@@ -66,7 +100,6 @@ const C = {
   info:'#0034B7', infoBg:'#E6F3FF', infoBorder:'#99C6FF',
 };
 
-/* ── Icons ──────────────────────────────────────────────────── */
 const Icon = ({ name, size=16, color='currentColor' }) => {
   const paths = {
     plus:     <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
@@ -95,7 +128,6 @@ const Icon = ({ name, size=16, color='currentColor' }) => {
   );
 };
 
-/* ── Primitives ─────────────────────────────────────────────── */
 const Badge = ({ status }) => {
   const cfg = status==='Ativo'
     ? { bg:C.successBg, color:C.success, border:C.successBorder, dot:'#86D562' }
@@ -160,35 +192,24 @@ const SelectInput = ({ value, onChange, options, placeholder, error, disabled })
   </div>
 );
 
-const TextArea = ({ value, onChange, placeholder, rows=3, disabled }) => (
-  <textarea value={value} onChange={e=>!disabled && onChange(e.target.value)} placeholder={placeholder} rows={rows} disabled={disabled}
-    style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px', fontSize:14, color:C.textPrimary, background:disabled?C.bg:'#fff', outline:'none', width:'100%', resize:disabled?'none':'vertical', fontFamily:'Inter', cursor:disabled?'not-allowed':'text' }}
-    onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
-    onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }} />
-);
 const TextAreaWithCount = ({ value, onChange, placeholder, rows=3, disabled, maxLength=500 }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
     <textarea
       value={value}
       onChange={e=>{ if(!disabled && e.target.value.length <= maxLength) onChange(e.target.value); }}
-      placeholder={placeholder}
-      rows={rows}
-      disabled={disabled}
-      maxLength={maxLength}
+      placeholder={placeholder} rows={rows} disabled={disabled} maxLength={maxLength}
       style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px', fontSize:14, color:C.textPrimary, background:disabled?C.bg:'#fff', outline:'none', width:'100%', resize:disabled?'none':'vertical', fontFamily:'Inter', cursor:disabled?'not-allowed':'text' }}
       onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
       onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
     />
     {!disabled && (
-      <span style={{
-        fontSize:11, fontFamily:'Inter',
-        color: value.length >= maxLength ? C.danger : value.length >= maxLength*0.9 ? C.warning : C.textSecondary,
-      }}>
+      <span style={{ fontSize:11, fontFamily:'Inter', color: value.length >= maxLength ? C.danger : value.length >= maxLength*0.9 ? C.warning : C.textSecondary }}>
         {value.length}/{maxLength} caracteres
       </span>
     )}
   </div>
 );
+
 const Field = ({ label, required, children, error, hint }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
     <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>
@@ -240,7 +261,6 @@ const Toast = ({ msg, type, onClose }) => (
   </div>
 );
 
-/* ── Sidebar ─────────────────────────────────────────────────── */
 const Sidebar = ({ collapsed, onToggle }) => {
   const [configOpen, setConfigOpen] = React.useState(false);
   const items = [
@@ -251,184 +271,224 @@ const Sidebar = ({ collapsed, onToggle }) => {
     { label:'Configurações',       key:'config',    icon:'settings', hasDropdown:true },
   ];
   const W = collapsed ? 56 : 180;
-
   const NavItem = ({ item }) => (
     <div>
       <div title={collapsed?item.label:undefined}
         onClick={()=>{ if(item.href) window.location.href=item.href; if(item.hasDropdown) setConfigOpen(o=>!o); }}
-        style={{
-          display:'flex', alignItems:'center', gap:10,
-          padding:collapsed?'12px 0':'11px 16px',
-          justifyContent:collapsed?'center':'flex-start',
-          cursor:'pointer',
-          color:item.active?'#fff':'rgba(248,250,252,0.75)',
-          fontSize:13, fontWeight:item.active?600:400,
-          borderBottom:'1px solid rgba(248,250,252,0.10)',
-          background:item.active?'rgba(255,255,255,0.10)':'transparent',
-          transition:'color 0.15s',
-        }}
+        style={{ display:'flex', alignItems:'center', gap:10, padding:collapsed?'12px 0':'11px 16px', justifyContent:collapsed?'center':'flex-start', cursor:'pointer', color:item.active?'#fff':'rgba(248,250,252,0.75)', fontSize:13, fontWeight:item.active?600:400, borderBottom:'1px solid rgba(248,250,252,0.10)', background:item.active?'rgba(255,255,255,0.10)':'transparent', transition:'color 0.15s' }}
         onMouseEnter={e=>{ e.currentTarget.style.color='#fff'; e.currentTarget.style.background='rgba(255,255,255,0.08)'; }}
         onMouseLeave={e=>{ if(!item.active) e.currentTarget.style.color='rgba(248,250,252,0.75)'; e.currentTarget.style.background=item.active?'rgba(255,255,255,0.10)':'transparent'; }}
       >
         <Icon name={item.icon} size={16} color={item.active?'#fff':'rgba(248,250,252,0.6)'} />
-        {!collapsed && (
-          <>
-            <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.label}</span>
-            {item.hasDropdown && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,0.6)" strokeWidth="2.5" strokeLinecap="round">
-                {configOpen?<polyline points="18 15 12 9 6 15"/>:<polyline points="6 9 12 15 18 9"/>}
-              </svg>
-            )}
-          </>
-        )}
+        {!collapsed && (<><span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.label}</span>{item.hasDropdown && (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,0.6)" strokeWidth="2.5" strokeLinecap="round">{configOpen?<polyline points="18 15 12 9 6 15"/>:<polyline points="6 9 12 15 18 9"/>}</svg>)}</>)}
       </div>
       {item.hasDropdown && configOpen && !collapsed && (
         <div style={{ background:'rgba(0,0,0,0.15)' }}>
           {['Geral','Segurança','Integrações'].map(sub=>(
             <div key={sub} style={{ padding:'9px 16px 9px 42px', fontSize:12, color:'rgba(248,250,252,0.65)', cursor:'pointer', borderBottom:'1px solid rgba(248,250,252,0.06)', transition:'color 0.15s' }}
-              onMouseEnter={e=>e.currentTarget.style.color='#fff'}
-              onMouseLeave={e=>e.currentTarget.style.color='rgba(248,250,252,0.65)'}
+              onMouseEnter={e=>e.currentTarget.style.color='#fff'} onMouseLeave={e=>e.currentTarget.style.color='rgba(248,250,252,0.65)'}
             >{sub}</div>
           ))}
         </div>
       )}
     </div>
   );
-
   return (
     <div style={{ width:W, minWidth:W, background:C.brandDark, display:'flex', flexDirection:'column', flexShrink:0, minHeight:'100%', transition:'width 0.22s ease, min-width 0.22s ease', overflow:'hidden' }}>
       <div style={{ padding:collapsed?'14px 0':'12px 12px', display:'flex', alignItems:'center', justifyContent:collapsed?'center':'space-between', borderBottom:'1px solid rgba(248,250,252,0.10)', minHeight:72 }}>
-        {!collapsed && (
-          <div style={{ background:'#fff', borderRadius:6, padding:'6px 8px', display:'flex', alignItems:'center', justifyContent:'center', flex:1, marginRight:8 }}>
-            <img src="ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} />
-          </div>
-        )}
-        {collapsed && (
-          <div style={{ background:'#fff', borderRadius:6, padding:'4px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4 }}>
-            <img src="ati_logo.png" alt="ATI" style={{ height:30, width:30, objectFit:'contain' }} />
-          </div>
-        )}
-        {!collapsed && (
-          <button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, flexShrink:0 }}
-            onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'}
-            onMouseLeave={e=>e.currentTarget.style.background='none'}
-          >«</button>
-        )}
-        {collapsed && (
-          <button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, marginTop:6, flexShrink:0 }}
-            onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'}
-            onMouseLeave={e=>e.currentTarget.style.background='none'}
-          >»</button>
-        )}
+        {!collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'6px 8px', display:'flex', alignItems:'center', justifyContent:'center', flex:1, marginRight:8 }}><img src="ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} /></div>)}
+        {collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'4px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4 }}><img src="ati_logo.png" alt="ATI" style={{ height:30, width:30, objectFit:'contain' }} /></div>)}
+        {!collapsed && (<button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>«</button>)}
+        {collapsed && (<button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, marginTop:6, flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>»</button>)}
       </div>
-      <nav style={{ flex:1 }}>
-        {items.map(item=><NavItem key={item.key} item={item}/>)}
-      </nav>
+      <nav style={{ flex:1 }}>{items.map(item=><NavItem key={item.key} item={item}/>)}</nav>
     </div>
   );
 };
 
-/* ── UserDropdown ────────────────────────────────────────────── */
 const UserDropdown = () => {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
-  React.useEffect(()=>{
-    const handler = e=>{ if(ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return ()=>document.removeEventListener('mousedown', handler);
-  },[]);
+  React.useEffect(()=>{ const handler = e=>{ if(ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', handler); return ()=>document.removeEventListener('mousedown', handler); },[]);
   return (
     <div ref={ref} style={{ position:'relative' }}>
-      <div onClick={()=>setOpen(o=>!o)} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'6px 10px', borderRadius:6, transition:'background 0.15s', background:open?C.bg:'transparent' }}
-        onMouseEnter={e=>e.currentTarget.style.background=C.bg}
-        onMouseLeave={e=>{ if(!open) e.currentTarget.style.background='transparent'; }}
-      >
+      <div onClick={()=>setOpen(o=>!o)} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'6px 10px', borderRadius:6, transition:'background 0.15s', background:open?C.bg:'transparent' }} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>{ if(!open) e.currentTarget.style.background='transparent'; }}>
         <div style={{ width:32, height:32, background:C.brand, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'#fff', flexShrink:0 }}>TT</div>
-        <div style={{ lineHeight:1.3 }}>
-          <div style={{ fontSize:13, fontWeight:600, color:C.textPrimary, whiteSpace:'nowrap' }}>Nome do usuário</div>
-          <div style={{ fontSize:11, color:C.textSecondary, whiteSpace:'nowrap' }}>Nível de acesso</div>
-        </div>
+        <div style={{ lineHeight:1.3 }}><div style={{ fontSize:13, fontWeight:600, color:C.textPrimary, whiteSpace:'nowrap' }}>Nome do usuário</div><div style={{ fontSize:11, color:C.textSecondary, whiteSpace:'nowrap' }}>Nível de acesso</div></div>
         <Icon name={open?'chevUp':'chevDown'} size={14} color={C.textSecondary} />
       </div>
       {open && (
         <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, boxShadow:'0 4px 24px rgba(0,26,122,0.13)', minWidth:200, zIndex:500, overflow:'hidden' }}>
-          {['Meu perfil','Configurações','Permissões','Ajuda'].map((item,i)=>(
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.textPrimary, cursor:'pointer', borderBottom:`1px solid ${C.divider}` }}
-              onMouseEnter={e=>e.currentTarget.style.background=C.bg}
-              onMouseLeave={e=>e.currentTarget.style.background='#fff'}
-            >
-              <span style={{ width:7, height:7, borderRadius:'50%', background:C.textPrimary, flexShrink:0, display:'inline-block' }}/>
-              {item}
-            </div>
-          ))}
-          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.danger, cursor:'pointer' }}
-            onClick={()=>{ window.location.href='../catalogo/index.html'; }}
-            onMouseEnter={e=>e.currentTarget.style.background=C.dangerBg}
-            onMouseLeave={e=>e.currentTarget.style.background='#fff'}
-          >
-            <Icon name="logout" size={14} color={C.danger}/>
-            Sair
-          </div>
+          {['Meu perfil','Configurações','Permissões','Ajuda'].map((item,i)=>(<div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.textPrimary, cursor:'pointer', borderBottom:`1px solid ${C.divider}` }} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background='#fff'}><span style={{ width:7, height:7, borderRadius:'50%', background:C.textPrimary, flexShrink:0, display:'inline-block' }}/>{item}</div>))}
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.danger, cursor:'pointer' }} onClick={()=>{ window.location.href='../catalogo/index.html'; }} onMouseEnter={e=>e.currentTarget.style.background=C.dangerBg} onMouseLeave={e=>e.currentTarget.style.background='#fff'}><Icon name="logout" size={14} color={C.danger}/>Sair</div>
         </div>
       )}
     </div>
   );
 };
 
-/* ── Topbar ─────────────────────────────────────────────────── */
 const Topbar = ({ breadcrumbs }) => (
   <div style={{ height:56, background:'#fff', borderBottom:`1px solid ${C.divider}`, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px', flexShrink:0 }}>
     <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:13 }}>
-      {breadcrumbs.map((b,i)=>(
-        <React.Fragment key={i}>
-          {i>0 && <span style={{ color:C.border }}>›</span>}
-          <span style={{ color:i===breadcrumbs.length-1?C.textPrimary:C.brand, fontWeight:i===breadcrumbs.length-1?500:400 }}>{b}</span>
-        </React.Fragment>
-      ))}
+      {breadcrumbs.map((b,i)=>(<React.Fragment key={i}>{i>0 && <span style={{ color:C.border }}>›</span>}<span style={{ color:i===breadcrumbs.length-1?C.textPrimary:C.brand, fontWeight:i===breadcrumbs.length-1?500:400 }}>{b}</span></React.Fragment>))}
     </div>
     <UserDropdown/>
   </div>
 );
 
+/* ── Operações List ─────────────────────────────────────────── */
+const HTTP_METHODS = ['GET','POST','PUT','PATCH','DELETE'];
+const METHOD_COLORS = {
+  GET:    { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF' },
+  POST:   { bg:'#EAFBD7', color:'#2B6418', border:'#86D562' },
+  PUT:    { bg:'#FFF6CE', color:'#B77706', border:'#FFCD48' },
+  PATCH:  { bg:'#FFF6CE', color:'#B77706', border:'#FFCD48' },
+  DELETE: { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F' },
+};
+
+function OperacoesList({ operacoes, onChange, readOnly, error }) {
+  const ops = operacoes && operacoes.length ? operacoes : EMPTY_OPS;
+
+  const updateOp = (i, field, val) => {
+    const next = ops.map((o,idx) => idx===i ? {...o,[field]:val} : o);
+    onChange(next);
+  };
+  const addOp = () => onChange([...ops, { metodo:'GET', endpoint:'', descricao:'' }]);
+  const removeOp = (i) => {
+    const next = ops.filter((_,idx)=>idx!==i);
+    onChange(next.length ? next : EMPTY_OPS);
+  };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>
+        Principais Operações <span style={{ color:C.danger }}>*</span>
+      </label>
+
+      {readOnly ? (
+        /* Modo somente leitura — exibição estilo portal */
+        <div style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:5, padding:'10px 14px', display:'flex', flexDirection:'column', gap:8 }}>
+          {ops.map((op,i)=>{
+            const mc = METHOD_COLORS[op.metodo] || METHOD_COLORS.GET;
+            return (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:13 }}>
+                <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:4, fontSize:12, fontWeight:700, background:mc.bg, color:mc.color, border:`1px solid ${mc.border}`, minWidth:56, justifyContent:'center', flexShrink:0 }}>{op.metodo}</span>
+                <code style={{ fontSize:13, background:'#F0F3F8', padding:'2px 6px', borderRadius:3, color:C.textPrimary, flexShrink:0 }}>{op.endpoint}</code>
+                {op.descricao && <><span style={{ color:C.border }}>—</span><span style={{ color:C.textSecondary }}>{op.descricao}</span></>}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Modo edição — lista dinâmica */
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {/* Header das colunas */}
+          <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8, paddingRight:0 }}>
+            <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>Método</span>
+            <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>Endpoint</span>
+            <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>Descrição</span>
+            <span></span>
+          </div>
+
+          {ops.map((op,i)=>(
+            <div key={i} style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8, alignItems:'center' }}>
+              {/* Método HTTP */}
+              <div style={{ position:'relative' }}>
+                <select value={op.metodo} onChange={e=>updateOp(i,'metodo',e.target.value)}
+                  style={{ height:42, borderRadius:5, border:`1px solid ${C.border}`, padding:'0 28px 0 10px', fontSize:13, fontWeight:700, color:METHOD_COLORS[op.metodo]?.color||C.textPrimary, background:METHOD_COLORS[op.metodo]?.bg||'#fff', outline:'none', width:'100%', appearance:'none', cursor:'pointer' }}>
+                  {HTTP_METHODS.map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+                <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
+                  <Icon name="chevDown" size={12} color={METHOD_COLORS[op.metodo]?.color||C.textSecondary}/>
+                </span>
+              </div>
+
+              {/* Endpoint */}
+              <input value={op.endpoint} onChange={e=>updateOp(i,'endpoint',e.target.value)}
+                placeholder="/api/v1/endpoint"
+                style={{ ...inputStyle(false), fontFamily:'monospace', fontSize:13 }}
+                onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
+                onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
+              />
+
+              {/* Descrição */}
+              <input value={op.descricao} onChange={e=>updateOp(i,'descricao',e.target.value)}
+                placeholder="Descrição da operação"
+                style={{ ...inputStyle(false), fontSize:13 }}
+                onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
+                onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
+              />
+
+              {/* Remover */}
+              <button onClick={()=>removeOp(i)} title="Remover operação"
+                style={{ width:36, height:42, borderRadius:5, border:`1px solid ${C.dangerBorder}`, background:C.dangerBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Icon name="x" size={13} color={C.danger}/>
+              </button>
+            </div>
+          ))}
+
+          {/* Botão adicionar */}
+          <button onClick={addOp}
+            style={{ alignSelf:'flex-start', height:34, padding:'0 14px', borderRadius:5, border:`1.5px solid ${C.brand}`, background:'#fff', color:C.brand, fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
+            <Icon name="plus" size={13} color={C.brand}/> Adicionar operação
+          </button>
+        </div>
+      )}
+
+      {error && <span style={{ fontSize:11, color:C.danger }}>{error}</span>}
+    </div>
+  );
+}
+
 /* ── API Form ────────────────────────────────────────────────── */
 const ORGAO_OPTS = ORGAOS.map(o=>({ value:o.id, label:`${o.shortName} — ${o.name}` }));
 const CAT_OPTS   = CATEGORIAS.map(c=>({ value:c.id, label:c.nome }));
-const EMPTY_API  = { nome:'', orgaoId:'', categoriaId:'', versao:'', descricao:'', operacoes:'', baseSistema:'', comoAcessar:'', detalhamento:'', contatos:[], status:'Inativo' };
+const EMPTY_API  = { nome:'', orgaoId:'', categoriaId:'', versao:'', descricao:'', operacoes:[...EMPTY_OPS], baseSistema:'', comoAcessar:'', detalhamento:'', contatos:[], status:'Inativo' };
 
 function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
-  const [form, setForm]     = React.useState(initial||EMPTY_API);
-  const [errors, setErrors] = React.useState({});
+  const [form, setForm]       = React.useState(initial || EMPTY_API);
+  const [errors, setErrors]   = React.useState({});
   const [contato, setContato] = React.useState({ nome:'', funcao:'', email:'' });
-  const [dirty, setDirty]   = React.useState(false);
+  const [dirty, setDirty]     = React.useState(false);
   const [showLeave, setShowLeave] = React.useState(false);
 
-  const set = (k,v)=>{ setForm(f=>({...f,[k]:v})); setDirty(true); setErrors(e=>({...e,[k]:''})); };
-
-  const validate = ()=>{
-    const e={};
-    if(!form.nome.trim())         e.nome='Campo obrigatório';
-    if(!form.orgaoId)             e.orgaoId='Campo obrigatório';
-    if(!form.versao.trim())       e.versao='Campo obrigatório';
-    if(!form.descricao.trim())    e.descricao='Campo obrigatório';
-    if(!form.operacoes.trim())    e.operacoes='Campo obrigatório';
-    if(!form.baseSistema.trim())  e.baseSistema='Campo obrigatório';
-    if(!form.comoAcessar.trim())  e.comoAcessar='Campo obrigatório';
-    if(!form.detalhamento.trim()) e.detalhamento='Campo obrigatório';
-    if(contato.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) e.contatoEmail='E-mail inválido';
-    setErrors(e);
-    return Object.keys(e).length===0;
+  const set = (k,v) => {
+    let extra = {};
+    if (k === 'orgaoId') {
+      const orgao = ORGAOS.find(o=>o.id===v);
+      extra = { baseSistema: orgao ? orgao.nome_origem : '' };
+    }
+    setForm(f=>({...f,[k]:v,...extra}));
+    setDirty(true);
+    setErrors(e=>({...e,[k]:''}));
   };
 
-  const addContato = ()=>{
-    if(!contato.nome.trim()||!contato.email.trim()) return;
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)){ setErrors(e=>({...e,contatoEmail:'E-mail inválido'})); return; }
+  const validate = () => {
+    const e = {};
+    if (!form.nome.trim())        e.nome       = 'Campo obrigatório';
+    if (!form.orgaoId)            e.orgaoId    = 'Campo obrigatório';
+    if (!form.versao.trim())      e.versao     = 'Campo obrigatório';
+    if (!form.descricao.trim())   e.descricao  = 'Campo obrigatório';
+    if (!form.operacoes?.length || form.operacoes.every(o=>!o.endpoint.trim()))
+                                  e.operacoes  = 'Adicione ao menos uma operação com endpoint preenchido';
+    if (!form.baseSistema.trim()) e.baseSistema= 'Campo obrigatório';
+    if (!form.comoAcessar.trim()) e.comoAcessar= 'Campo obrigatório';
+    if (!form.detalhamento.trim())e.detalhamento='Campo obrigatório';
+    if (contato.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) e.contatoEmail='E-mail inválido';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const addContato = () => {
+    if (!contato.nome.trim() || !contato.email.trim()) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) { setErrors(e=>({...e,contatoEmail:'E-mail inválido'})); return; }
     setForm(f=>({...f,contatos:[...f.contatos,contato]}));
     setContato({nome:'',funcao:'',email:''});
     setErrors(e=>({...e,contatoEmail:''}));
     setDirty(true);
   };
 
-  const handleCancel = ()=>{ if(dirty) setShowLeave(true); else onCancel(); };
+  const handleCancel = () => { if(dirty) setShowLeave(true); else onCancel(); };
   const ro = readOnly;
 
   const Section = ({ label, children }) => (
@@ -453,42 +513,57 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
           <Field label="Órgão" required error={errors.orgaoId}>
             <SelectInput value={form.orgaoId} onChange={v=>set('orgaoId',v)} options={ORGAO_OPTS} placeholder="Selecione o órgão..." error={errors.orgaoId} disabled={ro}/>
           </Field>
-          <Field label="Categoria" error={errors.categoriaId}>
+          <Field label="Categoria">
             <SelectInput value={form.categoriaId||''} onChange={v=>set('categoriaId',v)} options={CAT_OPTS} placeholder="Selecione a categoria..." disabled={ro}/>
           </Field>
           <Field label="Versão" required error={errors.versao}>
             <TextInput value={form.versao} onChange={v=>set('versao',v)} placeholder="Ex: v1, v2.0" error={errors.versao} disabled={ro}/>
           </Field>
           <div style={{ gridColumn:'1/-1' }}>
-           <Field label="Descrição" required error={errors.descricao}>
-  <TextAreaWithCount value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro} maxLength={1500}/>
-</Field>
+            <Field label="Descrição" required error={errors.descricao}>
+              <TextAreaWithCount value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro} maxLength={1500}/>
+            </Field>
           </div>
         </Section>
 
         <Section label="Detalhes técnicos">
+          {/* Principais Operações — lista dinâmica */}
           <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Principais Operações" required error={errors.operacoes}>
-  <TextAreaWithCount value={form.operacoes} onChange={v=>set('operacoes',v)} placeholder="Ex: GET /usuarios — retorna lista de usuários" rows={3} disabled={ro} maxLength={500}/>
-</Field>
+            <OperacoesList
+              operacoes={form.operacoes}
+              onChange={v=>{ setForm(f=>({...f,operacoes:v})); setDirty(true); setErrors(e=>({...e,operacoes:''})); }}
+              readOnly={ro}
+              error={errors.operacoes}
+            />
+          </div>
+
+          {/* Base/Sistema — desabilitado, carregado pelo órgão */}
+          <div style={{ gridColumn:'1/-1' }}>
+            <Field label="Base/Sistema" required error={errors.baseSistema}
+              hint={!ro && !form.orgaoId ? "Selecione um Órgão para carregar automaticamente" : undefined}>
+              <TextInput
+                value={form.baseSistema}
+                onChange={()=>{}}
+                placeholder="Carregado automaticamente ao selecionar o órgão..."
+                disabled={true}
+                error={errors.baseSistema}
+              />
+            </Field>
+          </div>
+
+          <div style={{ gridColumn:'1/-1' }}>
+            <Field label="Como acessar a API" required error={errors.comoAcessar}>
+              <TextAreaWithCount value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro} maxLength={500}/>
+            </Field>
           </div>
           <div style={{ gridColumn:'1/-1' }}>
-           <Field label="Base/Sistema" required error={errors.baseSistema}>
-  <TextAreaWithCount value={form.baseSistema} onChange={v=>set('baseSistema',v)} placeholder="Informe o sistema de origem dos dados..." rows={2} disabled={ro} maxLength={500}/>
-</Field>
-          </div>
-          <div style={{ gridColumn:'1/-1' }}>
-           <Field label="Como acessar a API" required error={errors.comoAcessar}>
-  <TextAreaWithCount value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro} maxLength={500}/>
-</Field>
-          </div>
-          <div style={{ gridColumn:'1/-1' }}>
-           <Field label="Detalhamento Técnico" required error={errors.detalhamento}>
-  <TextAreaWithCount value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro} maxLength={500}/>
-</Field>
+            <Field label="Detalhamento Técnico" required error={errors.detalhamento}>
+              <TextAreaWithCount value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro} maxLength={500}/>
+            </Field>
           </div>
         </Section>
 
+        {/* Contatos */}
         <div style={{ marginBottom:24 }}>
           <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>
             Contatos <span style={{ fontWeight:400, color:C.border, fontSize:11 }}>(Opcional)</span>
@@ -515,6 +590,7 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
           )}
         </div>
 
+        {/* Auditoria */}
         {ro && (
           <div style={{ marginBottom:16 }}>
             <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>Auditoria</div>
@@ -533,7 +609,7 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
       {!ro && (
         <div style={{ display:'flex', gap:10, justifyContent:'flex-end', paddingTop:16, borderTop:`1px solid ${C.divider}`, marginTop:8 }}>
           <Btn variant="secondary" onClick={handleCancel}>Cancelar</Btn>
-          <Btn variant="primary" onClick={()=>{ if(validate()) onSave({...form,status:isEdit?form.status:'Inativo',atualizado:new Date().toLocaleDateString('pt-BR'),autor:'Nome do usuário'}); }} icon="check">
+          <Btn variant="primary" icon="check" onClick={()=>{ if(validate()) onSave({...form,status:isEdit?form.status:'Inativo',atualizado:new Date().toLocaleDateString('pt-BR'),autor:'Nome do usuário'}); }}>
             {isEdit?'Salvar alterações':'Salvar'}
           </Btn>
         </div>
@@ -541,8 +617,7 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
 
       {showLeave && (
         <Modal title="Descartar alterações?" size="sm" onClose={()=>setShowLeave(false)}
-          footer={<><Btn variant="ghost" onClick={()=>setShowLeave(false)}>Continuar editando</Btn><Btn variant="danger" onClick={onCancel}>Descartar e sair</Btn></>}
-        >
+          footer={<><Btn variant="ghost" onClick={()=>setShowLeave(false)}>Continuar editando</Btn><Btn variant="danger" onClick={onCancel}>Descartar e sair</Btn></>}>
           <p style={{ fontSize:14, color:C.textSecondary, lineHeight:1.6 }}>Você possui alterações não salvas. Se sair agora, todas as alterações serão perdidas.</p>
         </Modal>
       )}
@@ -552,22 +627,16 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
 
 /* ── Main App ───────────────────────────────────────────────── */
 function App() {
-  const [apis, setApis]     = React.useState(INITIAL_APIS);
-  const [modal, setModal]   = React.useState(null);
+  const [apis, setApis]       = React.useState(INITIAL_APIS);
+  const [modal, setModal]     = React.useState(null);
   const [filters, setFilters] = React.useState(()=>{ try{ return JSON.parse(localStorage.getItem('pe_api_filters')||'{}'); }catch{ return {}; } });
-  const [page, setPage]     = React.useState(1);
+  const [page, setPage]       = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
-  const [sort, setSort]     = React.useState({ col:'nome', dir:'asc' });
-  const [toast, setToast]   = React.useState(null);
+  const [sort, setSort]       = React.useState({ col:'nome', dir:'asc' });
+  const [toast, setToast]     = React.useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
 
-  const setFilter = (k,v)=>{
-    const next={...filters,[k]:v};
-    if(!v) delete next[k];
-    setFilters(next);
-    localStorage.setItem('pe_api_filters',JSON.stringify(next));
-    setPage(1);
-  };
+  const setFilter = (k,v)=>{ const next={...filters,[k]:v}; if(!v) delete next[k]; setFilters(next); localStorage.setItem('pe_api_filters',JSON.stringify(next)); setPage(1); };
   const clearFilters = ()=>{ setFilters({}); localStorage.removeItem('pe_api_filters'); setPage(1); };
   const showToast = (msg,type='success')=>{ setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
   const handleSort = col=>setSort(s=>({ col, dir:s.col===col&&s.dir==='asc'?'desc':'asc' }));
@@ -589,10 +658,7 @@ function App() {
   const paged = filtered.slice((page-1)*pageSize,page*pageSize);
   const hasFilters = Object.keys(filters).length>0;
 
-  const SortIcon = ({ col })=>{
-    if(sort.col!==col) return <Icon name="chevDown" size={11} color={C.border}/>;
-    return <Icon name={sort.dir==='asc'?'chevUp':'chevDown'} size={11} color={C.brand}/>;
-  };
+  const SortIcon = ({ col })=>{ if(sort.col!==col) return <Icon name="chevDown" size={11} color={C.border}/>; return <Icon name={sort.dir==='asc'?'chevUp':'chevDown'} size={11} color={C.brand}/>; };
   const Th = ({ col, label, w })=>(
     <th onClick={()=>handleSort(col)} style={{ padding:'10px 14px', textAlign:'left', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, cursor:'pointer', whiteSpace:'nowrap', width:w, userSelect:'none', background:'#fff' }}>
       <div style={{ display:'flex', alignItems:'center', gap:5 }}>{label}<SortIcon col={col}/></div>
@@ -600,13 +666,8 @@ function App() {
   );
 
   const handleSave = (data,isEdit)=>{
-    if(isEdit){
-      setApis(prev=>prev.map(a=>a.id===data.id?{...a,...data}:a));
-      showToast('API atualizada com sucesso!');
-    } else {
-      setApis(prev=>[...prev,{...data,id:Date.now(),criado:new Date().toLocaleDateString('pt-BR'),atualizado:new Date().toLocaleDateString('pt-BR'),autor:'Nome do usuário'}]);
-      showToast('API cadastrada com sucesso!');
-    }
+    if(isEdit){ setApis(prev=>prev.map(a=>a.id===data.id?{...a,...data}:a)); showToast('API atualizada com sucesso!'); }
+    else { setApis(prev=>[...prev,{...data,id:Date.now(),criado:new Date().toLocaleDateString('pt-BR'),atualizado:new Date().toLocaleDateString('pt-BR'),autor:'Nome do usuário'}]); showToast('API cadastrada com sucesso!'); }
     setModal(null);
   };
 
@@ -620,16 +681,12 @@ function App() {
   return (
     <div style={{ display:'flex', height:'100vh', overflow:'hidden' }}>
       <Sidebar collapsed={sidebarCollapsed} onToggle={()=>{ const next=!sidebarCollapsed; setSidebarCollapsed(next); localStorage.setItem('pe_sidebar',next?'1':'0'); }}/>
-
       <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden' }}>
-        {/* GovBar */}
         <div style={{ background:C.brandDark, height:28, display:'flex', alignItems:'center', padding:'0 20px', gap:8, flexShrink:0 }}>
           <span style={{ color:'#FFCD37', fontSize:11 }}>★</span>
           <span style={{ color:'rgba(248,250,252,0.7)', fontSize:11 }}>Governo de Pernambuco</span>
         </div>
-
         <Topbar breadcrumbs={['Início','Catálogo de APIs','Gerenciar APIs']}/>
-
         <div style={{ flex:1, overflowY:'auto', padding:'28px 24px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
             <div>
@@ -655,36 +712,24 @@ function App() {
               </div>
               <div style={{ flex:'0 0 160px' }}>
                 <div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Status</div>
-                <SelectInput value={filters.status||'Todos'} onChange={v=>setFilter('status',v==='Todos'?'':v)}
-                  options={[{value:'Todos',label:'Todos'},{value:'Ativo',label:'Ativo'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos"/>
+                <SelectInput value={filters.status||'Todos'} onChange={v=>setFilter('status',v==='Todos'?'':v)} options={[{value:'Todos',label:'Todos'},{value:'Ativo',label:'Ativo'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos"/>
               </div>
               <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}>
                 <Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar filtros</Btn>
               </div>
             </div>
-            {hasFilters && (
-              <div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}>
-                <Icon name="filter" size={11} color={C.textSecondary}/>{' '}
-                <strong style={{ color:C.textPrimary }}>{filtered.length}</strong> resultado{filtered.length!==1?'s':''} encontrado{filtered.length!==1?'s':''}
-              </div>
-            )}
+            {hasFilters && (<div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}><Icon name="filter" size={11} color={C.textSecondary}/>{' '}<strong style={{ color:C.textPrimary }}>{filtered.length}</strong> resultado{filtered.length!==1?'s':''} encontrado{filtered.length!==1?'s':''}</div>)}
           </div>
 
           {/* Table */}
           <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, boxShadow:'0 0 20px 0 #E7E9EB', overflow:'hidden' }}>
             <div style={{ padding:'14px 20px', borderBottom:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>
-                {apis.length} APIs cadastradas
-                {hasFilters && <span style={{ color:C.brand, fontWeight:400 }}> · {filtered.length} filtradas</span>}
-              </span>
+              <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{apis.length} APIs cadastradas{hasFilters && <span style={{ color:C.brand, fontWeight:400 }}> · {filtered.length} filtradas</span>}</span>
               <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, color:C.textSecondary }}>
                 <span>Exibir:</span>
-                {[10,25,50].map(n=>(
-                  <button key={n} onClick={()=>{ setPageSize(n); setPage(1); }} style={{ padding:'3px 10px', borderRadius:4, border:`1px solid ${pageSize===n?C.brand:C.divider}`, background:pageSize===n?C.infoBg:'transparent', color:pageSize===n?C.brand:C.textSecondary, fontSize:12, fontWeight:pageSize===n?600:400, cursor:'pointer' }}>{n}</button>
-                ))}
+                {[10,25,50].map(n=>(<button key={n} onClick={()=>{ setPageSize(n); setPage(1); }} style={{ padding:'3px 10px', borderRadius:4, border:`1px solid ${pageSize===n?C.brand:C.divider}`, background:pageSize===n?C.infoBg:'transparent', color:pageSize===n?C.brand:C.textSecondary, fontSize:12, fontWeight:pageSize===n?600:400, cursor:'pointer' }}>{n}</button>))}
               </div>
             </div>
-
             {paged.length===0 ? (
               <div style={{ padding:'60px 20px', textAlign:'center' }}>
                 <div style={{ fontSize:32, marginBottom:12 }}>📭</div>
@@ -695,24 +740,19 @@ function App() {
             ):(
               <div style={{ overflowX:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                  <thead>
-                    <tr>
-                      <Th col="nome"   label="Nome da API" w="25%"/>
-                      <Th col="orgao"  label="Órgão"       w="18%"/>
-                      <Th col="versao" label="Versão"      w="8%"/>
-                      <Th col="status" label="Status"      w="10%"/>
-                      <th style={{ padding:'10px 14px', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, textAlign:'right', background:'#fff' }}>Ações</th>
-                    </tr>
-                  </thead>
+                  <thead><tr>
+                    <Th col="nome"   label="Nome da API" w="25%"/>
+                    <Th col="orgao"  label="Órgão"       w="18%"/>
+                    <Th col="versao" label="Versão"      w="8%"/>
+                    <Th col="status" label="Status"      w="10%"/>
+                    <th style={{ padding:'10px 14px', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, textAlign:'right', background:'#fff' }}>Ações</th>
+                  </tr></thead>
                   <tbody>
                     {paged.map(api=>{
                       const orgao = getOrgao(api.orgaoId);
                       const cat   = getCat(api.categoriaId);
                       return (
-                        <tr key={api.id} style={{ background:'#fff', transition:'background 0.1s' }}
-                          onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
-                          onMouseLeave={e=>e.currentTarget.style.background='#fff'}
-                        >
+                        <tr key={api.id} style={{ background:'#fff', transition:'background 0.1s' }} onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'} onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
                           <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
                             <div style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{api.nome}</div>
                             {cat && <span style={{ fontSize:11, fontWeight:500, background:C.infoBg, color:C.brand, padding:'1px 7px', borderRadius:100, border:`1px solid ${C.infoBorder}`, marginTop:3, display:'inline-block' }}>{cat.nome}</span>}
@@ -723,17 +763,11 @@ function App() {
                           <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
                             <span style={{ fontSize:12, fontWeight:500, background:C.infoBg, color:C.brand, padding:'2px 8px', borderRadius:100, border:`1px solid ${C.infoBorder}` }}>{api.versao}</span>
                           </td>
-                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
-                            <Badge status={api.status}/>
-                          </td>
+                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}><Badge status={api.status}/></td>
                           <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, textAlign:'right' }}>
                             <div style={{ display:'flex', gap:4, justifyContent:'flex-end' }}>
-                              <button title="Visualizar" onClick={()=>setModal({type:'view',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}>
-                                <Icon name="eye" size={14} color={C.brand}/>
-                              </button>
-                              <button title="Editar" onClick={()=>setModal(api.status==='Ativo'?{type:'editConfirm',api}:{type:'edit',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}>
-                                <Icon name="edit" size={14} color={C.brand}/>
-                              </button>
+                              <button title="Visualizar" onClick={()=>setModal({type:'view',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="eye" size={14} color={C.brand}/></button>
+                              <button title="Editar" onClick={()=>setModal(api.status==='Ativo'?{type:'editConfirm',api}:{type:'edit',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="edit" size={14} color={C.brand}/></button>
                               <div title={api.status==='Ativo'?'Inativar':'Ativar'} onClick={()=>setModal({type:'toggle',api})} style={{ cursor:'pointer', display:'flex', alignItems:'center', padding:'0 4px' }}>
                                 <div style={{ width:36, height:20, borderRadius:100, padding:2, background:api.status==='Ativo'?C.brand:'#CED2D7', display:'flex', alignItems:'center', justifyContent:api.status==='Ativo'?'flex-end':'flex-start', transition:'background 0.2s' }}>
                                   <div style={{ width:16, height:16, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
@@ -748,15 +782,12 @@ function App() {
                 </table>
               </div>
             )}
-
             {filtered.length>0 && (
               <div style={{ padding:'12px 20px', borderTop:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, color:C.textSecondary }}>
                 <span>Exibindo {Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} de {filtered.length}</span>
                 <div style={{ display:'flex', gap:4 }}>
                   <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===1?'default':'pointer', color:page===1?C.border:C.textPrimary, fontSize:12 }}>← Anterior</button>
-                  {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
-                    <button key={p} onClick={()=>setPage(p)} style={{ padding:'5px 10px', border:`1px solid ${p===page?C.brand:C.divider}`, borderRadius:4, background:p===page?C.brand:'#fff', color:p===page?'#fff':C.textPrimary, fontSize:12, cursor:'pointer', fontWeight:p===page?600:400 }}>{p}</button>
-                  ))}
+                  {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(<button key={p} onClick={()=>setPage(p)} style={{ padding:'5px 10px', border:`1px solid ${p===page?C.brand:C.divider}`, borderRadius:4, background:p===page?C.brand:'#fff', color:p===page?'#fff':C.textPrimary, fontSize:12, cursor:'pointer', fontWeight:p===page?600:400 }}>{p}</button>))}
                   <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===totalPages?'default':'pointer', color:page===totalPages?C.border:C.textPrimary, fontSize:12 }}>Próxima →</button>
                 </div>
               </div>
@@ -765,28 +796,21 @@ function App() {
         </div>
       </div>
 
-      {/* Modals */}
       {modal?.type==='add' && <Modal title="Incluir nova API" size="lg" onClose={()=>setModal(null)}><ApiForm onSave={d=>handleSave(d,false)} onCancel={()=>setModal(null)} isEdit={false}/></Modal>}
       {modal?.type==='edit' && <Modal title="Editar API" size="lg" onClose={()=>setModal(null)}><ApiForm initial={modal.api} onSave={d=>handleSave({...modal.api,...d},true)} onCancel={()=>setModal(null)} isEdit={true}/></Modal>}
       {modal?.type==='editConfirm' && (
-        <Modal title="Confirmar edição" size="sm" onClose={()=>setModal(null)}
-          footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="primary" onClick={()=>setModal({type:'edit',api:modal.api})}>Continuar edição</Btn></>}
-        >
+        <Modal title="Confirmar edição" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="primary" onClick={()=>setModal({type:'edit',api:modal.api})}>Continuar edição</Btn></>}>
           <Alert type="warning" msg={`A API "${modal.api.nome}" está com status Ativo. Deseja realmente editá-la?`}/>
           <p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>Alterações em APIs ativas podem impactar integrações em uso.</p>
         </Modal>
       )}
       {modal?.type==='view' && (
-        <Modal title={`Detalhes — ${modal.api.nome}`} size="lg" onClose={()=>setModal(null)}
-          footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}
-        >
+        <Modal title={`Detalhes — ${modal.api.nome}`} size="lg" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}>
           <ApiForm initial={modal.api} readOnly onCancel={()=>setModal(null)}/>
         </Modal>
       )}
       {modal?.type==='toggle' && (
-        <Modal title={modal.api.status==='Ativo'?'Inativar API':'Ativar API'} size="sm" onClose={()=>setModal(null)}
-          footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.api.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.api)}>{modal.api.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}
-        >
+        <Modal title={modal.api.status==='Ativo'?'Inativar API':'Ativar API'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.api.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.api)}>{modal.api.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>
           {modal.api.status==='Ativo'
             ?<><Alert type="warning" msg="Esta ação irá remover a API do catálogo público."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Inativa.</p></>
             :<><Alert type="info" msg="A API será publicada no catálogo público após ativação."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Ativa.</p></>
