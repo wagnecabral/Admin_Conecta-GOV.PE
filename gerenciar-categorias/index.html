@@ -133,7 +133,29 @@ const TextArea = ({ value, onChange, placeholder, rows=3, disabled }) => (
     onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
     onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }} />
 );
-
+const TextAreaWithCount = ({ value, onChange, placeholder, rows=3, disabled, maxLength=500 }) => (
+  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+    <textarea
+      value={value}
+      onChange={e=>{ if(!disabled && e.target.value.length <= maxLength) onChange(e.target.value); }}
+      placeholder={placeholder}
+      rows={rows}
+      disabled={disabled}
+      maxLength={maxLength}
+      style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px', fontSize:14, color:C.textPrimary, background:disabled?C.bg:'#fff', outline:'none', width:'100%', resize:disabled?'none':'vertical', fontFamily:'Inter', cursor:disabled?'not-allowed':'text' }}
+      onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
+      onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
+    />
+    {!disabled && (
+      <span style={{
+        fontSize:11, fontFamily:'Inter',
+        color: value.length >= maxLength ? C.danger : value.length >= maxLength*0.9 ? C.warning : C.textSecondary,
+      }}>
+        {value.length}/{maxLength} caracteres
+      </span>
+    )}
+  </div>
+);
 const Field = ({ label, required, children, error, hint }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
     <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>
@@ -365,13 +387,20 @@ function CatForm({ initial, readOnly, onSave, onCancel, isEdit }) {
         {ro && <Alert type="info" msg="Esta é uma visualização somente leitura. Nenhuma alteração pode ser feita." />}
         {!ro && !isEdit && <Alert type="info" msg="O status inicial será definido automaticamente como Inativo. Ative manualmente após revisão." />}
 
-        <Field label="Nome da Categoria" required error={errors.nome}>
-          <TextInput value={form.nome} onChange={v=>set('nome',v)} placeholder="Ex: Fiscal, Saúde, Segurança..." error={errors.nome} disabled={ro} />
+       <Field label="Nome da Categoria" required error={errors.nome}>
+          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+            <TextInput value={form.nome} onChange={v=>set('nome',v)} placeholder="Ex: Fiscal, Saúde, Segurança..." error={errors.nome} disabled={ro} maxLength={100}/>
+            {!ro && (
+              <span style={{ fontSize:11, fontFamily:'Inter', color: form.nome.length >= 100 ? C.danger : form.nome.length >= 90 ? C.warning : C.textSecondary }}>
+                {form.nome.length}/100 caracteres
+              </span>
+            )}
+          </div>
         </Field>
 
-       <Field label="Descrição" required error={errors.descricao} hint="Descreva brevemente o tipo de APIs agrupadas nesta categoria.">
-  <TextArea value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Descreva o propósito desta categoria de APIs..." rows={4} disabled={ro} />
-</Field>
+        <Field label="Descrição" required error={errors.descricao} hint="Descreva brevemente o tipo de APIs agrupadas nesta categoria.">
+          <TextAreaWithCount value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Descreva o propósito desta categoria de APIs..." rows={4} disabled={ro} maxLength={500}/>
+        </Field>
 
         {ro && (
           <div>
