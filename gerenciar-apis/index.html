@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -139,6 +140,7 @@ const Icon = ({ name, size=16, color='currentColor' }) => {
     shield:   <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
     clock:    <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
     lock:     <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+    relatorio:<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,
     audit:    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
   };
   return (
@@ -286,7 +288,8 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
     { label:'Visão Geral',          key:'dashboard',   icon:'grid' },
     { label:'Gerenciar APIs',       key:'apis',        icon:'api' },
     { label:'Gerenciar Categoria',  key:'categorias',  icon:'sort' },
-    { label:'Controle de Acesso',   key:'usuarios',    icon:'users' },  // ← HU.05.02
+    { label:'Controle de Acesso',   key:'usuarios',    icon:'users' },
+    { label:'Relatórios',           key:'relatorios',  icon:'relatorio' },
     { label:'Auditoria',            key:'auditoria',   icon:'audit' },
     { label:'Configurações',        key:'config',      icon:'settings', hasDropdown:true },
   ];
@@ -1005,44 +1008,1064 @@ function GerenciarCategorias({ showToast }) {
 /* ═══════════════════════════════════════════════════════════════
    SEÇÃO: DASHBOARD
 ══════════════════════════════════════════════════════════════ */
-function Dashboard({ onNav }) {
-  const apisAtivas    = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
-  const apisInativas  = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
-  const catAtivas     = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
-  const pendentes     = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
-  const usrsAtivos    = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
+/* ═══════════════════════════════════════════════════════════════
+   DADOS SIMULADOS PARA DASHBOARD E RELATÓRIOS
+   Representam métricas reais de governança que um gestor público
+   usaria para tomada de decisão sobre o ecossistema de APIs
+══════════════════════════════════════════════════════════════ */
+
+/* Consumo mensal por API — últimos 6 meses */
+const CONSUMO_MENSAL = [
+  { mes:'Nov/24', 'Catálogo de Serviços':4820, 'Consulta de CPF':3200, 'Boletim de Ocorrência':2100, 'Emissão de Certidões':1850, 'Programas Habitacionais':920 },
+  { mes:'Dez/24', 'Catálogo de Serviços':5100, 'Consulta de CPF':3450, 'Boletim de Ocorrência':2300, 'Emissão de Certidões':2100, 'Programas Habitacionais':1050 },
+  { mes:'Jan/25', 'Catálogo de Serviços':4600, 'Consulta de CPF':3100, 'Boletim de Ocorrência':1900, 'Emissão de Certidões':1700, 'Programas Habitacionais':800 },
+  { mes:'Fev/25', 'Catálogo de Serviços':5300, 'Consulta de CPF':3800, 'Boletim de Ocorrência':2500, 'Emissão de Certidões':2300, 'Programas Habitacionais':1100 },
+  { mes:'Mar/25', 'Catálogo de Serviços':5800, 'Consulta de CPF':4200, 'Boletim de Ocorrência':2800, 'Emissão de Certidões':2600, 'Programas Habitacionais':1300 },
+  { mes:'Abr/25', 'Catálogo de Serviços':6200, 'Consulta de CPF':4700, 'Boletim de Ocorrência':3100, 'Emissão de Certidões':2900, 'Programas Habitacionais':1500 },
+];
+
+/* Ranking de consumo por API */
+const RANKING_APIS = [
+  { nome:'Catálogo de Serviços',    orgao:'ATI',    requisicoes:31820, erros:142,  dispMedia:98.7, tendencia:+8 },
+  { nome:'Consulta de CPF',         orgao:'SEFAZ',  requisicoes:22450, erros:89,   dispMedia:99.1, tendencia:+12 },
+  { nome:'Boletim de Ocorrência',   orgao:'SEPLAG', requisicoes:14700, erros:211,  dispMedia:97.3, tendencia:+5 },
+  { nome:'Emissão de Certidões',    orgao:'SEFAZ',  requisicoes:13450, erros:67,   dispMedia:99.4, tendencia:+11 },
+  { nome:'Programas Habitacionais', orgao:'SEDS',   requisicoes:6670,  erros:45,   dispMedia:98.9, tendencia:+18 },
+  { nome:'Agendamento de Saúde',    orgao:'SES',    requisicoes:4200,  erros:320,  dispMedia:92.1, tendencia:-3  },
+  { nome:'Matrícula Escolar',       orgao:'SEE',    requisicoes:3100,  erros:98,   dispMedia:96.8, tendencia:+2  },
+  { nome:'Licença Ambiental',       orgao:'SEPLAG', requisicoes:1850,  erros:32,   dispMedia:99.2, tendencia:+7  },
+];
+
+/* Órgãos consumidores */
+const CONSUMIDORES = [
+  { orgao:'SEFAZ',  apis:3, requisicoes:18200, status:'Ativo' },
+  { orgao:'SES',    apis:2, requisicoes:12300, status:'Ativo' },
+  { orgao:'SEPLAG', apis:4, requisicoes:10800, status:'Ativo' },
+  { orgao:'SEE',    apis:2, requisicoes:8400,  status:'Ativo' },
+  { orgao:'SEDS',   apis:1, requisicoes:6700,  status:'Ativo' },
+  { orgao:'ATI',    apis:5, requisicoes:5900,  status:'Ativo' },
+  { orgao:'SERES',  apis:1, requisicoes:2100,  status:'Ativo' },
+];
+
+/* Evolução de cadastros ao longo do tempo */
+const EVOLUCAO_CADASTROS = [
+  { mes:'Out/24', apis:3,  usuarios:2 },
+  { mes:'Nov/24', apis:5,  usuarios:3 },
+  { mes:'Dez/24', apis:5,  usuarios:3 },
+  { mes:'Jan/25', apis:6,  usuarios:4 },
+  { mes:'Fev/25', apis:7,  usuarios:5 },
+  { mes:'Mar/25', apis:8,  usuarios:6 },
+  { mes:'Abr/25', apis:8,  usuarios:6 },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   DADOS SEI-PE (HU.03.06) — simulam retorno da integração
+   Em produção: consumidos via GET /v1/sei/solicitacoes (backend)
+   com cache de 15min. Frontend nunca acessa o SEI diretamente.
+══════════════════════════════════════════════════════════════ */
+const SEI_STATUS = [
+  { status:'Aprovadas',  key:'aprovadas',  qtd:47, cor:'#2B6418', bg:'#EAFBD7', border:'#86D562' },
+  { status:'Em análise', key:'analise',    qtd:12, cor:'#B77706', bg:'#FFF6CE', border:'#FFE082' },
+  { status:'Pendentes',  key:'pendentes',  qtd:8,  cor:'#0034B7', bg:'#E6F3FF', border:'#99C6FF' },
+  { status:'Reprovadas', key:'reprovadas', qtd:3,  cor:'#AC1010', bg:'#FFE4E4', border:'#E45F5F' },
+];
+
+/* Solicitações detalhadas — dados do protocolo SEI */
+const SEI_SOLICITACOES_RECENTES = [
+  { protocolo:'SEI-PE 2025.00000001-7', api:'Consulta de CPF',          orgaoSolicitante:'SEDS',   dataSolicitacao:'02/04/2025', status:'Aprovadas',  responsavel:'Leandro Melo'     },
+  { protocolo:'SEI-PE 2025.00000002-5', api:'Catálogo de Serviços',     orgaoSolicitante:'SEE',    dataSolicitacao:'05/04/2025', status:'Aprovadas',  responsavel:'Ana Costa'        },
+  { protocolo:'SEI-PE 2025.00000003-3', api:'Boletim de Ocorrência',    orgaoSolicitante:'SEFAZ',  dataSolicitacao:'08/04/2025', status:'Em análise', responsavel:'Pedro Oliveira'   },
+  { protocolo:'SEI-PE 2025.00000004-1', api:'Emissão de Certidões',     orgaoSolicitante:'SES',    dataSolicitacao:'10/04/2025', status:'Em análise', responsavel:'Fernanda Souza'   },
+  { protocolo:'SEI-PE 2025.00000005-0', api:'Programas Habitacionais',  orgaoSolicitante:'SEPLAG', dataSolicitacao:'12/04/2025', status:'Pendentes',  responsavel:'Carlos Mendes'    },
+  { protocolo:'SEI-PE 2025.00000006-8', api:'Consulta de CPF',          orgaoSolicitante:'SERES',  dataSolicitacao:'14/04/2025', status:'Pendentes',  responsavel:'Roberta Mendes'   },
+  { protocolo:'SEI-PE 2025.00000007-6', api:'Catálogo de Serviços',     orgaoSolicitante:'SECC',   dataSolicitacao:'15/04/2025', status:'Reprovadas', responsavel:'Lucas Alves'      },
+  { protocolo:'SEI-PE 2025.00000008-4', api:'Agendamento de Saúde',     orgaoSolicitante:'SEDS',   dataSolicitacao:'16/04/2025', status:'Aprovadas',  responsavel:'Maria Santos'     },
+];
+
+/* Evolução mensal de solicitações SEI */
+const SEI_EVOLUCAO = [
+  { mes:'Nov/24', aprovadas:6,  analise:2, pendentes:1, reprovadas:0 },
+  { mes:'Dez/24', aprovadas:8,  analise:3, pendentes:2, reprovadas:1 },
+  { mes:'Jan/25', aprovadas:7,  analise:2, pendentes:1, reprovadas:0 },
+  { mes:'Fev/25', aprovadas:9,  analise:3, pendentes:2, reprovadas:1 },
+  { mes:'Mar/25', aprovadas:11, analise:2, pendentes:1, reprovadas:1 },
+  { mes:'Abr/25', aprovadas:6,  analise:0, pendentes:1, reprovadas:0 },
+];
+
+/* Solicitações por API */
+const SEI_POR_API = [
+  { api:'Consulta de CPF',         qtd:18 },
+  { api:'Catálogo de Serviços',    qtd:14 },
+  { api:'Emissão de Certidões',    qtd:11 },
+  { api:'Boletim de Ocorrência',   qtd:9  },
+  { api:'Programas Habitacionais', qtd:6  },
+  { api:'Agendamento de Saúde',    qtd:4  },
+  { api:'Matrícula Escolar',       qtd:3  },
+  { api:'Licença Ambiental',       qtd:2  },
+];
+
+/* Solicitações por órgão solicitante */
+const SEI_POR_ORGAO = [
+  { orgao:'SEFAZ',  qtd:14 },
+  { orgao:'SES',    qtd:11 },
+  { orgao:'SEE',    qtd:9  },
+  { orgao:'SEDS',   qtd:8  },
+  { orgao:'SEPLAG', qtd:7  },
+  { orgao:'SERES',  qtd:5  },
+  { orgao:'SECC',   qtd:3  },
+  { orgao:'ATI',    qtd:10 },
+];
+
+/* Estado de sincronização simulado */
+const SEI_SYNC_STATE = {
+  ultimaSync: new Date(Date.now() - 8*60000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+  ultimaSyncData: new Date().toLocaleDateString('pt-BR'),
+  disponivel: true, /* false = simula indisponibilidade */
+};
+
+/* Mantém compatibilidade com código existente */
+const SEI_SOLICITACOES = SEI_STATUS;
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENTE: MINI GRÁFICO DE BARRAS (SVG puro — sem dependência)
+══════════════════════════════════════════════════════════════ */
+function BarChart({ data, keys, colors, height=120, title }) {
+  const maxVal = Math.max(...data.flatMap(d => keys.map(k => d[k]||0)));
+  const barW = Math.floor((280 - (keys.length * data.length * 2)) / (data.length * keys.length));
 
   return (
-    <div style={{ flex:1, overflowY:'auto', padding:'28px 24px' }}>
-      <div style={{ marginBottom:24 }}>
-        <h1 style={{ fontSize:26, fontWeight:700, color:C.textPrimary, marginBottom:4 }}>Visão Geral</h1>
-        <p style={{ fontSize:14, color:C.textSecondary }}>Resumo do portal Conecta Gov.PE — Sprint 03.</p>
+    <div>
+      {title && <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>{title}</div>}
+      <div style={{overflowX:'auto'}}>
+        <svg width={Math.max(300, data.length*(keys.length*barW+4)*1.1+50)} height={height+40} style={{display:'block'}}>
+          {/* Linhas de grade */}
+          {[0,25,50,75,100].map(pct=>{
+            const y = 8 + (height-16)*(1-pct/100);
+            return <line key={pct} x1="36" x2="100%" y1={y} y2={y} stroke="#E7E9EB" strokeWidth="0.5"/>;
+          })}
+          {data.map((d, gi) => {
+            const groupW = keys.length * (barW+2);
+            const gx = 40 + gi * (groupW + 8);
+            return (
+              <g key={gi}>
+                {keys.map((k, ki) => {
+                  const val = d[k]||0;
+                  const barH = maxVal > 0 ? ((val/maxVal)*(height-20)) : 0;
+                  const bx = gx + ki*(barW+2);
+                  const by = height - barH;
+                  return (
+                    <g key={k}>
+                      <rect x={bx} y={by} width={barW} height={Math.max(barH,1)} fill={colors[ki]} rx="2" opacity="0.85"/>
+                      <title>{k}: {val.toLocaleString('pt-BR')}</title>
+                    </g>
+                  );
+                })}
+                <text x={gx + (groupW/2) - 4} y={height+14} fontSize="9" fill="#494C57" textAnchor="middle">{d.mes||d.orgao||gi+1}</text>
+              </g>
+            );
+          })}
+          {/* Eixo Y — labels */}
+          {[0,50,100].map(pct => {
+            const y = 8 + (height-16)*(1-pct/100);
+            const val = Math.round(maxVal * pct/100);
+            return <text key={pct} x="34" y={y+3} fontSize="8" fill="#888" textAnchor="end">{val>=1000?Math.round(val/1000)+'k':val}</text>;
+          })}
+        </svg>
       </div>
-
-      {pendentes>0&&(<div style={{ background:C.pendenteBg, border:`1px solid ${C.pendenteBorder}`, borderRadius:8, padding:'12px 16px', marginBottom:20, display:'flex', gap:10, alignItems:'center' }}><Icon name="clock" size={16} color={C.pendente}/><span style={{ fontSize:13, color:C.pendente, flex:1 }}><strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso no sistema.</span><button onClick={()=>onNav('usuarios')} style={{ background:C.pendente, border:'none', borderRadius:5, padding:'5px 12px', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer' }}>Revisar →</button></div>)}
-
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px,1fr))', gap:14, marginBottom:28 }}>
-        {[
-          { label:'APIs Ativas',      valor:apisAtivas,   cor:C.success, sub:'de '+INITIAL_APIS.length+' total', nav:'apis' },
-          { label:'APIs Inativas',    valor:apisInativas, cor:C.danger,  sub:'aguardando ativação', nav:'apis' },
-          { label:'Categorias Ativas',valor:catAtivas,    cor:C.brand,   sub:'de '+INITIAL_CATS.length+' total', nav:'categorias' },
-          { label:'Usuários Ativos',  valor:usrsAtivos,   cor:C.brand,   sub:'com acesso liberado', nav:'usuarios' },
-          { label:'Pendentes',        valor:pendentes,    cor:C.pendente,sub:'aguardando aprovação', nav:'usuarios' },
-        ].map(card=>(<div key={card.label} onClick={()=>onNav(card.nav)} style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:10, padding:'18px 20px', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{ e.currentTarget.style.borderColor=C.brandBorder; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,52,183,0.09)'; }} onMouseLeave={e=>{ e.currentTarget.style.borderColor=C.divider; e.currentTarget.style.boxShadow='none'; }}><div style={{ fontSize:12, color:C.textSecondary, marginBottom:6 }}>{card.label}</div><div style={{ fontSize:28, fontWeight:700, color:card.cor, marginBottom:4 }}>{card.valor}</div><div style={{ fontSize:11, color:C.textSecondary }}>{card.sub}</div></div>))}
+      {/* Legenda */}
+      <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:6}}>
+        {keys.map((k,i)=>(
+          <div key={k} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.textSecondary}}>
+            <div style={{width:10,height:10,borderRadius:2,background:colors[i]}}/>
+            {k}
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-        <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:10, padding:'20px 24px' }}>
-          <div style={{ fontSize:14, fontWeight:700, color:C.textPrimary, marginBottom:14 }}>Últimas APIs cadastradas</div>
-          {INITIAL_APIS.slice(0,4).map((api,i)=>(<div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:i<3?`1px solid ${C.divider}`:'none' }}><div><div style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{api.nome}</div><div style={{ fontSize:11, color:C.textSecondary }}>{ORGAOS.find(o=>o.id===api.orgaoId)?.shortName}</div></div><BadgeApi status={api.status}/></div>))}
+function LineChart({ data, height=100 }) {
+  const maxA = Math.max(...data.map(d=>d.apis));
+  const maxU = Math.max(...data.map(d=>d.usuarios));
+  const W = 280, pad=20;
+  const xStep = (W - pad*2) / (data.length-1);
+  const ptA = data.map((d,i)=>({ x: pad + i*xStep, y: height - pad - (d.apis/maxA)*(height-pad*2) }));
+  const ptU = data.map((d,i)=>({ x: pad + i*xStep, y: height - pad - (d.usuarios/maxU)*(height-pad*2) }));
+  const toPath = pts => pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  return (
+    <svg width={W} height={height} style={{display:'block',width:'100%'}}>
+      {[0,50,100].map(pct=>{
+        const y = pad + (height-pad*2)*(1-pct/100);
+        return <line key={pct} x1={pad} x2={W-pad} y1={y} y2={y} stroke="#E7E9EB" strokeWidth="0.5"/>;
+      })}
+      <path d={toPath(ptA)} fill="none" stroke="#0034B7" strokeWidth="2" strokeLinejoin="round"/>
+      <path d={toPath(ptU)} fill="none" stroke="#2B6418" strokeWidth="2" strokeLinejoin="round" strokeDasharray="4 2"/>
+      {ptA.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="3" fill="#0034B7"/>)}
+      {ptU.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="3" fill="#2B6418"/>)}
+      {data.map((d,i)=>{
+        const x = pad + i*xStep;
+        return <text key={i} x={x} y={height-4} fontSize="8" fill="#888" textAnchor="middle">{d.mes.slice(0,3)}</text>;
+      })}
+      <line x1={pad} x2={pad} y1={pad} y2={height-pad} stroke="#CED2D7" strokeWidth="0.5"/>
+      <line x1={pad} x2={W-pad} y1={height-pad} y2={height-pad} stroke="#CED2D7" strokeWidth="0.5"/>
+    </svg>
+  );
+}
+
+function DonutChart({ ativo, inativo }) {
+  const total = ativo + inativo;
+  const pct = total > 0 ? Math.round((ativo/total)*100) : 0;
+  const r=38, cx=50, cy=50, circ=2*Math.PI*r;
+  const dashA = (ativo/total)*circ;
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:16}}>
+      <svg width={100} height={100}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#FFE4E4" strokeWidth="12"/>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#0034B7" strokeWidth="12"
+          strokeDasharray={`${dashA} ${circ}`} strokeDashoffset={circ/4} strokeLinecap="round"/>
+        <text x={cx} y={cy+5} textAnchor="middle" fontSize="14" fontWeight="700" fill="#0034B7">{pct}%</text>
+        <text x={cx} y={cy+17} textAnchor="middle" fontSize="8" fill="#888">ativas</text>
+      </svg>
+      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:10,height:10,borderRadius:2,background:'#0034B7'}}/><span style={{fontSize:12,color:C.textPrimary}}><strong>{ativo}</strong> Ativas</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:10,height:10,borderRadius:2,background:'#FFE4E4',border:'1px solid #E45F5F'}}/><span style={{fontSize:12,color:C.textPrimary}}><strong>{inativo}</strong> Inativas</span></div>
+        <div style={{fontSize:11,color:C.textSecondary}}>Total: {total} APIs</div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.06 — SEÇÃO SEI-PE (componente separado para reutilização
+   no Dashboard do ADM e, futuramente, no Dashboard do Cedente)
+   - Dados somente leitura (sem ações de aprovação/rejeição)
+   - Alerta de indisponibilidade com data do último sincronismo
+   - Cards de totais, gráficos e tabela de solicitações recentes
+══════════════════════════════════════════════════════════════ */
+function SeiPeSection({ orgaoFiltro }) {
+  const [tabela, setTabela]       = React.useState(true);
+  const [graficos, setGraficos]   = React.useState(true);
+  const [filtroStatus, setFiltroStatus] = React.useState('');
+  const [filtroOrgao, setFiltroOrgao]   = React.useState(orgaoFiltro||'');
+  const sync = SEI_SYNC_STATE;
+
+  /* Filtro da tabela de recentes */
+  const solicitacoesFiltradas = SEI_SOLICITACOES_RECENTES.filter(s => {
+    if (filtroStatus && s.status !== filtroStatus) return false;
+    if (filtroOrgao  && s.orgaoSolicitante !== filtroOrgao) return false;
+    return true;
+  });
+
+  const total = SEI_STATUS.reduce((s,i)=>s+i.qtd, 0);
+
+  const StatusBadgeSei = ({status}) => {
+    const cfg = {
+      'Aprovadas':  {bg:'#EAFBD7',color:'#2B6418',border:'#86D562'},
+      'Em análise': {bg:'#FFF6CE',color:'#B77706',border:'#FFE082'},
+      'Pendentes':  {bg:'#E6F3FF',color:'#0034B7',border:'#99C6FF'},
+      'Reprovadas': {bg:'#FFE4E4',color:'#AC1010',border:'#E45F5F'},
+    }[status]||{bg:C.bg,color:C.textSecondary,border:C.border};
+    return <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:100,fontSize:11,fontWeight:600,background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.border}`}}>{status}</span>;
+  };
+
+  /* Gráfico de barras simples p/ SEI */
+  const SeiBars = ({data,keyNome,keyQtd,cor,height=100}) => {
+    const max = Math.max(...data.map(d=>d[keyQtd]));
+    const bw  = Math.max(14, Math.floor(220/data.length) - 4);
+    const totalW = data.length*(bw+4)+40;
+    return (
+      <svg width={totalW} height={height+28} style={{display:'block',width:'100%',overflow:'visible'}}>
+        {data.map((d,i)=>{
+          const bh = max>0?(d[keyQtd]/max)*(height-16):0;
+          const bx = 8+i*(bw+4);
+          const by = height-bh;
+          return (
+            <g key={i}>
+              <rect x={bx} y={by} width={bw} height={Math.max(bh,1)} fill={cor} rx="3" opacity="0.85"/>
+              <text x={bx+bw/2} y={by-3} fontSize="9" fill={C.brand} textAnchor="middle" fontWeight="600">{d[keyQtd]}</text>
+              <text x={bx+bw/2} y={height+12} fontSize="8" fill="#888" textAnchor="middle"
+                style={{fontSize:8}}>{d[keyNome].length>7?d[keyNome].slice(0,7)+'…':d[keyNome]}</text>
+            </g>
+          );
+        })}
+        <line x1="6" x2={totalW-4} y1={height} y2={height} stroke="#E7E9EB" strokeWidth="0.5"/>
+      </svg>
+    );
+  };
+
+  /* Gráfico de linha — evolução mensal SEI */
+  const SeiLinhas = () => {
+    const W=500, H=90, pad=28;
+    const meses   = SEI_EVOLUCAO.map(d=>d.mes);
+    const series  = [
+      {key:'aprovadas',  cor:'#2B6418', label:'Aprovadas'},
+      {key:'analise',    cor:'#B77706', label:'Em análise'},
+      {key:'pendentes',  cor:'#0034B7', label:'Pendentes'},
+      {key:'reprovadas', cor:'#AC1010', label:'Reprovadas'},
+    ];
+    const maxV = Math.max(...SEI_EVOLUCAO.flatMap(d=>[d.aprovadas,d.analise,d.pendentes,d.reprovadas]));
+    const xStep = (W-pad*2)/(SEI_EVOLUCAO.length-1);
+    const toY   = v => H-pad-(v/maxV)*(H-pad*2);
+
+    return (
+      <div>
+        <svg width={W} height={H+20} style={{display:'block',width:'100%'}}>
+          {[0,5,10].map(v=>{
+            const y=toY(v);
+            return <g key={v}><line x1={pad} x2={W-pad} y1={y} y2={y} stroke="#E7E9EB" strokeWidth="0.5"/><text x={pad-4} y={y+3} fontSize="8" fill="#aaa" textAnchor="end">{v}</text></g>;
+          })}
+          {series.map(s=>{
+            const pts = SEI_EVOLUCAO.map((d,i)=>({ x:pad+i*xStep, y:toY(d[s.key]||0) }));
+            const path = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+            return (
+              <g key={s.key}>
+                <path d={path} fill="none" stroke={s.cor} strokeWidth="1.8" strokeLinejoin="round"/>
+                {pts.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="2.5" fill={s.cor}><title>{s.label}: {SEI_EVOLUCAO[i][s.key]}</title></circle>)}
+              </g>
+            );
+          })}
+          {meses.map((m,i)=><text key={i} x={pad+i*xStep} y={H+12} fontSize="8" fill="#888" textAnchor="middle">{m.slice(0,3)}</text>)}
+          <line x1={pad} x2={pad} y1={pad} y2={H-pad} stroke="#CED2D7" strokeWidth="0.5"/>
+          <line x1={pad} x2={W-pad} y1={H-pad} y2={H-pad} stroke="#CED2D7" strokeWidth="0.5"/>
+        </svg>
+        <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:6}}>
+          {series.map(s=>(
+            <div key={s.key} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.textSecondary}}>
+              <div style={{width:10,height:3,borderRadius:2,background:s.cor}}/>
+              {s.label}
+            </div>
+          ))}
         </div>
-        <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:10, padding:'20px 24px' }}>
-          <div style={{ fontSize:14, fontWeight:700, color:C.textPrimary, marginBottom:14 }}>Usuários recentes</div>
-          {INITIAL_USUARIOS.slice(0,4).map((u,i)=>(<div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:i<3?`1px solid ${C.divider}`:'none' }}><div><div style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{u.nome}</div><div style={{ fontSize:11, color:C.textSecondary }}>{u.perfil||'Sem perfil'}</div></div><Badge status={u.status}/></div>))}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',marginBottom:16,boxShadow:'0 0 20px 0 #E7E9EB'}}>
+
+      {/* Header da seção */}
+      <div style={{background:`linear-gradient(135deg, ${C.brandDark} 0%, ${C.brand} 100%)`,padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span style={{fontSize:15,fontWeight:700,color:'#fff'}}>Solicitações de Acesso — SEI-PE</span>
+            <span style={{fontSize:10,background:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.9)',padding:'2px 8px',borderRadius:100,fontWeight:600,border:'1px solid rgba(255,255,255,0.25)'}}>HU.03.06</span>
+          </div>
+          <p style={{fontSize:12,color:'rgba(248,250,252,0.7)'}}>Dados somente leitura — originados no SEI-PE e sincronizados via integração. Nenhuma ação disponível nesta interface.</p>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:5}}>
+            <div style={{width:7,height:7,borderRadius:'50%',background:sync.disponivel?'#86D562':'#FFE082'}}/>
+            <span style={{fontSize:11,color:sync.disponivel?'#A5D6A7':'#FFE082',fontWeight:500}}>{sync.disponivel?'SEI-PE disponível':'Modo cache'}</span>
+          </div>
+          <span style={{fontSize:10,color:'rgba(248,250,252,0.55)'}}>Sincronizado: {sync.ultimaSyncData} às {sync.ultimaSync}</span>
+          <span style={{fontSize:10,color:'rgba(248,250,252,0.55)'}}>Próxima sync em ~7 min</span>
+        </div>
+      </div>
+
+      {/* Alerta de indisponibilidade */}
+      {!sync.disponivel && (
+        <div style={{background:C.warningBg,border:'none',borderBottom:`1px solid #FFE082`,padding:'10px 20px',display:'flex',gap:10,alignItems:'center'}}>
+          <Icon name="warn" size={15} color={C.warning}/>
+          <span style={{fontSize:13,color:C.warning}}>O SEI-PE está temporariamente indisponível. Exibindo dados do último sincronismo em <strong>{sync.ultimaSyncData} às {sync.ultimaSync}</strong>.</span>
+        </div>
+      )}
+
+      <div style={{padding:'20px'}}>
+
+        {/* Cards KPI */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:20}}>
+          <div style={{background:C.bg,borderRadius:8,padding:'12px 14px',border:`1px solid ${C.divider}`,gridColumn:'1'}}>
+            <div style={{fontSize:11,color:C.textSecondary,marginBottom:4}}>Total</div>
+            <div style={{fontSize:26,fontWeight:700,color:C.brand}}>{total}</div>
+            <div style={{fontSize:10,color:C.textSecondary}}>solicitações</div>
+          </div>
+          {SEI_STATUS.map(s=>(
+            <div key={s.key} style={{background:s.bg,borderRadius:8,padding:'12px 14px',border:`1px solid ${s.border}`,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+              <div style={{fontSize:11,color:s.cor,fontWeight:500,marginBottom:4}}>{s.status}</div>
+              <div style={{fontSize:26,fontWeight:700,color:s.cor}}>{s.qtd}</div>
+              <div style={{fontSize:10,color:s.cor,opacity:0.75}}>{Math.round((s.qtd/total)*100)}% do total</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Toggle gráficos */}
+        <div style={{display:'flex',gap:8,marginBottom:16}}>
+          <button onClick={()=>setGraficos(g=>!g)} style={{background:graficos?C.infoBg:'none',border:`1px solid ${graficos?C.brand:C.divider}`,borderRadius:5,padding:'5px 12px',fontSize:12,color:graficos?C.brand:C.textSecondary,cursor:'pointer',fontWeight:graficos?600:400}}>
+            {graficos?'▼ Ocultar gráficos':'▶ Ver gráficos'}
+          </button>
+          <button onClick={()=>setTabela(t=>!t)} style={{background:tabela?C.infoBg:'none',border:`1px solid ${tabela?C.brand:C.divider}`,borderRadius:5,padding:'5px 12px',fontSize:12,color:tabela?C.brand:C.textSecondary,cursor:'pointer',fontWeight:tabela?600:400}}>
+            {tabela?'▼ Ocultar tabela':'▶ Ver tabela'}
+          </button>
+        </div>
+
+        {/* Gráficos */}
+        {graficos && (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
+
+            {/* Por API */}
+            <div style={{background:C.bg,borderRadius:8,padding:'14px',border:`1px solid ${C.divider}`}}>
+              <div style={{fontSize:12,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Solicitações por API</div>
+              <SeiBars data={SEI_POR_API} keyNome="api" keyQtd="qtd" cor="#0034B7" height={90}/>
+            </div>
+
+            {/* Por órgão */}
+            <div style={{background:C.bg,borderRadius:8,padding:'14px',border:`1px solid ${C.divider}`}}>
+              <div style={{fontSize:12,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Por órgão solicitante</div>
+              <SeiBars data={SEI_POR_ORGAO} keyNome="orgao" keyQtd="qtd" cor="#337FFF" height={90}/>
+            </div>
+
+            {/* Evolução mensal */}
+            <div style={{background:C.bg,borderRadius:8,padding:'14px',border:`1px solid ${C.divider}`}}>
+              <div style={{fontSize:12,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Evolução mensal</div>
+              <SeiLinhas/>
+            </div>
+          </div>
+        )}
+
+        {/* Tabela de solicitações recentes */}
+        {tabela && (
+          <div style={{border:`1px solid ${C.divider}`,borderRadius:8,overflow:'hidden'}}>
+            {/* Filtros da tabela */}
+            <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.divider}`,background:C.bg,display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+              <span style={{fontSize:12,fontWeight:500,color:C.textSecondary}}>Solicitações recentes</span>
+              <div style={{position:'relative',marginLeft:'auto'}}>
+                <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)} style={{height:30,border:`1px solid ${C.border}`,borderRadius:5,padding:'0 24px 0 8px',fontSize:11,color:C.textPrimary,background:'#fff',outline:'none',appearance:'none',cursor:'pointer'}}>
+                  <option value="">Todos os status</option>
+                  {SEI_STATUS.map(s=><option key={s.key} value={s.status}>{s.status}</option>)}
+                </select>
+                <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={11} color={C.textSecondary}/></span>
+              </div>
+              <div style={{position:'relative'}}>
+                <select value={filtroOrgao} onChange={e=>setFiltroOrgao(e.target.value)} style={{height:30,border:`1px solid ${C.border}`,borderRadius:5,padding:'0 24px 0 8px',fontSize:11,color:C.textPrimary,background:'#fff',outline:'none',appearance:'none',cursor:'pointer'}}>
+                  <option value="">Todos os órgãos</option>
+                  {['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES','SECC'].map(o=><option key={o} value={o}>{o}</option>)}
+                </select>
+                <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={11} color={C.textSecondary}/></span>
+              </div>
+              <span style={{fontSize:11,color:C.textSecondary}}>{solicitacoesFiltradas.length} registro{solicitacoesFiltradas.length!==1?'s':''}</span>
+            </div>
+
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr>{['Protocolo SEI','API','Órgão Solicitante','Data da Solicitação','Responsável','Status'].map(h=>(
+                  <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:'#fafbff',whiteSpace:'nowrap'}}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {solicitacoesFiltradas.length===0?(
+                  <tr><td colSpan="6" style={{padding:'24px',textAlign:'center',fontSize:13,color:C.textSecondary}}>Nenhuma solicitação encontrada com os filtros aplicados.</td></tr>
+                ):(
+                  solicitacoesFiltradas.map((s,i)=>(
+                    <tr key={i} style={{borderBottom:`1px solid ${C.divider}`,transition:'background 0.1s'}} onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'} onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                      <td style={{padding:'10px 12px'}}>
+                        <code style={{fontSize:11,fontFamily:'monospace',background:C.bg,padding:'2px 6px',borderRadius:3,color:C.textPrimary}}>{s.protocolo}</code>
+                      </td>
+                      <td style={{padding:'10px 12px',fontSize:13,fontWeight:500,color:C.textPrimary}}>{s.api}</td>
+                      <td style={{padding:'10px 12px'}}>
+                        <span style={{fontSize:11,background:C.infoBg,color:C.brand,padding:'2px 7px',borderRadius:100,fontWeight:600,border:`1px solid ${C.infoBorder}`}}>{s.orgaoSolicitante}</span>
+                      </td>
+                      <td style={{padding:'10px 12px',fontSize:12,color:C.textSecondary}}>{s.dataSolicitacao}</td>
+                      <td style={{padding:'10px 12px',fontSize:12,color:C.textSecondary}}>{s.responsavel}</td>
+                      <td style={{padding:'10px 12px'}}><StatusBadgeSei status={s.status}/></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            {/* Rodapé somente leitura */}
+            <div style={{padding:'10px 14px',borderTop:`1px solid ${C.divider}`,background:C.bg,display:'flex',alignItems:'center',gap:8}}>
+              <Icon name="info" size={13} color={C.textSecondary}/>
+              <span style={{fontSize:11,color:C.textSecondary}}>Dados somente leitura. As solicitações são gerenciadas exclusivamente no SEI-PE. Nenhuma ação de aprovação, rejeição ou edição está disponível nesta interface.</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.01 — DASHBOARD GERAL DO PORTAL
+   Indicadores reais para gestores: KPIs, gráficos, ranking,
+   evolução de cadastros, solicitações SEI-PE
+══════════════════════════════════════════════════════════════ */
+function Dashboard({ onNav }) {
+  const apisAtivas   = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
+  const apisInativas = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
+  const totalReq     = RANKING_APIS.reduce((s,a)=>s+a.requisicoes,0);
+  const totalErros   = RANKING_APIS.reduce((s,a)=>s+a.erros,0);
+  const dispGeral    = (RANKING_APIS.reduce((s,a)=>s+a.dispMedia,0)/RANKING_APIS.length).toFixed(1);
+  const pendentes    = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
+  const [ultimaAtt]  = React.useState(new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+
+  const kpis = [
+    { label:'Total de Requisições',   valor:totalReq.toLocaleString('pt-BR'),  sub:'últimos 6 meses',           cor:C.brand,   nav:'relatorios' },
+    { label:'APIs Publicadas',        valor:apisAtivas,                          sub:`de ${INITIAL_APIS.length} cadastradas`, cor:'#2B6418', nav:'apis' },
+    { label:'Disponibilidade Média',  valor:dispGeral+'%',                       sub:'SLA do período',            cor:dispGeral>=98?'#2B6418':C.warning, nav:'relatorios' },
+    { label:'Taxa de Erros',          valor:((totalErros/totalReq)*100).toFixed(2)+'%', sub:totalErros+' erros no período', cor:totalErros/totalReq<0.02?'#2B6418':C.warning, nav:'relatorios' },
+    { label:'Órgãos Consumidores',    valor:CONSUMIDORES.length,                 sub:'integrações ativas',        cor:C.brand,   nav:'relatorios' },
+    { label:'Usuários Pendentes',     valor:pendentes,                            sub:'aguardam aprovação',        cor:pendentes>0?C.warning:C.textSecondary, nav:'usuarios' },
+  ];
+
+  const Card = ({label,valor,sub,cor,nav}) => (
+    <div onClick={()=>onNav(nav)} style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px 18px',cursor:'pointer',transition:'all 0.15s'}}
+      onMouseEnter={e=>{e.currentTarget.style.borderColor='#99C6FF';e.currentTarget.style.boxShadow='0 2px 12px rgba(0,52,183,0.09)';}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor=C.divider;e.currentTarget.style.boxShadow='none';}}>
+      <div style={{fontSize:11,color:C.textSecondary,marginBottom:4}}>{label}</div>
+      <div style={{fontSize:24,fontWeight:700,color:cor,marginBottom:3}}>{valor}</div>
+      <div style={{fontSize:11,color:C.textSecondary}}>{sub}</div>
+    </div>
+  );
+
+  const SectionTitle = ({children, action}) => (
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div style={{fontSize:14,fontWeight:700,color:C.textPrimary}}>{children}</div>
+      {action}
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
+      {/* Header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
+        <div>
+          <h1 style={{fontSize:26,fontWeight:700,color:C.textPrimary,letterSpacing:'-0.15px',marginBottom:4}}>Dashboard</h1>
+          <p style={{fontSize:14,color:C.textSecondary}}>Indicadores gerais do ecossistema de APIs — Conecta Gov.PE</p>
+        </div>
+        <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'6px 12px',fontSize:12,color:C.brand,display:'flex',gap:6,alignItems:'center'}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Atualizado às {ultimaAtt}
+        </div>
+      </div>
+
+      {/* Alerta pendentes */}
+      {pendentes>0&&(
+        <div style={{background:C.pendenteBg,border:`1px solid ${C.pendenteBorder}`,borderRadius:8,padding:'10px 16px',marginBottom:16,display:'flex',gap:10,alignItems:'center'}}>
+          <Icon name="clock" size={15} color={C.pendente}/>
+          <span style={{fontSize:13,color:C.pendente,flex:1}}><strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso.</span>
+          <button onClick={()=>onNav('usuarios')} style={{background:C.pendente,border:'none',borderRadius:5,padding:'4px 10px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Revisar →</button>
+        </div>
+      )}
+
+      {/* KPIs */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:20}}>
+        {kpis.map(k=><Card key={k.label} {...k}/>)}
+      </div>
+
+      {/* Linha 1: Gráfico de barras consumo + Donut status */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:16,marginBottom:16}}>
+        <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'18px 20px'}}>
+          <SectionTitle action={<button onClick={()=>onNav('relatorios')} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>Ver relatório →</button>}>
+            Consumo mensal por API (requisições)
+          </SectionTitle>
+          <BarChart
+            data={CONSUMO_MENSAL}
+            keys={['Catálogo de Serviços','Consulta de CPF','Boletim de Ocorrência','Emissão de Certidões']}
+            colors={['#0034B7','#337FFF','#001A7A','#99C6FF']}
+            height={130}
+          />
+        </div>
+        <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'18px 20px',minWidth:200}}>
+          <SectionTitle>Status das APIs</SectionTitle>
+          <DonutChart ativo={apisAtivas} inativo={apisInativas}/>
+          <div style={{marginTop:16,paddingTop:12,borderTop:`1px solid ${C.divider}`}}>
+            <div style={{fontSize:11,color:C.textSecondary,marginBottom:8}}>Por categoria</div>
+            {INITIAL_CATS.filter(c=>c.status==='Ativo').slice(0,4).map((cat,i)=>(
+              <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:C.textPrimary,marginBottom:4}}>
+                <span>{cat.nome}</span>
+                <span style={{fontWeight:600,color:C.brand}}>{cat.qtdApis}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Linha 2: Ranking APIs + Evolução */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 260px',gap:16,marginBottom:16}}>
+        {/* Ranking */}
+        <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden'}}>
+          <div style={{padding:'14px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontSize:14,fontWeight:700,color:C.textPrimary}}>Ranking de APIs mais consumidas</div>
+            <div style={{fontSize:11,color:C.textSecondary}}>Período completo</div>
+          </div>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr>{['#','API','Órgão','Requisições','Erros','Disp.','Tendência'].map(h=><th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:'#fafbff',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {RANKING_APIS.map((api,i)=>(
+                <tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}>
+                  <td style={{padding:'9px 12px',fontSize:12,color:C.textSecondary,fontWeight:600}}>{i+1}</td>
+                  <td style={{padding:'9px 12px'}}><div style={{fontSize:13,fontWeight:500,color:C.textPrimary}}>{api.nome}</div></td>
+                  <td style={{padding:'9px 12px'}}><span style={{fontSize:11,background:C.infoBg,color:C.brand,padding:'2px 6px',borderRadius:100,border:`1px solid ${C.infoBorder}`,fontWeight:600}}>{api.orgao}</span></td>
+                  <td style={{padding:'9px 12px',fontSize:13,fontWeight:700,color:C.textPrimary}}>{api.requisicoes.toLocaleString('pt-BR')}</td>
+                  <td style={{padding:'9px 12px',fontSize:12,color:api.erros>200?C.danger:C.textSecondary}}>{api.erros}</td>
+                  <td style={{padding:'9px 12px'}}>
+                    <span style={{fontSize:11,fontWeight:600,color:api.dispMedia>=98?C.success:C.warning}}>{api.dispMedia}%</span>
+                  </td>
+                  <td style={{padding:'9px 12px'}}>
+                    <span style={{fontSize:11,fontWeight:600,color:api.tendencia>0?C.success:C.danger}}>{api.tendencia>0?'+':''}{api.tendencia}%</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Evolução + SEI */}
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px'}}>
+            <SectionTitle>Evolução de cadastros</SectionTitle>
+            <LineChart data={EVOLUCAO_CADASTROS} height={90}/>
+            <div style={{display:'flex',gap:12,marginTop:8,justifyContent:'center'}}>
+              <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.textSecondary}}><div style={{width:10,height:2,background:'#0034B7'}}/> APIs</div>
+              <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:C.textSecondary}}><div style={{width:10,height:2,background:'#2B6418',borderTop:'2px dashed #2B6418'}}/> Usuários</div>
+            </div>
+          </div>
+
+          {/* SEI-PE mini card — leva ao bloco completo abaixo */}
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.textPrimary}}>SEI-PE</div>
+              <span style={{fontSize:10,background:SEI_SYNC_STATE.disponivel?C.successBg:C.warningBg,color:SEI_SYNC_STATE.disponivel?C.success:C.warning,padding:'2px 8px',borderRadius:100,fontWeight:600,border:`1px solid ${SEI_SYNC_STATE.disponivel?C.successBorder:C.warningBorder||'#FFE082'}`}}>{SEI_SYNC_STATE.disponivel?'Online':'Cache'}</span>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              {SEI_STATUS.map(s=>(
+                <div key={s.status} style={{background:s.bg,borderRadius:7,padding:'8px 10px',textAlign:'center',border:`1px solid ${s.border}`}}>
+                  <div style={{fontSize:18,fontWeight:700,color:s.cor}}>{s.qtd}</div>
+                  <div style={{fontSize:9,color:s.cor,fontWeight:600,marginTop:1}}>{s.status}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ════════════════════════════════════════════════════
+          HU.03.06 — INTEGRAÇÃO SEI-PE NO DASHBOARD
+          Somente leitura — dados sincronizados via backend
+          Nunca expõe credenciais ou acesso direto ao SEI
+      ════════════════════════════════════════════════════ */}
+      <SeiPeSection/>
+
+      {/* Distribuição por órgão */}
+      <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'18px 20px'}}>
+        <SectionTitle>Distribuição de requisições por órgão consumidor</SectionTitle>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {CONSUMIDORES.sort((a,b)=>b.requisicoes-a.requisicoes).map((org,i)=>{
+            const maxR = CONSUMIDORES[0].requisicoes;
+            const pct  = Math.round((org.requisicoes/maxR)*100);
+            return (
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:56,fontSize:12,fontWeight:600,color:C.textPrimary,flexShrink:0}}>{org.orgao}</div>
+                <div style={{flex:1,background:C.divider,borderRadius:100,height:8,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${pct}%`,background:i<3?C.brand:C.brandHover,borderRadius:100,transition:'width 0.5s'}}/>
+                </div>
+                <div style={{width:70,fontSize:12,color:C.textSecondary,textAlign:'right',flexShrink:0}}>{org.requisicoes.toLocaleString('pt-BR')}</div>
+                <div style={{width:30,fontSize:11,color:C.textSecondary,textAlign:'right',flexShrink:0}}>{Math.round((org.requisicoes/CONSUMIDORES.reduce((s,o)=>s+o.requisicoes,0))*100)}%</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.03 + HU.03.04 — RELATÓRIOS
+   Aba 1: Relatório de APIs Cadastradas (HU.03.03)
+   Aba 2: Relatório de Uso / Consumo das APIs (HU.03.04)
+   - Exportação PDF e Excel com dados gerenciais reais
+   - Cabeçalho com data, usuário e filtros aplicados
+══════════════════════════════════════════════════════════════ */
+function Relatorios({ showToast }) {
+  const [aba, setAba]           = React.useState('cadastradas'); /* cadastradas | uso */
+  const [loading, setLoading]   = React.useState(false);
+  const [formato, setFormato]   = React.useState('pdf');
+  const [preview, setPreview]   = React.useState(false);
+
+  /* Filtros HU.03.03 */
+  const [f1, setF1] = React.useState({ orgaoId:'', status:'', categoriaId:'', dataInicio:'', dataFim:'' });
+  /* Filtros HU.03.04 */
+  const [f2, setF2] = React.useState({ apiNome:'', orgaoConsumidor:'', periodo:'6m' });
+
+  const now = () => {
+    const d = new Date();
+    return { data:d.toLocaleDateString('pt-BR'), hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h') };
+  };
+
+  const getApisCadastradas = () => INITIAL_APIS.filter(a=>{
+    if(f1.orgaoId && a.orgaoId!==f1.orgaoId) return false;
+    if(f1.status  && a.status!==f1.status)   return false;
+    if(f1.categoriaId && a.categoriaId!==f1.categoriaId) return false;
+    return true;
+  });
+
+  const getUsoFiltrado = () => RANKING_APIS.filter(a=>{
+    if(f2.apiNome && !a.nome.toLowerCase().includes(f2.apiNome.toLowerCase())) return false;
+    if(f2.orgaoConsumidor && a.orgao!==f2.orgaoConsumidor) return false;
+    return true;
+  });
+
+  const filtrosLabel1 = () => {
+    const parts=[];
+    if(f1.orgaoId)     parts.push('Órgão: '+(ORGAOS.find(o=>o.id===f1.orgaoId)?.shortName||''));
+    if(f1.status)      parts.push('Status: '+f1.status);
+    if(f1.categoriaId) parts.push('Categoria: '+(CATEGORIAS.find(c=>c.id===f1.categoriaId)?.nome||''));
+    if(f1.dataInicio)  parts.push('De: '+f1.dataInicio);
+    if(f1.dataFim)     parts.push('Até: '+f1.dataFim);
+    return parts.length?parts.join(' | '):'Sem filtros';
+  };
+
+  const filtrosLabel2 = () => {
+    const parts=[];
+    if(f2.apiNome)          parts.push('API: '+f2.apiNome);
+    if(f2.orgaoConsumidor)  parts.push('Órgão: '+f2.orgaoConsumidor);
+    const pMap={'1m':'Último mês','3m':'Últimos 3 meses','6m':'Últimos 6 meses','12m':'Último ano'};
+    parts.push('Período: '+(pMap[f2.periodo]||f2.periodo));
+    return parts.join(' | ');
+  };
+
+  /* ── PDF APIs Cadastradas ── */
+  const gerarPDFCadastradas = async (apis) => {
+    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W=doc.internal.pageSize.getWidth();
+    doc.setFillColor(0,26,122); doc.rect(0,0,W,26,'F');
+    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text('Conecta Gov.PE — Relatório de APIs Cadastradas',14,11);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
+    doc.text(`Filtros: ${filtrosLabel1()}`,14,22);
+    doc.autoTable({
+      head:[['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em']],
+      body:apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—']),
+      startY:30, styles:{fontSize:8,cellPadding:2.5},
+      headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[230,243,255]},
+      columnStyles:{0:{cellWidth:7},1:{cellWidth:50},2:{cellWidth:18},3:{cellWidth:15},4:{cellWidth:25},5:{cellWidth:16},6:{cellWidth:40},7:{cellWidth:20},8:{cellWidth:20}},
+      didDrawPage:()=>{const pg=doc.internal.getCurrentPageInfo().pageNumber; doc.setFontSize(7);doc.setTextColor(120);doc.text(`Pág. ${pg} | Total: ${apis.length} APIs`,14,doc.internal.pageSize.getHeight()-5);doc.text('Gerado automaticamente pelo sistema Conecta Gov.PE — ATI-PE',W/2,doc.internal.pageSize.getHeight()-5,{align:'center'});}
+    });
+    doc.save(`relatorio-apis_${slug}.pdf`);
+  };
+
+  /* ── PDF Uso ── */
+  const gerarPDFUso = async (dados) => {
+    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W=doc.internal.pageSize.getWidth();
+    doc.setFillColor(0,52,183); doc.rect(0,0,W,26,'F');
+    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text('Conecta Gov.PE — Relatório de Uso das APIs',14,11);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
+    doc.text(`Filtros: ${filtrosLabel2()}`,14,22);
+    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
+    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
+    doc.setFontSize(9); doc.setTextColor(0);
+    doc.text(`Total de requisições no período: ${totalReq.toLocaleString('pt-BR')}   |   Total de erros: ${totalErr}   |   Disponibilidade média: ${(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1)}%`,14,32);
+    doc.autoTable({
+      head:[['#','API','Órgão','Total Requisições','Erros','% Erro','Disp. Média','Tendência Mês']],
+      body:dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes.toLocaleString('pt-BR'),a.erros,((a.erros/a.requisicoes)*100).toFixed(2)+'%',a.dispMedia+'%',(a.tendencia>0?'+':'')+a.tendencia+'%']),
+      startY:37, styles:{fontSize:8,cellPadding:2.5},
+      headStyles:{fillColor:[0,52,183],textColor:255,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[230,243,255]},
+      columnStyles:{0:{cellWidth:7},1:{cellWidth:55},2:{cellWidth:18},3:{cellWidth:28},4:{cellWidth:15},5:{cellWidth:16},6:{cellWidth:20},7:{cellWidth:22}},
+      didDrawPage:()=>{doc.setFontSize(7);doc.setTextColor(120);doc.text(`Pág. ${doc.internal.getCurrentPageInfo().pageNumber}`,14,doc.internal.pageSize.getHeight()-5);}
+    });
+    doc.save(`relatorio-uso-apis_${slug}.pdf`);
+  };
+
+  /* ── Excel Cadastradas ── */
+  const gerarXLSXCadastradas = (apis) => {
+    const {utils,write}=window.XLSX; const {data,hora,slug}=now();
+    const cab=[['Conecta Gov.PE — Relatório de APIs Cadastradas'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel1()}`],[`Total de registros: ${apis.length}`],[],
+      ['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em','Responsável','Operações principais']];
+    const linhas=apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.name||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—',a.autor||'—',(a.operacoes||[]).map(op=>`${op.metodo} ${op.endpoint}`).join('; ')]);
+    const ws=utils.aoa_to_sheet([...cab,...linhas]);
+    ws['!cols']=[{wch:4},{wch:38},{wch:40},{wch:8},{wch:22},{wch:10},{wch:38},{wch:12},{wch:12},{wch:18},{wch:50}];
+    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'APIs');
+    const buf=write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`relatorio-apis_${slug}.xlsx`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  /* ── Excel Uso ── */
+  const gerarXLSXUso = (dados) => {
+    const {utils,write}=window.XLSX; const {data,hora,slug}=now();
+    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
+    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
+    const cab=[['Conecta Gov.PE — Relatório de Uso das APIs'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel2()}`],[`Total de requisições: ${totalReq.toLocaleString('pt-BR')} | Total de erros: ${totalErr} | Disponibilidade média: ${(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1)}%`],[],
+      ['#','API','Órgão Cedente','Total Requisições','Total Erros','% Erro','Disp. Média (%)','Tendência Mensal (%)']];
+    const linhas=dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes,a.erros,+((a.erros/a.requisicoes)*100).toFixed(2),a.dispMedia,a.tendencia]);
+    /* Aba de consumo mensal */
+    const ws2=utils.aoa_to_sheet([['Consumo Mensal por API'],['Mês','Catálogo de Serviços','Consulta de CPF','Boletim de Ocorrência','Emissão de Certidões','Programas Habitacionais'],...CONSUMO_MENSAL.map(m=>[m.mes,m['Catálogo de Serviços'],m['Consulta de CPF'],m['Boletim de Ocorrência'],m['Emissão de Certidões'],m['Programas Habitacionais']])]);
+    ws2['!cols']=[{wch:10},{wch:22},{wch:18},{wch:22},{wch:22},{wch:24}];
+    const ws=utils.aoa_to_sheet([...cab,...linhas]);
+    ws['!cols']=[{wch:4},{wch:38},{wch:16},{wch:20},{wch:14},{wch:10},{wch:18},{wch:20}];
+    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso por API'); utils.book_append_sheet(wb,ws2,'Consumo Mensal');
+    const buf=write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const handleGerar = async () => {
+    const dados = aba==='cadastradas' ? getApisCadastradas() : getUsoFiltrado();
+    if(dados.length===0){showToast('Nenhum dado encontrado com os filtros aplicados.','warning');return;}
+    setLoading(true);
+    try {
+      await new Promise(r=>setTimeout(r,1400));
+      if(aba==='cadastradas'){ formato==='pdf'?await gerarPDFCadastradas(dados):gerarXLSXCadastradas(dados); }
+      else                   { formato==='pdf'?await gerarPDFUso(dados):gerarXLSXUso(dados); }
+      showToast(`Relatório gerado com sucesso! ${dados.length} registro(s) exportado(s).`,'success');
+    } catch(e){ console.error(e); showToast('Erro ao gerar o relatório. Tente novamente.','warning'); }
+    finally{ setLoading(false); }
+  };
+
+  const apisCad   = getApisCadastradas();
+  const dadosUso  = getUsoFiltrado();
+  const dadosAtivos = aba==='cadastradas'?apisCad:dadosUso;
+  const {slug}    = now();
+
+  const inputSt = {height:38,borderRadius:5,border:`1px solid ${C.border}`,padding:'0 10px',fontSize:13,color:C.textPrimary,background:'#fff',outline:'none',width:'100%'};
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
+      <div style={{marginBottom:20}}>
+        <h1 style={{fontSize:26,fontWeight:700,color:C.textPrimary,letterSpacing:'-0.15px',marginBottom:4}}>Relatórios</h1>
+        <p style={{fontSize:14,color:C.textSecondary}}>Gere relatórios para análise, auditoria e prestação de contas do ecossistema de APIs.</p>
+      </div>
+
+      {/* Abas */}
+      <div style={{display:'flex',gap:0,borderBottom:`2px solid ${C.divider}`,marginBottom:20}}>
+        {[
+          {key:'cadastradas', label:'APIs Cadastradas',     desc:'HU.03.03'},
+          {key:'uso',         label:'Uso e Consumo de APIs',desc:'HU.03.04'},
+        ].map(tab=>(
+          <button key={tab.key} onClick={()=>setAba(tab.key)}
+            style={{padding:'10px 20px',border:'none',background:'none',cursor:'pointer',fontSize:13,fontWeight:aba===tab.key?700:400,color:aba===tab.key?C.brand:C.textSecondary,borderBottom:`2px solid ${aba===tab.key?C.brand:'transparent'}`,marginBottom:-2,display:'flex',alignItems:'center',gap:8,transition:'all 0.15s'}}>
+            {tab.label}
+            <span style={{fontSize:10,background:aba===tab.key?C.infoBg:C.divider,color:aba===tab.key?C.brand:C.textSecondary,padding:'1px 6px',borderRadius:100,fontWeight:600}}>{tab.desc}</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:20,alignItems:'start'}}>
+
+        {/* Painel esquerdo: filtros + preview tabela */}
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+          {/* Filtros */}
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{background:C.brandDark,padding:'12px 18px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Filtros</div>
+                <div style={{fontSize:11,color:'rgba(248,250,252,0.65)'}}>Serão aplicados na geração e registrados no cabeçalho</div>
+              </div>
+            </div>
+            <div style={{padding:'16px 18px'}}>
+              {aba==='cadastradas' ? (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  {/* Órgão */}
+                  <div>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div>
+                    <div style={{position:'relative'}}>
+                      <select value={f1.orgaoId} onChange={e=>setF1(p=>({...p,orgaoId:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                        <option value="">Todos</option>
+                        {ORGAOS.map(o=><option key={o.id} value={o.id}>{o.shortName}</option>)}
+                      </select>
+                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
+                    </div>
+                  </div>
+                  {/* Status */}
+                  <div>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Status</div>
+                    <div style={{position:'relative'}}>
+                      <select value={f1.status} onChange={e=>setF1(p=>({...p,status:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                        <option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option>
+                      </select>
+                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
+                    </div>
+                  </div>
+                  {/* Categoria */}
+                  <div>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Categoria</div>
+                    <div style={{position:'relative'}}>
+                      <select value={f1.categoriaId} onChange={e=>setF1(p=>({...p,categoriaId:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                        <option value="">Todas</option>
+                        {CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+                      </select>
+                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
+                    </div>
+                  </div>
+                  {/* Data */}
+                  <div>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Data criação — de</div>
+                    <input type="date" value={f1.dataInicio} onChange={e=>setF1(p=>({...p,dataInicio:e.target.value}))} style={inputSt}/>
+                  </div>
+                  <div style={{gridColumn:'1/-1'}}>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Data criação — até</div>
+                    <input type="date" value={f1.dataFim} onChange={e=>setF1(p=>({...p,dataFim:e.target.value}))} style={inputSt}/>
+                  </div>
+                </div>
+              ) : (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  {/* API */}
+                  <div style={{gridColumn:'1/-1'}}>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Nome da API</div>
+                    <input value={f2.apiNome} onChange={e=>setF2(p=>({...p,apiNome:e.target.value}))} placeholder="Busca parcial..." style={inputSt}/>
+                  </div>
+                  {/* Órgão consumidor */}
+                  <div>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div>
+                    <div style={{position:'relative'}}>
+                      <select value={f2.orgaoConsumidor} onChange={e=>setF2(p=>({...p,orgaoConsumidor:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                        <option value="">Todos</option>
+                        {['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES'].map(o=><option key={o} value={o}>{o}</option>)}
+                      </select>
+                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
+                    </div>
+                  </div>
+                  {/* Período */}
+                  <div>
+                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Período</div>
+                    <div style={{position:'relative'}}>
+                      <select value={f2.periodo} onChange={e=>setF2(p=>({...p,periodo:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                        <option value="1m">Último mês</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="12m">Último ano</option>
+                      </select>
+                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <button onClick={()=>aba==='cadastradas'?setF1({orgaoId:'',status:'',categoriaId:'',dataInicio:'',dataFim:''}):setF2({apiNome:'',orgaoConsumidor:'',periodo:'6m'})}
+                style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:C.brand,marginTop:10,padding:0,textDecoration:'underline'}}>Limpar filtros</button>
+            </div>
+          </div>
+
+          {/* Preview tabela de dados */}
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>Prévia dos dados — {dadosAtivos.length} registro{dadosAtivos.length!==1?'s':''}</span>
+              <button onClick={()=>setPreview(p=>!p)} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>{preview?'Ocultar':'Expandir'}</button>
+            </div>
+            <div style={{overflowX:'auto',maxHeight:preview?280:140,transition:'max-height 0.3s'}}>
+              <table style={{width:'100%',borderCollapse:'collapse'}}>
+                {aba==='cadastradas'?(
+                  <>
+                    <thead><tr>{['Nome','Órgão','Versão','Status','Categoria'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+                    <tbody>{apisCad.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,color:C.textPrimary,fontWeight:500}}>{a.nome}</td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{ORGAOS.find(o=>o.id===a.orgaoId)?.shortName}</td><td style={{padding:'7px 12px',fontSize:11}}>{a.versao}</td><td style={{padding:'7px 12px'}}><BadgeApi status={a.status}/></td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td></tr>)}</tbody>
+                  </>
+                ):(
+                  <>
+                    <thead><tr>{['API','Órgão','Requisições','Erros','Disp.','Tendência'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+                    <tbody>{dadosUso.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,color:C.textPrimary,fontWeight:500}}>{a.nome}</td><td style={{padding:'7px 12px',fontSize:11}}><span style={{background:C.infoBg,color:C.brand,padding:'1px 6px',borderRadius:100,fontSize:10,fontWeight:600}}>{a.orgao}</span></td><td style={{padding:'7px 12px',fontSize:12,fontWeight:700,color:C.brand}}>{a.requisicoes.toLocaleString('pt-BR')}</td><td style={{padding:'7px 12px',fontSize:12,color:a.erros>200?C.danger:C.textSecondary}}>{a.erros}</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.dispMedia>=98?C.success:C.warning}}>{a.dispMedia}%</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.tendencia>0?C.success:C.danger}}>{a.tendencia>0?'+':''}{a.tendencia}%</td></tr>)}</tbody>
+                  </>
+                )}
+              </table>
+            </div>
+          </div>
+
+          {/* Gráfico de barras — uso */}
+          {aba==='uso'&&(
+            <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px 18px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+              <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:14}}>APIs mais consumidas no período</div>
+              <BarChart
+                data={getUsoFiltrado().slice(0,6).map(a=>({...a,mes:a.orgao}))}
+                keys={['requisicoes']}
+                colors={['#0034B7']}
+                height={110}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Painel direito: exportação */}
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          {/* Sumário */}
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:12}}>Sumário</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+              {aba==='cadastradas'?[
+                {label:'Registros',         valor:apisCad.length},
+                {label:'APIs Ativas',        valor:apisCad.filter(a=>a.status==='Ativo').length},
+                {label:'APIs Inativas',      valor:apisCad.filter(a=>a.status==='Inativo').length},
+                {label:'Órgãos únicos',      valor:[...new Set(apisCad.map(a=>a.orgaoId))].length},
+              ]:[
+                {label:'APIs no relatório',   valor:dadosUso.length},
+                {label:'Total requisições',   valor:dadosUso.reduce((s,a)=>s+a.requisicoes,0).toLocaleString('pt-BR')},
+                {label:'Total erros',         valor:dadosUso.reduce((s,a)=>s+a.erros,0).toLocaleString('pt-BR')},
+                {label:'Disp. média',         valor:(dadosUso.length?dadosUso.reduce((s,a)=>s+a.dispMedia,0)/dadosUso.length:0).toFixed(1)+'%'},
+              ].map(item=>(
+                <div key={item.label} style={{background:C.bg,borderRadius:6,padding:'8px 10px'}}>
+                  <div style={{fontSize:10,color:C.textSecondary,marginBottom:3}}>{item.label}</div>
+                  <div style={{fontSize:16,fontWeight:700,color:C.brand}}>{item.valor}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:C.brand,lineHeight:1.6}}>
+              <strong>Filtros ativos:</strong><br/>{aba==='cadastradas'?filtrosLabel1():filtrosLabel2()}
+            </div>
+          </div>
+
+          {/* Formato */}
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Formato de exportação</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+              {[{key:'pdf',label:'PDF',desc:'Relatório formatado',icon:'📄'},{key:'xlsx',label:'Excel',desc:'Planilha (.xlsx)',icon:'📊'}].map(fmt=>(
+                <div key={fmt.key} onClick={()=>setFormato(fmt.key)}
+                  style={{border:`2px solid ${formato===fmt.key?C.brand:C.divider}`,borderRadius:8,padding:'10px 12px',cursor:'pointer',background:formato===fmt.key?C.infoBg:'#fff',transition:'all 0.15s'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{fontSize:16}}>{fmt.icon}</span><span style={{fontSize:13,fontWeight:formato===fmt.key?700:500,color:formato===fmt.key?C.brand:C.textPrimary}}>{fmt.label}</span></div>
+                  <div style={{fontSize:11,color:C.textSecondary}}>{fmt.desc}</div>
+                </div>
+              ))}
+            </div>
+            {/* Nome do arquivo */}
+            <div style={{background:C.bg,border:`1px solid ${C.divider}`,borderRadius:5,padding:'7px 10px',fontSize:10,color:C.textSecondary,marginBottom:12,fontFamily:'monospace',wordBreak:'break-all'}}>
+              {aba==='cadastradas'?'relatorio-apis':'relatorio-uso-apis'}_{slug}.{formato}
+            </div>
+            {/* Botão */}
+            <button onClick={handleGerar} disabled={loading||dadosAtivos.length===0}
+              style={{width:'100%',height:44,borderRadius:8,background:loading||dadosAtivos.length===0?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||dadosAtivos.length===0?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}
+              onMouseEnter={e=>{if(!loading&&dadosAtivos.length>0)e.currentTarget.style.background=C.brandDark;}}
+              onMouseLeave={e=>{if(!loading&&dadosAtivos.length>0)e.currentTarget.style.background=C.brand;}}
+            >
+              {loading?<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando...</>
+              :<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar {formato.toUpperCase()}</>}
+            </button>
+            {dadosAtivos.length===0&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:6}}>Nenhum registro com os filtros aplicados.</p>}
+          </div>
+
+          {/* Nota técnica */}
+          <div style={{background:C.warningBg,border:'1px solid #FFE082',borderRadius:8,padding:'10px 14px',fontSize:11,color:C.warning,lineHeight:1.6}}>
+            <strong>Produção:</strong> Os dados virão dos endpoints <code style={{background:'rgba(0,0,0,0.06)',padding:'1px 4px',borderRadius:3}}>GET /v1/reports/apis</code> e <code style={{background:'rgba(0,0,0,0.06)',padding:'1px 4px',borderRadius:3}}>/v1/reports/usage</code>. A geração será assíncrona no backend para grandes volumes.
+          </div>
+        </div>
+      </div>
+      <ScriptLoader/>
+    </div>
+  );
+}
+
+/* Carrega jsPDF + autoTable + SheetJS sob demanda */
+function ScriptLoader() {
+  React.useEffect(()=>{
+    const load=(src)=>new Promise((res,rej)=>{
+      if(document.querySelector(`script[src="${src}"]`)){res();return;}
+      const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+    (async()=>{
+      try{
+        await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+        await load('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      }catch(e){console.warn('Libs de relatório:',e);}
+    })();
+  },[]);
+  return null;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1060,6 +2083,7 @@ function App() {
     'apis':      ['Início','Catálogo de APIs','Gerenciar APIs'],
     'categorias':['Início','Catálogo de APIs','Gerenciar Categorias'],
     'usuarios':  ['Início','Controle de Acesso'],
+    'relatorios':['Início','Relatórios'],
     'auditoria': ['Início','Auditoria'],
     'dashboard': ['Início'],
     'config':    ['Início','Configurações'],
@@ -1089,6 +2113,7 @@ function App() {
         {section==='apis'       && <GerenciarApis showToast={showToast}/>}
         {section==='categorias' && <GerenciarCategorias showToast={showToast}/>}
         {section==='usuarios'   && <ControleAcesso showToast={showToast}/>}
+        {section==='relatorios' && <Relatorios showToast={showToast}/>}
         {section==='auditoria'  && <Placeholder titulo="Auditoria" descricao="Log de ações realizadas no backoffice: criação, edição, ativação e inativação de registros. Disponível na próxima sprint." icon="📋"/>}
         {section==='config'     && <Placeholder titulo="Configurações" descricao="Configurações gerais, de segurança e integrações do portal. Disponível na próxima sprint." icon="⚙️"/>}
       </div>
