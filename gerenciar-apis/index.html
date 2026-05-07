@@ -22,6 +22,23 @@ input,select,textarea,button { font-family:'Inter',sans-serif; }
 <div id="root"></div>
 <script type="text/babel">
 
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════════════════════ */
+const C = {
+  brand:'#0034B7', brandHover:'#337FFF', brandDark:'#001A7A',
+  bg:'#F8FAFC', white:'#FFFFFF', border:'#CED2D7', divider:'#E7E9EB',
+  textPrimary:'#28272C', textSecondary:'#494C57', textDisabled:'#CED2D7',
+  danger:'#AC1010', dangerBg:'#FFE4E4', dangerBorder:'#E45F5F',
+  success:'#2B6418', successBg:'#EAFBD7', successBorder:'#86D562',
+  warning:'#B77706', warningBg:'#FFF6CE', warningBorder:'#FFE082',
+  info:'#0034B7', infoBg:'#E6F3FF', infoBorder:'#99C6FF',
+  pendente:'#B77706', pendenteBg:'#FFF6CE', pendenteBorder:'#FFE082',
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   DADOS ESTÁTICOS
+══════════════════════════════════════════════════════════════ */
 const ORGAOS = [
   { id:'1', shortName:'ATI',    name:'Agência Estadual de Tecnologia da Informação',    nome_origem:'ATI — Portal de Serviços PE' },
   { id:'2', shortName:'SEFAZ',  name:'Secretaria da Fazenda',                           nome_origem:'SEFAZ — Cadastro Fiscal' },
@@ -34,72 +51,70 @@ const ORGAOS = [
 ].sort((a,b)=>a.shortName.localeCompare(b.shortName));
 
 const CATEGORIAS = [
-  { id:'1', nome:'Fiscal' },
-  { id:'2', nome:'Saúde' },
-  { id:'3', nome:'Segurança Pública' },
-  { id:'4', nome:'Educação' },
-  { id:'5', nome:'Habitação Social' },
-  { id:'6', nome:'Meio Ambiente' },
-  { id:'7', nome:'Serviços ao Cidadão' },
+  { id:'1', nome:'Fiscal' }, { id:'2', nome:'Saúde' }, { id:'3', nome:'Segurança Pública' },
+  { id:'4', nome:'Educação' }, { id:'5', nome:'Habitação Social' }, { id:'6', nome:'Meio Ambiente' }, { id:'7', nome:'Serviços ao Cidadão' },
 ];
 
 const EMPTY_OPS = [{ metodo:'GET', endpoint:'', descricao:'' }];
 
 const INITIAL_APIS = [
-  { id:1, nome:'Catálogo de Serviços', orgaoId:'1', categoriaId:'7', versao:'v2.1', status:'Ativo',
-    descricao:'API pública de catálogo de serviços do estado.',
-    operacoes:[{metodo:'GET',endpoint:'/servicos',descricao:'Lista todos os serviços'},{metodo:'GET',endpoint:'/servicos/{id}',descricao:'Detalhe do serviço'}],
-    baseSistema:'ATI — Portal de Serviços PE', comoAcessar:'Solicitar credenciais via portal ATI. Autenticar via Bearer Token.',
-    detalhamento:'Protocolo HTTPS. Retorna JSON com campos: id, nome, orgao, descricao, status.',
-    contatos:[{nome:'Time ATI', funcao:'Suporte', email:'api@ati.pe.gov.br'}], criado:'15/01/2025', atualizado:'10/04/2025', autor:'João Silva' },
-  { id:2, nome:'Consulta de CPF', orgaoId:'2', categoriaId:'1', versao:'v1.0', status:'Ativo',
-    descricao:'Consulta de dados cadastrais via CPF.',
-    operacoes:[{metodo:'GET',endpoint:'/cpf/{numero}',descricao:'Retorna dados do cidadão'}],
-    baseSistema:'SEFAZ — Cadastro Fiscal', comoAcessar:'Solicitar acesso via SEFAZ Digital. Requer convênio assinado.',
-    detalhamento:'Protocolo HTTPS. IP fixo obrigatório.',
-    contatos:[{nome:'SEFAZ Digital', funcao:'TI', email:'digital@sefaz.pe.gov.br'}], criado:'03/02/2025', atualizado:'03/02/2025', autor:'Maria Santos' },
-  { id:3, nome:'Agendamento de Saúde', orgaoId:'4', categoriaId:'2', versao:'v1.2', status:'Inativo',
-    descricao:'Agendamento de consultas na rede pública.',
-    operacoes:[{metodo:'POST',endpoint:'/agendamentos',descricao:'Cria agendamento'}],
-    baseSistema:'SES — Sistema de Regulação', comoAcessar:'Acesso restrito a sistemas credenciados pela SES.',
-    detalhamento:'OAuth 2.0.', contatos:[], criado:'22/03/2025', atualizado:'22/03/2025', autor:'Carlos Lima' },
-  { id:4, nome:'Boletim de Ocorrência', orgaoId:'3', categoriaId:'3', versao:'v3.0', status:'Ativo',
-    descricao:'Registro e consulta de boletins de ocorrência.',
-    operacoes:[{metodo:'POST',endpoint:'/bo',descricao:'Registra BO'},{metodo:'GET',endpoint:'/bo/{protocolo}',descricao:'Consulta BO'}],
-    baseSistema:'SEPLAG — Sistema de Segurança Pública', comoAcessar:'Credenciais fornecidas pela SEPLAG.',
-    detalhamento:'HTTPS.', contatos:[{nome:'SEPLAG TI', funcao:'Gestão', email:'ti@seplag.pe.gov.br'}], criado:'10/04/2025', atualizado:'18/04/2025', autor:'Ana Costa' },
-  { id:5, nome:'Emissão de Certidões', orgaoId:'2', categoriaId:'1', versao:'v1.5', status:'Ativo',
-    descricao:'Emissão de certidões fiscais e negativas.',
-    operacoes:[{metodo:'GET',endpoint:'/certidoes/negativa',descricao:'Emite CND'}],
-    baseSistema:'SEFAZ — Sistema Tributário', comoAcessar:'Integração via API Key.',
-    detalhamento:'HTTPS.', contatos:[{nome:'SEFAZ', funcao:'Fiscal', email:'sefaz@sefaz.pe.gov.br'}], criado:'05/01/2025', atualizado:'05/01/2025', autor:'Pedro Oliveira' },
-  { id:6, nome:'Matrícula Escolar', orgaoId:'5', categoriaId:'4', versao:'v2.0', status:'Inativo',
-    descricao:'Matrícula e transferência na rede estadual.',
-    operacoes:[{metodo:'POST',endpoint:'/matriculas',descricao:'Realiza matrícula'}],
-    baseSistema:'SEE — Sistema de Gestão Escolar', comoAcessar:'Disponível apenas para sistemas homologados.',
-    detalhamento:'OAuth 2.0.', contatos:[], criado:'28/03/2025', atualizado:'01/04/2025', autor:'Fernanda Reis' },
-  { id:7, nome:'Licença Ambiental', orgaoId:'3', categoriaId:'6', versao:'v1.0', status:'Inativo',
-    descricao:'Solicitação de licenças ambientais via CPRH.',
-    operacoes:[{metodo:'POST',endpoint:'/licencas',descricao:'Solicita licença'}],
-    baseSistema:'CPRH — Sistema Ambiental', comoAcessar:'Credenciais via SEPLAG.',
-    detalhamento:'HTTPS + certificado.', contatos:[{nome:'SEPLAG Ambiental', funcao:'Ambiental', email:'ambiental@seplag.pe.gov.br'}], criado:'14/04/2025', atualizado:'14/04/2025', autor:'Lucas Alves' },
-  { id:8, nome:'Programas Habitacionais', orgaoId:'6', categoriaId:'5', versao:'v1.1', status:'Ativo',
-    descricao:'Inscrições em programas habitacionais estaduais.',
-    operacoes:[{metodo:'POST',endpoint:'/inscricoes',descricao:'Realiza inscrição'}],
-    baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS.',
-    detalhamento:'HTTPS.', contatos:[{nome:'SEDS TI', funcao:'TI', email:'ti@seds.pe.gov.br'}], criado:'20/02/2025', atualizado:'20/02/2025', autor:'Roberta Mendes' },
+  { id:1, nome:'Catálogo de Serviços', orgaoId:'1', categoriaId:'7', versao:'v2.1', status:'Ativo', descricao:'API pública de catálogo de serviços do estado.', operacoes:[{metodo:'GET',endpoint:'/servicos',descricao:'Lista todos os serviços'},{metodo:'GET',endpoint:'/servicos/{id}',descricao:'Detalhe do serviço'}], baseSistema:'ATI — Portal de Serviços PE', comoAcessar:'Solicitar credenciais via portal ATI. Autenticar via Bearer Token.', detalhamento:'Protocolo HTTPS. Retorna JSON com campos: id, nome, orgao, descricao, status.', contatos:[{nome:'Time ATI', funcao:'Suporte', email:'api@ati.pe.gov.br'}], criado:'15/01/2025', atualizado:'10/04/2025', autor:'João Silva' },
+  { id:2, nome:'Consulta de CPF', orgaoId:'2', categoriaId:'1', versao:'v1.0', status:'Ativo', descricao:'Consulta de dados cadastrais via CPF.', operacoes:[{metodo:'GET',endpoint:'/cpf/{numero}',descricao:'Retorna dados do cidadão'}], baseSistema:'SEFAZ — Cadastro Fiscal', comoAcessar:'Solicitar acesso via SEFAZ Digital. Requer convênio assinado.', detalhamento:'Protocolo HTTPS. IP fixo obrigatório.', contatos:[{nome:'SEFAZ Digital', funcao:'TI', email:'digital@sefaz.pe.gov.br'}], criado:'03/02/2025', atualizado:'03/02/2025', autor:'Maria Santos' },
+  { id:3, nome:'Agendamento de Saúde', orgaoId:'4', categoriaId:'2', versao:'v1.2', status:'Inativo', descricao:'Agendamento de consultas na rede pública.', operacoes:[{metodo:'POST',endpoint:'/agendamentos',descricao:'Cria agendamento'}], baseSistema:'SES — Sistema de Regulação', comoAcessar:'Acesso restrito a sistemas credenciados pela SES.', detalhamento:'OAuth 2.0.', contatos:[], criado:'22/03/2025', atualizado:'22/03/2025', autor:'Carlos Lima' },
+  { id:4, nome:'Boletim de Ocorrência', orgaoId:'3', categoriaId:'3', versao:'v3.0', status:'Ativo', descricao:'Registro e consulta de boletins de ocorrência.', operacoes:[{metodo:'POST',endpoint:'/bo',descricao:'Registra BO'},{metodo:'GET',endpoint:'/bo/{protocolo}',descricao:'Consulta BO'}], baseSistema:'SEPLAG — Sistema de Segurança Pública', comoAcessar:'Credenciais fornecidas pela SEPLAG.', detalhamento:'HTTPS.', contatos:[{nome:'SEPLAG TI', funcao:'Gestão', email:'ti@seplag.pe.gov.br'}], criado:'10/04/2025', atualizado:'18/04/2025', autor:'Ana Costa' },
+  { id:5, nome:'Emissão de Certidões', orgaoId:'2', categoriaId:'1', versao:'v1.5', status:'Ativo', descricao:'Emissão de certidões fiscais e negativas.', operacoes:[{metodo:'GET',endpoint:'/certidoes/negativa',descricao:'Emite CND'}], baseSistema:'SEFAZ — Sistema Tributário', comoAcessar:'Integração via API Key.', detalhamento:'HTTPS.', contatos:[{nome:'SEFAZ', funcao:'Fiscal', email:'sefaz@sefaz.pe.gov.br'}], criado:'05/01/2025', atualizado:'05/01/2025', autor:'Pedro Oliveira' },
+  { id:6, nome:'Matrícula Escolar', orgaoId:'5', categoriaId:'4', versao:'v2.0', status:'Inativo', descricao:'Matrícula e transferência na rede estadual.', operacoes:[{metodo:'POST',endpoint:'/matriculas',descricao:'Realiza matrícula'}], baseSistema:'SEE — Sistema de Gestão Escolar', comoAcessar:'Disponível apenas para sistemas homologados.', detalhamento:'OAuth 2.0.', contatos:[], criado:'28/03/2025', atualizado:'01/04/2025', autor:'Fernanda Reis' },
+  { id:7, nome:'Licença Ambiental', orgaoId:'3', categoriaId:'6', versao:'v1.0', status:'Inativo', descricao:'Solicitação de licenças ambientais via CPRH.', operacoes:[{metodo:'POST',endpoint:'/licencas',descricao:'Solicita licença'}], baseSistema:'CPRH — Sistema Ambiental', comoAcessar:'Credenciais via SEPLAG.', detalhamento:'HTTPS + certificado.', contatos:[{nome:'SEPLAG Ambiental', funcao:'Ambiental', email:'ambiental@seplag.pe.gov.br'}], criado:'14/04/2025', atualizado:'14/04/2025', autor:'Lucas Alves' },
+  { id:8, nome:'Programas Habitacionais', orgaoId:'6', categoriaId:'5', versao:'v1.1', status:'Ativo', descricao:'Inscrições em programas habitacionais estaduais.', operacoes:[{metodo:'POST',endpoint:'/inscricoes',descricao:'Realiza inscrição'}], baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS.', detalhamento:'HTTPS.', contatos:[{nome:'SEDS TI', funcao:'TI', email:'ti@seds.pe.gov.br'}], criado:'20/02/2025', atualizado:'20/02/2025', autor:'Roberta Mendes' },
 ];
 
-const C = {
-  brand:'#0034B7', brandHover:'#337FFF', brandDark:'#001A7A',
-  bg:'#F8FAFC', white:'#FFFFFF', border:'#CED2D7', divider:'#E7E9EB',
-  textPrimary:'#28272C', textSecondary:'#494C57', textDisabled:'#CED2D7',
-  danger:'#AC1010', dangerBg:'#FFE4E4', dangerBorder:'#E45F5F',
-  success:'#2B6418', successBg:'#EAFBD7', successBorder:'#86D562',
-  warning:'#B77706', warningBg:'#FFF6CE',
-  info:'#0034B7', infoBg:'#E6F3FF', infoBorder:'#99C6FF',
-};
+/* ═══════════════════════════════════════════════════════════════
+   USUÁRIOS — Dados simulados (HU.05.01 + HU.05.02)
+   Reflete: usuários pré-cadastrados, pendentes (tentativas via SSO) e inativos
+   CPF mascarado na listagem conforme LGPD — completo só no detalhe
+══════════════════════════════════════════════════════════════ */
+const INITIAL_USUARIOS = [
+  {
+    id:1, nome:'João Silva', cpfMascarado:'046.XXX.XXX-18', cpfCompleto:'046.318.094-18',
+    perfil:'ADM', orgao:'—', orgaoId:'', status:'Ativo',
+    criadoEm:'15/01/2025', criadoPor:'SYSTEM', atualizadoEm:'10/04/2025', atualizadoPor:'João Silva',
+    origemCadastro:'SSO', ultimoAcesso:'07/05/2026 08:42',
+  },
+  {
+    id:2, nome:'Ana Costa', cpfMascarado:'123.XXX.XXX-90', cpfCompleto:'123.456.789-90',
+    perfil:'Cedente', orgao:'SEFAZ', orgaoId:'2', status:'Ativo',
+    criadoEm:'10/03/2026', criadoPor:'SYSTEM', atualizadoEm:'12/03/2026', atualizadoPor:'João Silva',
+    origemCadastro:'SSO', ultimoAcesso:'06/05/2026 14:15',
+  },
+  {
+    id:3, nome:'Carlos Mendes', cpfMascarado:'987.XXX.XXX-44', cpfCompleto:'987.654.321-44',
+    perfil:'', orgao:'—', orgaoId:'', status:'Pendente',
+    criadoEm:'05/05/2026', criadoPor:'SYSTEM', atualizadoEm:'', atualizadoPor:'',
+    origemCadastro:'SSO', ultimoAcesso:'05/05/2026 10:30',
+  },
+  {
+    id:4, nome:'Mariana Lima', cpfMascarado:'234.XXX.XXX-77', cpfCompleto:'234.567.890-77',
+    perfil:'', orgao:'—', orgaoId:'', status:'Pendente',
+    criadoEm:'06/05/2026', criadoPor:'SYSTEM', atualizadoEm:'', atualizadoPor:'',
+    origemCadastro:'SSO', ultimoAcesso:'06/05/2026 09:01',
+  },
+  {
+    id:5, nome:'Roberto Nunes', cpfMascarado:'345.XXX.XXX-11', cpfCompleto:'345.678.901-11',
+    perfil:'Consumidor', orgao:'—', orgaoId:'', status:'Inativo',
+    criadoEm:'01/02/2026', criadoPor:'SYSTEM', atualizadoEm:'15/04/2026', atualizadoPor:'João Silva',
+    origemCadastro:'SSO', ultimoAcesso:'14/04/2026 17:22',
+  },
+  {
+    id:6, nome:'Fernanda Souza', cpfMascarado:'456.XXX.XXX-33', cpfCompleto:'456.789.012-33',
+    perfil:'Cedente', orgao:'SES', orgaoId:'4', status:'Ativo',
+    criadoEm:'20/03/2026', criadoPor:'SYSTEM', atualizadoEm:'21/03/2026', atualizadoPor:'João Silva',
+    origemCadastro:'SSO', ultimoAcesso:'07/05/2026 07:55',
+  },
+];
 
+/* ═══════════════════════════════════════════════════════════════
+   ÍCONES
+══════════════════════════════════════════════════════════════ */
 const Icon = ({ name, size=16, color='currentColor' }) => {
   const paths = {
     plus:     <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
@@ -115,11 +130,16 @@ const Icon = ({ name, size=16, color='currentColor' }) => {
     warn:     <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
     info:     <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
     person:   <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+    users:    <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
     api:      <><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></>,
     sort:     <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
     grid:     <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>,
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
     logout:   <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+    shield:   <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
+    clock:    <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+    lock:     <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+    audit:    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -128,13 +148,30 @@ const Icon = ({ name, size=16, color='currentColor' }) => {
   );
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENTES BASE
+══════════════════════════════════════════════════════════════ */
 const Badge = ({ status }) => {
+  const cfg = {
+    'Ativo':    { bg:C.successBg,  color:C.success,  border:C.successBorder,  dot:'#86D562' },
+    'Inativo':  { bg:'#F1EFE8',    color:'#5F5E5A',  border:'#D3D1C7',        dot:'#B4B2A9' },
+    'Pendente': { bg:C.pendenteBg, color:C.pendente, border:C.pendenteBorder, dot:'#FFB700' },
+  }[status] || { bg:C.infoBg, color:C.info, border:C.infoBorder, dot:C.info };
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:100, fontSize:12, fontWeight:600, background:cfg.bg, color:cfg.color, border:`1px solid ${cfg.border}` }}>
+      <span style={{ width:6, height:6, borderRadius:'50%', background:cfg.dot, flexShrink:0 }}/>
+      {status}
+    </span>
+  );
+};
+
+const BadgeApi = ({ status }) => {
   const cfg = status==='Ativo'
     ? { bg:C.successBg, color:C.success, border:C.successBorder, dot:'#86D562' }
     : { bg:C.dangerBg,  color:C.danger,  border:C.dangerBorder,  dot:C.danger };
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:100, fontSize:12, fontWeight:600, background:cfg.bg, color:cfg.color, border:`1px solid ${cfg.border}` }}>
-      <span style={{ width:6, height:6, borderRadius:'50%', background:cfg.dot, flexShrink:0 }} />
+      <span style={{ width:6, height:6, borderRadius:'50%', background:cfg.dot, flexShrink:0 }}/>
       {status}
     </span>
   );
@@ -150,14 +187,10 @@ const Btn = ({ children, variant='primary', size='md', onClick, disabled, style=
     danger:   { background:C.danger,      color:'#fff', border:`1.5px solid ${C.danger}` },
     ghost:    { background:'transparent', color:C.brand, border:'1.5px solid transparent' },
     outline:  { background:'transparent', color:C.brand, border:`1.5px solid ${C.brand}` },
+    success:  { background:C.success,     color:'#fff', border:`1.5px solid ${C.success}` },
   }[variant];
   return (
-    <button onClick={onClick} disabled={disabled} style={{
-      height:h, padding:px, fontSize:fs, fontWeight:600, fontFamily:'Inter',
-      borderRadius:5, cursor:disabled?'not-allowed':'pointer',
-      display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap',
-      opacity:disabled?0.5:1, transition:'all 0.15s', ...vs, ...style,
-    }}
+    <button onClick={onClick} disabled={disabled} style={{ height:h, padding:px, fontSize:fs, fontWeight:600, fontFamily:'Inter', borderRadius:5, cursor:disabled?'not-allowed':'pointer', display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap', opacity:disabled?0.5:1, transition:'all 0.15s', ...vs, ...style }}
       onMouseEnter={e=>{ if(!disabled){ if(variant==='primary') e.currentTarget.style.background=C.brandHover; if(variant==='secondary') e.currentTarget.style.background=C.infoBg; }}}
       onMouseLeave={e=>{ if(!disabled){ if(variant==='primary') e.currentTarget.style.background=C.brand; if(variant==='secondary') e.currentTarget.style.background='#fff'; }}}
     >
@@ -167,16 +200,14 @@ const Btn = ({ children, variant='primary', size='md', onClick, disabled, style=
   );
 };
 
-const inputStyle = (error) => ({
-  height:42, borderRadius:5, border:`1px solid ${error?C.danger:C.border}`,
-  padding:'0 12px', fontSize:14, color:C.textPrimary, background:'#fff', outline:'none', width:'100%',
-});
+const inputStyle = (error) => ({ height:42, borderRadius:5, border:`1px solid ${error?C.danger:C.border}`, padding:'0 12px', fontSize:14, color:C.textPrimary, background:'#fff', outline:'none', width:'100%' });
 
 const TextInput = ({ value, onChange, placeholder, error, disabled }) => (
-  <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
-    disabled={disabled} style={{ ...inputStyle(error), background:disabled?C.bg:'#fff', cursor:disabled?'not-allowed':'text' }}
+  <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
+    style={{ ...inputStyle(error), background:disabled?C.bg:'#fff', cursor:disabled?'not-allowed':'text' }}
     onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
-    onBlur={e=>{ e.target.style.borderColor=error?C.danger:C.border; e.target.style.boxShadow='none'; }} />
+    onBlur={e=>{ e.target.style.borderColor=error?C.danger:C.border; e.target.style.boxShadow='none'; }}
+  />
 );
 
 const SelectInput = ({ value, onChange, options, placeholder, error, disabled }) => (
@@ -186,35 +217,24 @@ const SelectInput = ({ value, onChange, options, placeholder, error, disabled })
       <option value="">{placeholder||'Selecione...'}</option>
       {options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
-    <span style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
-      <Icon name="chevDown" size={14} color={C.textSecondary} />
-    </span>
+    <span style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><Icon name="chevDown" size={14} color={C.textSecondary}/></span>
   </div>
 );
 
 const TextAreaWithCount = ({ value, onChange, placeholder, rows=3, disabled, maxLength=500 }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-    <textarea
-      value={value}
-      onChange={e=>{ if(!disabled && e.target.value.length <= maxLength) onChange(e.target.value); }}
-      placeholder={placeholder} rows={rows} disabled={disabled} maxLength={maxLength}
+    <textarea value={value} onChange={e=>{ if(!disabled && e.target.value.length<=maxLength) onChange(e.target.value); }} placeholder={placeholder} rows={rows} disabled={disabled} maxLength={maxLength}
       style={{ borderRadius:5, border:`1px solid ${C.border}`, padding:'10px 12px', fontSize:14, color:C.textPrimary, background:disabled?C.bg:'#fff', outline:'none', width:'100%', resize:disabled?'none':'vertical', fontFamily:'Inter', cursor:disabled?'not-allowed':'text' }}
       onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
       onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
     />
-    {!disabled && (
-      <span style={{ fontSize:11, fontFamily:'Inter', color: value.length >= maxLength ? C.danger : value.length >= maxLength*0.9 ? C.warning : C.textSecondary }}>
-        {value.length}/{maxLength} caracteres
-      </span>
-    )}
+    {!disabled && (<span style={{ fontSize:11, fontFamily:'Inter', color:value.length>=maxLength?C.danger:value.length>=maxLength*0.9?C.warning:C.textSecondary }}>{value.length}/{maxLength} caracteres</span>)}
   </div>
 );
 
 const Field = ({ label, required, children, error, hint }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
-    <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>
-      {label}{required && <span style={{ color:C.danger }}> *</span>}
-    </label>
+    <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{label}{required&&<span style={{ color:C.danger }}> *</span>}</label>
     {children}
     {hint && !error && <span style={{ fontSize:11, color:C.textSecondary }}>{hint}</span>}
     {error && <span style={{ fontSize:11, color:C.danger }}>{error}</span>}
@@ -226,9 +246,7 @@ const Modal = ({ title, children, onClose, footer, size='md' }) => (
     <div style={{ background:'#fff', borderRadius:8, width:size==='lg'?760:size==='sm'?420:560, maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 8px 40px rgba(0,0,0,0.25)' }}>
       <div style={{ padding:'20px 24px', borderBottom:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
         <span style={{ fontSize:17, fontWeight:700, color:C.textPrimary }}>{title}</span>
-        <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center' }}>
-          <Icon name="x" size={18} color={C.textSecondary} />
-        </button>
+        <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="x" size={18} color={C.textSecondary}/></button>
       </div>
       <div style={{ padding:24, overflowY:'auto', flex:1 }}>{children}</div>
       {footer && <div style={{ padding:'16px 24px', borderTop:`1px solid ${C.divider}`, display:'flex', gap:10, justifyContent:'flex-end', flexShrink:0, background:'#fff' }}>{footer}</div>}
@@ -239,104 +257,122 @@ const Modal = ({ title, children, onClose, footer, size='md' }) => (
 const Alert = ({ type, msg }) => {
   const cfg = {
     info:    { bg:C.infoBg,    border:C.infoBorder,    color:C.brand,   icon:'info' },
-    warning: { bg:C.warningBg, border:C.border,        color:C.warning, icon:'warn' },
+    warning: { bg:C.warningBg, border:C.warningBorder, color:C.warning, icon:'warn' },
     danger:  { bg:C.dangerBg,  border:C.dangerBorder,  color:C.danger,  icon:'warn' },
     success: { bg:C.successBg, border:C.successBorder, color:C.success, icon:'check' },
   }[type];
   return (
     <div style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, borderRadius:5, padding:'10px 14px', display:'flex', gap:10, alignItems:'flex-start', fontSize:13, color:cfg.color }}>
-      <Icon name={cfg.icon} size={15} color={cfg.color} />
+      <Icon name={cfg.icon} size={15} color={cfg.color}/>
       <span>{msg}</span>
     </div>
   );
 };
 
 const Toast = ({ msg, type, onClose }) => (
-  <div style={{ position:'fixed', bottom:24, right:24, zIndex:2000, background:type==='success'?C.success:C.danger, color:'#fff', borderRadius:5, padding:'12px 18px', display:'flex', gap:10, alignItems:'center', boxShadow:'0 4px 24px rgba(0,0,0,0.2)', fontSize:14, fontWeight:500, maxWidth:380 }}>
-    <Icon name={type==='success'?'check':'x'} size={16} color="#fff" />
+  <div style={{ position:'fixed', bottom:24, right:24, zIndex:2000, background:type==='success'?C.success:type==='warning'?C.warning:C.danger, color:'#fff', borderRadius:5, padding:'12px 18px', display:'flex', gap:10, alignItems:'center', boxShadow:'0 4px 24px rgba(0,0,0,0.2)', fontSize:14, fontWeight:500, maxWidth:420 }}>
+    <Icon name={type==='success'?'check':'warn'} size={16} color="#fff"/>
     <span style={{ flex:1 }}>{msg}</span>
-    <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'#fff', display:'flex' }}>
-      <Icon name="x" size={14} color="#fff" />
-    </button>
+    <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'#fff', display:'flex' }}><Icon name="x" size={14} color="#fff"/></button>
   </div>
 );
 
-const Sidebar = ({ collapsed, onToggle }) => {
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR — com item "Controle de Acesso" (HU.05.02)
+══════════════════════════════════════════════════════════════ */
+const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
   const [configOpen, setConfigOpen] = React.useState(false);
   const items = [
-    { label:'Visão Geral',         key:'dashboard', icon:'grid' },
-    { label:'Gerenciar APIs',      key:'apis',      icon:'api',     active:true },
-    { label:'Gerenciar Categoria', key:'catalogo',  icon:'sort',    href:'../gerenciar-categorias/index.html' },
-    { label:'Usuários',            key:'usuarios',  icon:'person' },
-    { label:'Configurações',       key:'config',    icon:'settings', hasDropdown:true },
+    { label:'Visão Geral',          key:'dashboard',   icon:'grid' },
+    { label:'Gerenciar APIs',       key:'apis',        icon:'api' },
+    { label:'Gerenciar Categoria',  key:'categorias',  icon:'sort' },
+    { label:'Controle de Acesso',   key:'usuarios',    icon:'users' },  // ← HU.05.02
+    { label:'Auditoria',            key:'auditoria',   icon:'audit' },
+    { label:'Configurações',        key:'config',      icon:'settings', hasDropdown:true },
   ];
-  const W = collapsed ? 56 : 180;
-  const NavItem = ({ item }) => (
-    <div>
-      <div title={collapsed?item.label:undefined}
-        onClick={()=>{ if(item.href) window.location.href=item.href; if(item.hasDropdown) setConfigOpen(o=>!o); }}
-        style={{ display:'flex', alignItems:'center', gap:10, padding:collapsed?'12px 0':'11px 16px', justifyContent:collapsed?'center':'flex-start', cursor:'pointer', color:item.active?'#fff':'rgba(248,250,252,0.75)', fontSize:13, fontWeight:item.active?600:400, borderBottom:'1px solid rgba(248,250,252,0.10)', background:item.active?'rgba(255,255,255,0.10)':'transparent', transition:'color 0.15s' }}
-        onMouseEnter={e=>{ e.currentTarget.style.color='#fff'; e.currentTarget.style.background='rgba(255,255,255,0.08)'; }}
-        onMouseLeave={e=>{ if(!item.active) e.currentTarget.style.color='rgba(248,250,252,0.75)'; e.currentTarget.style.background=item.active?'rgba(255,255,255,0.10)':'transparent'; }}
-      >
-        <Icon name={item.icon} size={16} color={item.active?'#fff':'rgba(248,250,252,0.6)'} />
-        {!collapsed && (<><span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.label}</span>{item.hasDropdown && (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,0.6)" strokeWidth="2.5" strokeLinecap="round">{configOpen?<polyline points="18 15 12 9 6 15"/>:<polyline points="6 9 12 15 18 9"/>}</svg>)}</>)}
-      </div>
-      {item.hasDropdown && configOpen && !collapsed && (
-        <div style={{ background:'rgba(0,0,0,0.15)' }}>
-          {['Geral','Segurança','Integrações'].map(sub=>(
-            <div key={sub} style={{ padding:'9px 16px 9px 42px', fontSize:12, color:'rgba(248,250,252,0.65)', cursor:'pointer', borderBottom:'1px solid rgba(248,250,252,0.06)', transition:'color 0.15s' }}
-              onMouseEnter={e=>e.currentTarget.style.color='#fff'} onMouseLeave={e=>e.currentTarget.style.color='rgba(248,250,252,0.65)'}
-            >{sub}</div>
-          ))}
+  const W = collapsed ? 56 : 200;
+
+  const NavItem = ({ item }) => {
+    const isActive = activeSection === item.key;
+    return (
+      <div>
+        <div title={collapsed?item.label:undefined}
+          onClick={()=>{ if(item.hasDropdown){ setConfigOpen(o=>!o); return; } onNav(item.key); }}
+          style={{ display:'flex', alignItems:'center', gap:10, padding:collapsed?'12px 0':'11px 16px', justifyContent:collapsed?'center':'flex-start', cursor:'pointer', color:isActive?'#fff':'rgba(248,250,252,0.75)', fontSize:13, fontWeight:isActive?600:400, borderBottom:'1px solid rgba(248,250,252,0.10)', background:isActive?'rgba(255,255,255,0.13)':'transparent', borderLeft:isActive?`3px solid rgba(255,255,255,0.6)`:collapsed?'none':'3px solid transparent', transition:'all 0.15s' }}
+          onMouseEnter={e=>{ if(!isActive){ e.currentTarget.style.color='#fff'; e.currentTarget.style.background='rgba(255,255,255,0.08)'; }}}
+          onMouseLeave={e=>{ if(!isActive){ e.currentTarget.style.color='rgba(248,250,252,0.75)'; e.currentTarget.style.background='transparent'; }}}
+        >
+          <Icon name={item.icon} size={16} color={isActive?'#fff':'rgba(248,250,252,0.6)'}/>
+          {!collapsed && (<><span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.label}</span>{item.hasDropdown && (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,0.6)" strokeWidth="2.5" strokeLinecap="round">{configOpen?<polyline points="18 15 12 9 6 15"/>:<polyline points="6 9 12 15 18 9"/>}</svg>)}</>)}
         </div>
-      )}
-    </div>
-  );
+        {item.hasDropdown && configOpen && !collapsed && (
+          <div style={{ background:'rgba(0,0,0,0.15)' }}>
+            {['Geral','Segurança','Integrações'].map(sub=>(
+              <div key={sub} style={{ padding:'9px 16px 9px 42px', fontSize:12, color:'rgba(248,250,252,0.65)', cursor:'pointer', borderBottom:'1px solid rgba(248,250,252,0.06)', transition:'color 0.15s' }} onMouseEnter={e=>e.currentTarget.style.color='#fff'} onMouseLeave={e=>e.currentTarget.style.color='rgba(248,250,252,0.65)'}>{sub}</div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={{ width:W, minWidth:W, background:C.brandDark, display:'flex', flexDirection:'column', flexShrink:0, minHeight:'100%', transition:'width 0.22s ease, min-width 0.22s ease', overflow:'hidden' }}>
       <div style={{ padding:collapsed?'14px 0':'12px 12px', display:'flex', alignItems:'center', justifyContent:collapsed?'center':'space-between', borderBottom:'1px solid rgba(248,250,252,0.10)', minHeight:72 }}>
-        {!collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'6px 8px', display:'flex', alignItems:'center', justifyContent:'center', flex:1, marginRight:8 }}><img src="ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} /></div>)}
-        {collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'4px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4 }}><img src="ati_logo.png" alt="ATI" style={{ height:30, width:30, objectFit:'contain' }} /></div>)}
-        {!collapsed && (<button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>«</button>)}
-        {collapsed && (<button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, marginTop:6, flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>»</button>)}
+        {!collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'6px 8px', display:'flex', alignItems:'center', justifyContent:'center', flex:1, marginRight:8 }}><img src="ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>{ e.target.style.display='none'; }}/></div>)}
+        {collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'4px', display:'flex', alignItems:'center', justifyContent:'center' }}><img src="ati_logo.png" alt="ATI" style={{ height:30, width:30, objectFit:'contain' }} onError={e=>{ e.target.style.display='none'; }}/></div>)}
+        <button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, flexShrink:0, marginTop:collapsed?6:0 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>{collapsed?'»':'«'}</button>
       </div>
       <nav style={{ flex:1 }}>{items.map(item=><NavItem key={item.key} item={item}/>)}</nav>
     </div>
   );
 };
 
-const UserDropdown = () => {
+/* ═══════════════════════════════════════════════════════════════
+   TOPBAR / USER DROPDOWN
+══════════════════════════════════════════════════════════════ */
+const UserDropdown = ({ onLogout }) => {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
-  React.useEffect(()=>{ const handler = e=>{ if(ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', handler); return ()=>document.removeEventListener('mousedown', handler); },[]);
+  React.useEffect(()=>{ const h=e=>{ if(ref.current&&!ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h); },[]);
   return (
     <div ref={ref} style={{ position:'relative' }}>
       <div onClick={()=>setOpen(o=>!o)} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'6px 10px', borderRadius:6, transition:'background 0.15s', background:open?C.bg:'transparent' }} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>{ if(!open) e.currentTarget.style.background='transparent'; }}>
-        <div style={{ width:32, height:32, background:C.brand, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'#fff', flexShrink:0 }}>TT</div>
-        <div style={{ lineHeight:1.3 }}><div style={{ fontSize:13, fontWeight:600, color:C.textPrimary, whiteSpace:'nowrap' }}>Nome do usuário</div><div style={{ fontSize:11, color:C.textSecondary, whiteSpace:'nowrap' }}>Nível de acesso</div></div>
-        <Icon name={open?'chevUp':'chevDown'} size={14} color={C.textSecondary} />
+        <div style={{ width:32, height:32, background:C.brand, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'#fff', flexShrink:0 }}>JS</div>
+        <div style={{ lineHeight:1.3 }}><div style={{ fontSize:13, fontWeight:600, color:C.textPrimary, whiteSpace:'nowrap' }}>João Silva</div><div style={{ fontSize:11, color:C.textSecondary, whiteSpace:'nowrap' }}>ADM</div></div>
+        <Icon name={open?'chevUp':'chevDown'} size={14} color={C.textSecondary}/>
       </div>
       {open && (
         <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, boxShadow:'0 4px 24px rgba(0,26,122,0.13)', minWidth:200, zIndex:500, overflow:'hidden' }}>
-          {['Meu perfil','Configurações','Permissões','Ajuda'].map((item,i)=>(<div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.textPrimary, cursor:'pointer', borderBottom:`1px solid ${C.divider}` }} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background='#fff'}><span style={{ width:7, height:7, borderRadius:'50%', background:C.textPrimary, flexShrink:0, display:'inline-block' }}/>{item}</div>))}
-          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.danger, cursor:'pointer' }} onClick={()=>{ window.location.href='../catalogo/index.html'; }} onMouseEnter={e=>e.currentTarget.style.background=C.dangerBg} onMouseLeave={e=>e.currentTarget.style.background='#fff'}><Icon name="logout" size={14} color={C.danger}/>Sair</div>
+          {['Meu perfil','Configurações'].map((item,i)=>(<div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.textPrimary, cursor:'pointer', borderBottom:`1px solid ${C.divider}` }} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background='#fff'}>{item}</div>))}
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 16px', fontSize:13, color:C.danger, cursor:'pointer' }} onClick={()=>{ try{ window.location.href='../catalogo/index.html'; }catch(e){} }} onMouseEnter={e=>e.currentTarget.style.background=C.dangerBg} onMouseLeave={e=>e.currentTarget.style.background='#fff'}><Icon name="logout" size={14} color={C.danger}/>Sair</div>
         </div>
       )}
     </div>
   );
 };
 
-const Topbar = ({ breadcrumbs }) => (
+const Topbar = ({ breadcrumbs, notificacoes=0 }) => (
   <div style={{ height:56, background:'#fff', borderBottom:`1px solid ${C.divider}`, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px', flexShrink:0 }}>
     <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:13 }}>
-      {breadcrumbs.map((b,i)=>(<React.Fragment key={i}>{i>0 && <span style={{ color:C.border }}>›</span>}<span style={{ color:i===breadcrumbs.length-1?C.textPrimary:C.brand, fontWeight:i===breadcrumbs.length-1?500:400 }}>{b}</span></React.Fragment>))}
+      {breadcrumbs.map((b,i)=>(<React.Fragment key={i}>{i>0&&<span style={{ color:C.border }}>›</span>}<span style={{ color:i===breadcrumbs.length-1?C.textPrimary:C.brand, fontWeight:i===breadcrumbs.length-1?500:400 }}>{b}</span></React.Fragment>))}
     </div>
-    <UserDropdown/>
+    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+      {/* Sino com badge de notificações */}
+      <div style={{ position:'relative', marginRight:8 }}>
+        <button style={{ background:'none', border:'none', cursor:'pointer', padding:'6px', borderRadius:6, display:'flex', alignItems:'center', transition:'background 0.15s' }} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background='none'}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.textSecondary} strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        {notificacoes > 0 && (<div style={{ position:'absolute', top:4, right:4, width:16, height:16, background:'#E24B4A', borderRadius:'50%', border:'2px solid #fff', display:'flex', alignItems:'center', justifyContent:'center' }}><span style={{ fontSize:9, color:'#fff', fontWeight:700 }}>{notificacoes}</span></div>)}
+      </div>
+      <UserDropdown/>
+    </div>
   </div>
 );
 
-/* ── Operações List ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   OPERAÇÕES LIST (APIs)
+══════════════════════════════════════════════════════════════ */
 const HTTP_METHODS = ['GET','POST','PUT','PATCH','DELETE'];
 const METHOD_COLORS = {
   GET:    { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF' },
@@ -347,100 +383,46 @@ const METHOD_COLORS = {
 };
 
 function OperacoesList({ operacoes, onChange, readOnly, error }) {
-  const ops = operacoes && operacoes.length ? operacoes : EMPTY_OPS;
-
-  const updateOp = (i, field, val) => {
-    const next = ops.map((o,idx) => idx===i ? {...o,[field]:val} : o);
-    onChange(next);
-  };
-  const addOp = () => onChange([...ops, { metodo:'GET', endpoint:'', descricao:'' }]);
-  const removeOp = (i) => {
-    const next = ops.filter((_,idx)=>idx!==i);
-    onChange(next.length ? next : EMPTY_OPS);
-  };
-
+  const ops = operacoes&&operacoes.length ? operacoes : EMPTY_OPS;
+  const updateOp=(i,field,val)=>onChange(ops.map((o,idx)=>idx===i?{...o,[field]:val}:o));
+  const addOp=()=>onChange([...ops,{metodo:'GET',endpoint:'',descricao:''}]);
+  const removeOp=(i)=>{ const next=ops.filter((_,idx)=>idx!==i); onChange(next.length?next:EMPTY_OPS); };
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
-      <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>
-        Principais Operações <span style={{ color:C.danger }}>*</span>
-      </label>
-
+      <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>Principais Operações <span style={{ color:C.danger }}>*</span></label>
       {readOnly ? (
-        /* Modo somente leitura — exibição estilo portal */
         <div style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:5, padding:'10px 14px', display:'flex', flexDirection:'column', gap:8 }}>
-          {ops.map((op,i)=>{
-            const mc = METHOD_COLORS[op.metodo] || METHOD_COLORS.GET;
-            return (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:13 }}>
-                <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:4, fontSize:12, fontWeight:700, background:mc.bg, color:mc.color, border:`1px solid ${mc.border}`, minWidth:56, justifyContent:'center', flexShrink:0 }}>{op.metodo}</span>
-                <code style={{ fontSize:13, background:'#F0F3F8', padding:'2px 6px', borderRadius:3, color:C.textPrimary, flexShrink:0 }}>{op.endpoint}</code>
-                {op.descricao && <><span style={{ color:C.border }}>—</span><span style={{ color:C.textSecondary }}>{op.descricao}</span></>}
-              </div>
-            );
-          })}
+          {ops.map((op,i)=>{ const mc=METHOD_COLORS[op.metodo]||METHOD_COLORS.GET; return (<div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:13 }}><span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:4, fontSize:12, fontWeight:700, background:mc.bg, color:mc.color, border:`1px solid ${mc.border}`, minWidth:56, justifyContent:'center', flexShrink:0 }}>{op.metodo}</span><code style={{ fontSize:13, background:'#F0F3F8', padding:'2px 6px', borderRadius:3, color:C.textPrimary, flexShrink:0 }}>{op.endpoint}</code>{op.descricao&&<><span style={{ color:C.border }}>—</span><span style={{ color:C.textSecondary }}>{op.descricao}</span></>}</div>); })}
         </div>
-      ) : (
-        /* Modo edição — lista dinâmica */
+      ):(
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          {/* Header das colunas */}
-          <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8, paddingRight:0 }}>
-            <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>Método</span>
-            <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>Endpoint</span>
-            <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>Descrição</span>
-            <span></span>
+          <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8 }}>
+            {['Método','Endpoint','Descrição',''].map((h,i)=>(<span key={i} style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>{h}</span>))}
           </div>
-
           {ops.map((op,i)=>(
             <div key={i} style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8, alignItems:'center' }}>
-              {/* Método HTTP */}
               <div style={{ position:'relative' }}>
-                <select value={op.metodo} onChange={e=>updateOp(i,'metodo',e.target.value)}
-                  style={{ height:42, borderRadius:5, border:`1px solid ${C.border}`, padding:'0 28px 0 10px', fontSize:13, fontWeight:700, color:METHOD_COLORS[op.metodo]?.color||C.textPrimary, background:METHOD_COLORS[op.metodo]?.bg||'#fff', outline:'none', width:'100%', appearance:'none', cursor:'pointer' }}>
+                <select value={op.metodo} onChange={e=>updateOp(i,'metodo',e.target.value)} style={{ height:42, borderRadius:5, border:`1px solid ${C.border}`, padding:'0 28px 0 10px', fontSize:13, fontWeight:700, color:METHOD_COLORS[op.metodo]?.color||C.textPrimary, background:METHOD_COLORS[op.metodo]?.bg||'#fff', outline:'none', width:'100%', appearance:'none', cursor:'pointer' }}>
                   {HTTP_METHODS.map(m=><option key={m} value={m}>{m}</option>)}
                 </select>
-                <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
-                  <Icon name="chevDown" size={12} color={METHOD_COLORS[op.metodo]?.color||C.textSecondary}/>
-                </span>
+                <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><Icon name="chevDown" size={12} color={METHOD_COLORS[op.metodo]?.color||C.textSecondary}/></span>
               </div>
-
-              {/* Endpoint */}
-              <input value={op.endpoint} onChange={e=>updateOp(i,'endpoint',e.target.value)}
-                placeholder="/api/v1/endpoint"
-                style={{ ...inputStyle(false), fontFamily:'monospace', fontSize:13 }}
-                onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
-                onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
-              />
-
-              {/* Descrição */}
-              <input value={op.descricao} onChange={e=>updateOp(i,'descricao',e.target.value)}
-                placeholder="Descrição da operação"
-                style={{ ...inputStyle(false), fontSize:13 }}
-                onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
-                onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
-              />
-
-              {/* Remover */}
-              <button onClick={()=>removeOp(i)} title="Remover operação"
-                style={{ width:36, height:42, borderRadius:5, border:`1px solid ${C.dangerBorder}`, background:C.dangerBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Icon name="x" size={13} color={C.danger}/>
-              </button>
+              <input value={op.endpoint} onChange={e=>updateOp(i,'endpoint',e.target.value)} placeholder="/api/v1/endpoint" style={{ ...inputStyle(false), fontFamily:'monospace', fontSize:13 }} onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }} onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}/>
+              <input value={op.descricao} onChange={e=>updateOp(i,'descricao',e.target.value)} placeholder="Descrição da operação" style={{ ...inputStyle(false), fontSize:13 }} onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }} onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}/>
+              <button onClick={()=>removeOp(i)} style={{ width:36, height:42, borderRadius:5, border:`1px solid ${C.dangerBorder}`, background:C.dangerBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Icon name="x" size={13} color={C.danger}/></button>
             </div>
           ))}
-
-          {/* Botão adicionar */}
-          <button onClick={addOp}
-            style={{ alignSelf:'flex-start', height:34, padding:'0 14px', borderRadius:5, border:`1.5px solid ${C.brand}`, background:'#fff', color:C.brand, fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
-            <Icon name="plus" size={13} color={C.brand}/> Adicionar operação
-          </button>
+          <button onClick={addOp} style={{ alignSelf:'flex-start', height:34, padding:'0 14px', borderRadius:5, border:`1.5px solid ${C.brand}`, background:'#fff', color:C.brand, fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, marginTop:4 }}><Icon name="plus" size={13} color={C.brand}/>Adicionar operação</button>
         </div>
       )}
-
       {error && <span style={{ fontSize:11, color:C.danger }}>{error}</span>}
     </div>
   );
 }
 
-/* ── API Form ────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   API FORM
+══════════════════════════════════════════════════════════════ */
 const ORGAO_OPTS = ORGAOS.map(o=>({ value:o.id, label:`${o.shortName} — ${o.name}` }));
 const CAT_OPTS   = CATEGORIAS.map(c=>({ value:c.id, label:c.nome }));
 const EMPTY_API  = { nome:'', orgaoId:'', categoriaId:'', versao:'', descricao:'', operacoes:[...EMPTY_OPS], baseSistema:'', comoAcessar:'', detalhamento:'', contatos:[], status:'Inativo' };
@@ -452,372 +434,474 @@ function ApiForm({ initial, readOnly, onSave, onCancel, isEdit }) {
   const [dirty, setDirty]     = React.useState(false);
   const [showLeave, setShowLeave] = React.useState(false);
 
-  const set = (k,v) => {
-    let extra = {};
-    if (k === 'orgaoId') {
-      const orgao = ORGAOS.find(o=>o.id===v);
-      extra = { baseSistema: orgao ? orgao.nome_origem : '' };
-    }
-    setForm(f=>({...f,[k]:v,...extra}));
-    setDirty(true);
-    setErrors(e=>({...e,[k]:''}));
-  };
+  const set=(k,v)=>{ let extra={}; if(k==='orgaoId'){ const orgao=ORGAOS.find(o=>o.id===v); extra={baseSistema:orgao?orgao.nome_origem:''}; } setForm(f=>({...f,[k]:v,...extra})); setDirty(true); setErrors(e=>({...e,[k]:''})); };
+  const validate=()=>{ const e={}; if(!form.nome.trim()) e.nome='Campo obrigatório'; if(!form.orgaoId) e.orgaoId='Campo obrigatório'; if(!form.versao.trim()) e.versao='Campo obrigatório'; if(!form.descricao.trim()) e.descricao='Campo obrigatório'; if(!form.operacoes?.length||form.operacoes.every(o=>!o.endpoint.trim())) e.operacoes='Adicione ao menos uma operação com endpoint preenchido'; if(!form.baseSistema.trim()) e.baseSistema='Campo obrigatório'; if(!form.comoAcessar.trim()) e.comoAcessar='Campo obrigatório'; if(!form.detalhamento.trim()) e.detalhamento='Campo obrigatório'; if(contato.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) e.contatoEmail='E-mail inválido'; setErrors(e); return Object.keys(e).length===0; };
+  const addContato=()=>{ if(!contato.nome.trim()||!contato.email.trim()) return; if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)){ setErrors(e=>({...e,contatoEmail:'E-mail inválido'})); return; } setForm(f=>({...f,contatos:[...f.contatos,contato]})); setContato({nome:'',funcao:'',email:''}); setErrors(e=>({...e,contatoEmail:''})); setDirty(true); };
+  const handleCancel=()=>{ if(dirty) setShowLeave(true); else onCancel(); };
+  const ro=readOnly;
 
-  const validate = () => {
-    const e = {};
-    if (!form.nome.trim())        e.nome       = 'Campo obrigatório';
-    if (!form.orgaoId)            e.orgaoId    = 'Campo obrigatório';
-    if (!form.versao.trim())      e.versao     = 'Campo obrigatório';
-    if (!form.descricao.trim())   e.descricao  = 'Campo obrigatório';
-    if (!form.operacoes?.length || form.operacoes.every(o=>!o.endpoint.trim()))
-                                  e.operacoes  = 'Adicione ao menos uma operação com endpoint preenchido';
-    if (!form.baseSistema.trim()) e.baseSistema= 'Campo obrigatório';
-    if (!form.comoAcessar.trim()) e.comoAcessar= 'Campo obrigatório';
-    if (!form.detalhamento.trim())e.detalhamento='Campo obrigatório';
-    if (contato.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) e.contatoEmail='E-mail inválido';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const addContato = () => {
-    if (!contato.nome.trim() || !contato.email.trim()) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) { setErrors(e=>({...e,contatoEmail:'E-mail inválido'})); return; }
-    setForm(f=>({...f,contatos:[...f.contatos,contato]}));
-    setContato({nome:'',funcao:'',email:''});
-    setErrors(e=>({...e,contatoEmail:''}));
-    setDirty(true);
-  };
-
-  const handleCancel = () => { if(dirty) setShowLeave(true); else onCancel(); };
-  const ro = readOnly;
-
-  const Section = ({ label, children }) => (
-    <div style={{ marginBottom:24 }}>
-      <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>{label}</div>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>{children}</div>
-    </div>
-  );
+  const Section=({ label, children })=>(<div style={{ marginBottom:24 }}><div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>{label}</div><div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>{children}</div></div>);
 
   return (
     <>
       <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
-        {ro && <div style={{ marginBottom:16 }}><Alert type="info" msg="Esta é uma visualização somente leitura. Nenhuma alteração pode ser feita." /></div>}
-        {!ro && !isEdit && <div style={{ marginBottom:16 }}><Alert type="info" msg="O status inicial será definido automaticamente como Inativo. Ative manualmente após revisão." /></div>}
-
+        {ro&&<div style={{ marginBottom:16 }}><Alert type="info" msg="Esta é uma visualização somente leitura. Nenhuma alteração pode ser feita."/></div>}
+        {!ro&&!isEdit&&<div style={{ marginBottom:16 }}><Alert type="info" msg="O status inicial será definido automaticamente como Inativo. Ative manualmente após revisão."/></div>}
         <Section label="Identificação">
-          <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Nome" required error={errors.nome}>
-              <TextInput value={form.nome} onChange={v=>set('nome',v)} placeholder="Ex: Catálogo de Serviços" error={errors.nome} disabled={ro}/>
-            </Field>
-          </div>
-          <Field label="Órgão" required error={errors.orgaoId}>
-            <SelectInput value={form.orgaoId} onChange={v=>set('orgaoId',v)} options={ORGAO_OPTS} placeholder="Selecione o órgão..." error={errors.orgaoId} disabled={ro}/>
-          </Field>
-          <Field label="Categoria">
-            <SelectInput value={form.categoriaId||''} onChange={v=>set('categoriaId',v)} options={CAT_OPTS} placeholder="Selecione a categoria..." disabled={ro}/>
-          </Field>
-          <Field label="Versão" required error={errors.versao}>
-            <TextInput value={form.versao} onChange={v=>set('versao',v)} placeholder="Ex: v1, v2.0" error={errors.versao} disabled={ro}/>
-          </Field>
-          <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Descrição" required error={errors.descricao}>
-              <TextAreaWithCount value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro} maxLength={1500}/>
-            </Field>
-          </div>
+          <div style={{ gridColumn:'1/-1' }}><Field label="Nome" required error={errors.nome}><TextInput value={form.nome} onChange={v=>set('nome',v)} placeholder="Ex: Catálogo de Serviços" error={errors.nome} disabled={ro}/></Field></div>
+          <Field label="Órgão" required error={errors.orgaoId}><SelectInput value={form.orgaoId} onChange={v=>set('orgaoId',v)} options={ORGAO_OPTS} placeholder="Selecione o órgão..." error={errors.orgaoId} disabled={ro}/></Field>
+          <Field label="Categoria"><SelectInput value={form.categoriaId||''} onChange={v=>set('categoriaId',v)} options={CAT_OPTS} placeholder="Selecione a categoria..." disabled={ro}/></Field>
+          <Field label="Versão" required error={errors.versao}><TextInput value={form.versao} onChange={v=>set('versao',v)} placeholder="Ex: v1, v2.0" error={errors.versao} disabled={ro}/></Field>
+          <div style={{ gridColumn:'1/-1' }}><Field label="Descrição" required error={errors.descricao}><TextAreaWithCount value={form.descricao} onChange={v=>set('descricao',v)} placeholder="Resumo do propósito desta API..." rows={2} disabled={ro} maxLength={1500}/></Field></div>
         </Section>
-
         <Section label="Detalhes técnicos">
-          {/* Principais Operações — lista dinâmica */}
-          <div style={{ gridColumn:'1/-1' }}>
-            <OperacoesList
-              operacoes={form.operacoes}
-              onChange={v=>{ setForm(f=>({...f,operacoes:v})); setDirty(true); setErrors(e=>({...e,operacoes:''})); }}
-              readOnly={ro}
-              error={errors.operacoes}
-            />
-          </div>
-
-          {/* Base/Sistema — desabilitado, carregado pelo órgão */}
-          <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Base/Sistema" required error={errors.baseSistema}
-              hint={!ro && !form.orgaoId ? "Selecione um Órgão para carregar automaticamente" : undefined}>
-              <TextInput
-                value={form.baseSistema}
-                onChange={()=>{}}
-                placeholder="Carregado automaticamente ao selecionar o órgão..."
-                disabled={true}
-                error={errors.baseSistema}
-              />
-            </Field>
-          </div>
-
-          <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Como acessar a API" required error={errors.comoAcessar}>
-              <TextAreaWithCount value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro} maxLength={500}/>
-            </Field>
-          </div>
-          <div style={{ gridColumn:'1/-1' }}>
-            <Field label="Detalhamento Técnico" required error={errors.detalhamento}>
-              <TextAreaWithCount value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro} maxLength={500}/>
-            </Field>
-          </div>
+          <div style={{ gridColumn:'1/-1' }}><OperacoesList operacoes={form.operacoes} onChange={v=>{ setForm(f=>({...f,operacoes:v})); setDirty(true); setErrors(e=>({...e,operacoes:''})); }} readOnly={ro} error={errors.operacoes}/></div>
+          <div style={{ gridColumn:'1/-1' }}><Field label="Base/Sistema" required error={errors.baseSistema} hint={!ro&&!form.orgaoId?"Selecione um Órgão para carregar automaticamente":undefined}><TextInput value={form.baseSistema} onChange={()=>{}} placeholder="Carregado automaticamente ao selecionar o órgão..." disabled={true} error={errors.baseSistema}/></Field></div>
+          <div style={{ gridColumn:'1/-1' }}><Field label="Como acessar a API" required error={errors.comoAcessar}><TextAreaWithCount value={form.comoAcessar} onChange={v=>set('comoAcessar',v)} placeholder="Passo a passo para solicitação e acesso à API..." rows={3} disabled={ro} maxLength={500}/></Field></div>
+          <div style={{ gridColumn:'1/-1' }}><Field label="Detalhamento Técnico" required error={errors.detalhamento}><TextAreaWithCount value={form.detalhamento} onChange={v=>set('detalhamento',v)} placeholder="Protocolo, IP fixo, campos retornados (payload)..." rows={3} disabled={ro} maxLength={500}/></Field></div>
         </Section>
-
-        {/* Contatos */}
         <div style={{ marginBottom:24 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>
-            Contatos <span style={{ fontWeight:400, color:C.border, fontSize:11 }}>(Opcional)</span>
-          </div>
-          {form.contatos.map((c,i)=>(
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:C.bg, borderRadius:5, border:`1px solid ${C.divider}`, marginBottom:8, fontSize:13 }}>
-              <Icon name="person" size={13} color={C.textSecondary}/>
-              <span style={{ fontWeight:500, color:C.textPrimary }}>{c.nome}</span>
-              {c.funcao && <><span style={{ color:C.textSecondary }}>·</span><span style={{ color:C.textSecondary, fontSize:12 }}>{c.funcao}</span></>}
-              <span style={{ color:C.textSecondary }}>·</span>
-              <span style={{ color:C.brand }}>{c.email}</span>
-              {!ro && <button onClick={()=>setForm(f=>({...f,contatos:f.contatos.filter((_,j)=>j!==i)}))} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', display:'flex' }}><Icon name="x" size={13} color={C.danger}/></button>}
-            </div>
-          ))}
-          {!ro && (
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr auto', gap:10, alignItems:'flex-end' }}>
-              <Field label="Nome"><TextInput value={contato.nome} onChange={v=>setContato(c=>({...c,nome:v}))} placeholder="Ex: Time ATI"/></Field>
-              <Field label="Função"><TextInput value={contato.funcao} onChange={v=>setContato(c=>({...c,funcao:v}))} placeholder="Ex: Gerente de TI"/></Field>
-              <Field label="E-mail" error={errors.contatoEmail}>
-                <TextInput value={contato.email} onChange={v=>{ setContato(c=>({...c,email:v})); setErrors(e=>({...e,contatoEmail:''})); }} placeholder="equipe@orgao.pe.gov.br" error={errors.contatoEmail}/>
-              </Field>
-              <Btn variant="outline" onClick={addContato} style={{ marginBottom:errors.contatoEmail?16:0 }}>+ Adicionar</Btn>
-            </div>
-          )}
+          <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>Contatos <span style={{ fontWeight:400, color:C.border, fontSize:11 }}>(Opcional)</span></div>
+          {form.contatos.map((ct,i)=>(<div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:C.bg, borderRadius:5, border:`1px solid ${C.divider}`, marginBottom:8, fontSize:13 }}><Icon name="person" size={13} color={C.textSecondary}/><span style={{ fontWeight:500, color:C.textPrimary }}>{ct.nome}</span>{ct.funcao&&<><span style={{ color:C.textSecondary }}>·</span><span style={{ color:C.textSecondary, fontSize:12 }}>{ct.funcao}</span></>}<span style={{ color:C.textSecondary }}>·</span><span style={{ color:C.brand }}>{ct.email}</span>{!ro&&<button onClick={()=>setForm(f=>({...f,contatos:f.contatos.filter((_,j)=>j!==i)}))} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', display:'flex' }}><Icon name="x" size={13} color={C.danger}/></button>}</div>))}
+          {!ro&&(<div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr auto', gap:10, alignItems:'flex-end' }}><Field label="Nome"><TextInput value={contato.nome} onChange={v=>setContato(c=>({...c,nome:v}))} placeholder="Ex: Time ATI"/></Field><Field label="Função"><TextInput value={contato.funcao} onChange={v=>setContato(c=>({...c,funcao:v}))} placeholder="Ex: Gerente de TI"/></Field><Field label="E-mail" error={errors.contatoEmail}><TextInput value={contato.email} onChange={v=>{ setContato(c=>({...c,email:v})); setErrors(e=>({...e,contatoEmail:''})); }} placeholder="equipe@orgao.pe.gov.br" error={errors.contatoEmail}/></Field><Btn variant="outline" onClick={addContato} style={{ marginBottom:errors.contatoEmail?16:0 }}>+ Adicionar</Btn></div>)}
         </div>
-
-        {/* Auditoria */}
-        {ro && (
+        {ro&&(
           <div style={{ marginBottom:16 }}>
             <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:14, paddingBottom:8, borderBottom:`1px solid ${C.divider}` }}>Auditoria</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
-              {[['Status',<Badge status={form.status}/>],['Criado em',form.criado||'—'],['Atualizado em',form.atualizado||'—'],['Responsável',form.autor||'—']].map(([k,v])=>(
-                <div key={k} style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:5, padding:'10px 12px' }}>
-                  <div style={{ fontSize:11, color:C.textSecondary, marginBottom:4 }}>{k}</div>
-                  <div style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{v}</div>
-                </div>
-              ))}
+              {[['Status',<BadgeApi status={form.status}/>],['Criado em',form.criado||'—'],['Atualizado em',form.atualizado||'—'],['Responsável',form.autor||'—']].map(([k,v])=>(<div key={k} style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:5, padding:'10px 12px' }}><div style={{ fontSize:11, color:C.textSecondary, marginBottom:4 }}>{k}</div><div style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{v}</div></div>))}
             </div>
           </div>
         )}
       </div>
-
-      {!ro && (
-        <div style={{ display:'flex', gap:10, justifyContent:'flex-end', paddingTop:16, borderTop:`1px solid ${C.divider}`, marginTop:8 }}>
-          <Btn variant="secondary" onClick={handleCancel}>Cancelar</Btn>
-          <Btn variant="primary" icon="check" onClick={()=>{ if(validate()) onSave({...form,status:isEdit?form.status:'Inativo',atualizado:new Date().toLocaleDateString('pt-BR'),autor:'Nome do usuário'}); }}>
-            {isEdit?'Salvar alterações':'Salvar'}
-          </Btn>
-        </div>
-      )}
-
-      {showLeave && (
-        <Modal title="Descartar alterações?" size="sm" onClose={()=>setShowLeave(false)}
-          footer={<><Btn variant="ghost" onClick={()=>setShowLeave(false)}>Continuar editando</Btn><Btn variant="danger" onClick={onCancel}>Descartar e sair</Btn></>}>
-          <p style={{ fontSize:14, color:C.textSecondary, lineHeight:1.6 }}>Você possui alterações não salvas. Se sair agora, todas as alterações serão perdidas.</p>
-        </Modal>
-      )}
+      {!ro&&(<div style={{ display:'flex', gap:10, justifyContent:'flex-end', paddingTop:16, borderTop:`1px solid ${C.divider}`, marginTop:8 }}><Btn variant="secondary" onClick={handleCancel}>Cancelar</Btn><Btn variant="primary" icon="check" onClick={()=>{ if(validate()) onSave({...form,status:isEdit?form.status:'Inativo',atualizado:new Date().toLocaleDateString('pt-BR'),autor:'João Silva'}); }}>{isEdit?'Salvar alterações':'Salvar'}</Btn></div>)}
+      {showLeave&&(<Modal title="Descartar alterações?" size="sm" onClose={()=>setShowLeave(false)} footer={<><Btn variant="ghost" onClick={()=>setShowLeave(false)}>Continuar editando</Btn><Btn variant="danger" onClick={onCancel}>Descartar e sair</Btn></>}><p style={{ fontSize:14, color:C.textSecondary, lineHeight:1.6 }}>Você possui alterações não salvas. Se sair agora, todas as alterações serão perdidas.</p></Modal>)}
     </>
   );
 }
 
-/* ── Main App ───────────────────────────────────────────────── */
-function App() {
+/* ═══════════════════════════════════════════════════════════════
+   SEÇÃO: GERENCIAR APIs
+══════════════════════════════════════════════════════════════ */
+function GerenciarApis({ showToast }) {
   const [apis, setApis]       = React.useState(INITIAL_APIS);
   const [modal, setModal]     = React.useState(null);
-  const [filters, setFilters] = React.useState(()=>{ try{ return JSON.parse(localStorage.getItem('pe_api_filters')||'{}'); }catch{ return {}; } });
+  const [filters, setFilters] = React.useState({});
   const [page, setPage]       = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [sort, setSort]       = React.useState({ col:'nome', dir:'asc' });
-  const [toast, setToast]     = React.useState(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
 
-  const setFilter = (k,v)=>{ const next={...filters,[k]:v}; if(!v) delete next[k]; setFilters(next); localStorage.setItem('pe_api_filters',JSON.stringify(next)); setPage(1); };
-  const clearFilters = ()=>{ setFilters({}); localStorage.removeItem('pe_api_filters'); setPage(1); };
-  const showToast = (msg,type='success')=>{ setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
-  const handleSort = col=>setSort(s=>({ col, dir:s.col===col&&s.dir==='asc'?'desc':'asc' }));
-  const getOrgao = id=>ORGAOS.find(o=>o.id===id);
-  const getCat   = id=>CATEGORIAS.find(c=>c.id===id);
+  const setFilter=(k,v)=>{ const next={...filters,[k]:v}; if(!v) delete next[k]; setFilters(next); setPage(1); };
+  const clearFilters=()=>{ setFilters({}); setPage(1); };
+  const handleSort=col=>setSort(s=>({ col, dir:s.col===col&&s.dir==='asc'?'desc':'asc' }));
+  const getOrgao=id=>ORGAOS.find(o=>o.id===id);
+  const getCat=id=>CATEGORIAS.find(c=>c.id===id);
+  const hasFilters=Object.keys(filters).length>0;
 
   const filtered = apis.filter(a=>{
-    if(filters.nome && !a.nome.toLowerCase().includes(filters.nome.toLowerCase())) return false;
-    if(filters.orgaoId && a.orgaoId!==filters.orgaoId) return false;
-    if(filters.status && filters.status!=='Todos' && a.status!==filters.status) return false;
+    if(filters.nome&&!a.nome.toLowerCase().includes(filters.nome.toLowerCase())) return false;
+    if(filters.orgaoId&&a.orgaoId!==filters.orgaoId) return false;
+    if(filters.status&&filters.status!=='Todos'&&a.status!==filters.status) return false;
     return true;
-  }).sort((a,b)=>{
-    let va = sort.col==='orgao'?getOrgao(a.orgaoId)?.shortName||'':a[sort.col]||'';
-    let vb = sort.col==='orgao'?getOrgao(b.orgaoId)?.shortName||'':b[sort.col]||'';
-    return sort.dir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+  }).sort((a,b)=>{ let va=sort.col==='orgao'?getOrgao(a.orgaoId)?.shortName||'':a[sort.col]||''; let vb=sort.col==='orgao'?getOrgao(b.orgaoId)?.shortName||'':b[sort.col]||''; return sort.dir==='asc'?va.localeCompare(vb):vb.localeCompare(va); });
+
+  const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
+  const paged=filtered.slice((page-1)*pageSize,page*pageSize);
+
+  const SortIcon=({ col })=>{ if(sort.col!==col) return <Icon name="chevDown" size={11} color={C.border}/>; return <Icon name={sort.dir==='asc'?'chevUp':'chevDown'} size={11} color={C.brand}/>; };
+  const Th=({ col, label, w })=>(<th onClick={()=>handleSort(col)} style={{ padding:'10px 14px', textAlign:'left', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, cursor:'pointer', whiteSpace:'nowrap', width:w, userSelect:'none', background:'#fff' }}><div style={{ display:'flex', alignItems:'center', gap:5 }}>{label}<SortIcon col={col}/></div></th>);
+
+  const handleSave=(data,isEdit)=>{ if(isEdit){ setApis(prev=>prev.map(a=>a.id===data.id?{...a,...data}:a)); showToast('API atualizada com sucesso!','success'); }else{ setApis(prev=>[...prev,{...data,id:Date.now(),criado:new Date().toLocaleDateString('pt-BR'),atualizado:new Date().toLocaleDateString('pt-BR'),autor:'João Silva'}]); showToast('API cadastrada com sucesso!','success'); } setModal(null); };
+  const handleToggle=api=>{ const novoStatus=api.status==='Ativo'?'Inativo':'Ativo'; setApis(prev=>prev.map(a=>a.id===api.id?{...a,status:novoStatus,atualizado:new Date().toLocaleDateString('pt-BR')}:a)); showToast(`API "${api.nome}" ${novoStatus==='Ativo'?'ativada':'inativada'} com sucesso. Log de auditoria registrado.`,novoStatus==='Ativo'?'success':'warning'); setModal(null); };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:'28px 24px' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
+        <div><h1 style={{ fontSize:26, fontWeight:700, color:C.textPrimary, letterSpacing:'-0.15px', marginBottom:4 }}>Gerenciar APIs</h1><p style={{ fontSize:14, color:C.textSecondary }}>Gerencie as APIs disponíveis no catálogo do portal do governo.</p></div>
+        <Btn variant="primary" size="md" icon="plus" onClick={()=>setModal({type:'add'})}>Incluir API</Btn>
+      </div>
+      <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, padding:'18px 20px', marginBottom:16, boxShadow:'0 0 20px 0 #E7E9EB' }}>
+        <div style={{ display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap' }}>
+          <div style={{ flex:'1 1 200px', minWidth:160 }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Buscar por nome</div><div style={{ position:'relative' }}><span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }}><Icon name="search" size={14} color={C.border}/></span><input value={filters.nome||''} onChange={e=>setFilter('nome',e.target.value)} placeholder="Digite para buscar..." style={{ ...inputStyle(false), paddingLeft:32 }}/></div></div>
+          <div style={{ flex:'1 1 220px', minWidth:180 }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Órgão</div><SelectInput value={filters.orgaoId||''} onChange={v=>setFilter('orgaoId',v)} options={ORGAO_OPTS} placeholder="Todos os órgãos"/></div>
+          <div style={{ flex:'0 0 160px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Status</div><SelectInput value={filters.status||'Todos'} onChange={v=>setFilter('status',v==='Todos'?'':v)} options={[{value:'Todos',label:'Todos'},{value:'Ativo',label:'Ativo'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos"/></div>
+          <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}><Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar filtros</Btn></div>
+        </div>
+        {hasFilters&&(<div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}><strong style={{ color:C.textPrimary }}>{filtered.length}</strong> resultado{filtered.length!==1?'s':''} encontrado{filtered.length!==1?'s':''}</div>)}
+      </div>
+      <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, boxShadow:'0 0 20px 0 #E7E9EB', overflow:'hidden' }}>
+        <div style={{ padding:'14px 20px', borderBottom:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{apis.length} APIs cadastradas{hasFilters&&<span style={{ color:C.brand, fontWeight:400 }}> · {filtered.length} filtradas</span>}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, color:C.textSecondary }}><span>Exibir:</span>{[10,25,50].map(n=>(<button key={n} onClick={()=>{ setPageSize(n); setPage(1); }} style={{ padding:'3px 10px', borderRadius:4, border:`1px solid ${pageSize===n?C.brand:C.divider}`, background:pageSize===n?C.infoBg:'transparent', color:pageSize===n?C.brand:C.textSecondary, fontSize:12, fontWeight:pageSize===n?600:400, cursor:'pointer' }}>{n}</button>))}</div>
+        </div>
+        {paged.length===0?(
+          <div style={{ padding:'60px 20px', textAlign:'center' }}><div style={{ fontSize:32, marginBottom:12 }}>📭</div><div style={{ fontSize:16, fontWeight:600, color:C.textPrimary, marginBottom:6 }}>Nenhuma API encontrada</div><div style={{ fontSize:13, color:C.textSecondary, marginBottom:20 }}>{hasFilters?'Tente ajustar os filtros aplicados.':'Clique em "Incluir API" para cadastrar a primeira.'}</div>{hasFilters?<Btn variant="secondary" onClick={clearFilters}>Limpar filtros</Btn>:<Btn variant="primary" icon="plus" onClick={()=>setModal({type:'add'})}>Incluir API</Btn>}</div>
+        ):(
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead><tr><Th col="nome" label="Nome da API" w="25%"/><Th col="orgao" label="Órgão" w="18%"/><Th col="versao" label="Versão" w="8%"/><Th col="status" label="Status" w="10%"/><th style={{ padding:'10px 14px', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, textAlign:'right', background:'#fff' }}>Ações</th></tr></thead>
+              <tbody>
+                {paged.map(api=>{ const orgao=getOrgao(api.orgaoId); const cat=getCat(api.categoriaId); return (
+                  <tr key={api.id} style={{ background:'#fff', transition:'background 0.1s' }} onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'} onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}><div style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{api.nome}</div>{cat&&<span style={{ fontSize:11, fontWeight:500, background:C.infoBg, color:C.brand, padding:'1px 7px', borderRadius:100, border:`1px solid ${C.infoBorder}`, marginTop:3, display:'inline-block' }}>{cat.nome}</span>}</td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, fontSize:13, color:C.textSecondary }}>{orgao?<><span style={{ fontWeight:600, color:C.textPrimary }}>{orgao.shortName}</span><br/><span style={{ fontSize:11 }}>{orgao.name.slice(0,28)}{orgao.name.length>28?'…':''}</span></>:'—'}</td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}><span style={{ fontSize:12, fontWeight:500, background:C.infoBg, color:C.brand, padding:'2px 8px', borderRadius:100, border:`1px solid ${C.infoBorder}` }}>{api.versao}</span></td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}><BadgeApi status={api.status}/></td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, textAlign:'right' }}>
+                      <div style={{ display:'flex', gap:4, justifyContent:'flex-end' }}>
+                        <button title="Visualizar" onClick={()=>setModal({type:'view',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="eye" size={14} color={C.brand}/></button>
+                        <button title="Editar" onClick={()=>setModal(api.status==='Ativo'?{type:'editConfirm',api}:{type:'edit',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="edit" size={14} color={C.brand}/></button>
+                        <div title={api.status==='Ativo'?'Inativar':'Ativar'} onClick={()=>setModal({type:'toggle',api})} style={{ cursor:'pointer', display:'flex', alignItems:'center', padding:'0 4px' }}><div style={{ width:36, height:20, borderRadius:100, padding:2, background:api.status==='Ativo'?C.brand:'#CED2D7', display:'flex', alignItems:'center', justifyContent:api.status==='Ativo'?'flex-end':'flex-start', transition:'background 0.2s' }}><div style={{ width:16, height:16, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/></div></div>
+                      </div>
+                    </td>
+                  </tr>
+                ); })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {filtered.length>0&&(<div style={{ padding:'12px 20px', borderTop:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, color:C.textSecondary }}><span>Exibindo {Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} de {filtered.length}</span><div style={{ display:'flex', gap:4 }}><button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===1?'default':'pointer', color:page===1?C.border:C.textPrimary, fontSize:12 }}>← Anterior</button>{Array.from({length:totalPages},(_,i)=>i+1).map(p=>(<button key={p} onClick={()=>setPage(p)} style={{ padding:'5px 10px', border:`1px solid ${p===page?C.brand:C.divider}`, borderRadius:4, background:p===page?C.brand:'#fff', color:p===page?'#fff':C.textPrimary, fontSize:12, cursor:'pointer', fontWeight:p===page?600:400 }}>{p}</button>))}<button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===totalPages?'default':'pointer', color:page===totalPages?C.border:C.textPrimary, fontSize:12 }}>Próxima →</button></div></div>)}
+      </div>
+
+      {modal?.type==='add'&&<Modal title="Incluir nova API" size="lg" onClose={()=>setModal(null)}><ApiForm onSave={d=>handleSave(d,false)} onCancel={()=>setModal(null)} isEdit={false}/></Modal>}
+      {modal?.type==='edit'&&<Modal title="Editar API" size="lg" onClose={()=>setModal(null)}><ApiForm initial={modal.api} onSave={d=>handleSave({...modal.api,...d},true)} onCancel={()=>setModal(null)} isEdit={true}/></Modal>}
+      {modal?.type==='editConfirm'&&(<Modal title="Confirmar edição" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="primary" onClick={()=>setModal({type:'edit',api:modal.api})}>Continuar edição</Btn></>}><Alert type="warning" msg={`A API "${modal.api.nome}" está Ativa. Deseja realmente editá-la?`}/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>Alterações em APIs ativas podem impactar integrações em uso.</p></Modal>)}
+      {modal?.type==='view'&&(<Modal title={`Detalhes — ${modal.api.nome}`} size="lg" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}><ApiForm initial={modal.api} readOnly onCancel={()=>setModal(null)}/></Modal>)}
+      {modal?.type==='toggle'&&(<Modal title={modal.api.status==='Ativo'?'Inativar API':'Ativar API'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.api.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.api)}>{modal.api.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>{modal.api.status==='Ativo'?<><Alert type="warning" msg="Esta ação irá remover a API do catálogo público."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Inativa.</p></>:<><Alert type="info" msg="A API será publicada no catálogo público após ativação."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Ativa.</p></>}<p style={{ fontSize:11, color:C.textSecondary, marginTop:8 }}>Esta ação será registrada no log de auditoria.</p></Modal>)}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SEÇÃO: CONTROLE DE ACESSO (HU.05.02)
+   - Listagem com badge de status (Ativo/Pendente/Inativo)
+   - CPF mascarado na listagem (LGPD), completo só no detalhe
+   - Ativar usuário pendente (define perfil/órgão)
+   - Editar usuário ativo
+   - Inativar / Reativar com proteção do último ADM
+   - Filtros combinados por nome, CPF, perfil, status
+   - Auditoria automática (created_by/updated_by via SSO)
+══════════════════════════════════════════════════════════════ */
+function ControleAcesso({ showToast }) {
+  const [usuarios, setUsuarios] = React.useState(INITIAL_USUARIOS);
+  const [modal, setModal]       = React.useState(null);
+  const [filters, setFilters]   = React.useState({});
+  const [page, setPage]         = React.useState(1);
+  const PAGE_SIZE               = 10;
+
+  const setFilter=(k,v)=>{ const next={...filters,[k]:v}; if(!v) delete next[k]; setFilters(next); setPage(1); };
+  const clearFilters=()=>{ setFilters({}); setPage(1); };
+  const hasFilters=Object.keys(filters).length>0;
+
+  const now=()=>new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const filtered = usuarios.filter(u=>{
+    if(filters.nome && !u.nome.toLowerCase().includes(filters.nome.toLowerCase())) return false;
+    if(filters.cpf  && !u.cpfCompleto.replace(/\D/g,'').includes(filters.cpf.replace(/\D/g,''))) return false;
+    if(filters.perfil && u.perfil!==filters.perfil) return false;
+    if(filters.status && u.status!==filters.status) return false;
+    return true;
   });
 
-  const totalPages = Math.max(1,Math.ceil(filtered.length/pageSize));
-  const paged = filtered.slice((page-1)*pageSize,page*pageSize);
-  const hasFilters = Object.keys(filters).length>0;
+  const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));
+  const paged=filtered.slice((page-1)*PAGE_SIZE,page*PAGE_SIZE);
 
-  const SortIcon = ({ col })=>{ if(sort.col!==col) return <Icon name="chevDown" size={11} color={C.border}/>; return <Icon name={sort.dir==='asc'?'chevUp':'chevDown'} size={11} color={C.brand}/>; };
-  const Th = ({ col, label, w })=>(
-    <th onClick={()=>handleSort(col)} style={{ padding:'10px 14px', textAlign:'left', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, cursor:'pointer', whiteSpace:'nowrap', width:w, userSelect:'none', background:'#fff' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:5 }}>{label}<SortIcon col={col}/></div>
-    </th>
-  );
-
-  const handleSave = (data,isEdit)=>{
-    if(isEdit){ setApis(prev=>prev.map(a=>a.id===data.id?{...a,...data}:a)); showToast('API atualizada com sucesso!'); }
-    else { setApis(prev=>[...prev,{...data,id:Date.now(),criado:new Date().toLocaleDateString('pt-BR'),atualizado:new Date().toLocaleDateString('pt-BR'),autor:'Nome do usuário'}]); showToast('API cadastrada com sucesso!'); }
+  const handleAtivar=(dados)=>{
+    setUsuarios(prev=>prev.map(u=>u.id===modal.usuario.id?{ ...u, perfil:dados.perfil, orgao:dados.orgaoId?ORGAOS.find(o=>o.id===dados.orgaoId)?.shortName||'—':'—', orgaoId:dados.orgaoId, status:'Ativo', atualizadoEm:now(), atualizadoPor:'João Silva' }:u));
+    showToast(`Usuário "${modal.usuario.nome}" ativado com sucesso! Log de auditoria registrado.`,'success');
     setModal(null);
   };
 
-  const handleToggle = api=>{
-    const novoStatus = api.status==='Ativo'?'Inativo':'Ativo';
-    setApis(prev=>prev.map(a=>a.id===api.id?{...a,status:novoStatus,atualizado:new Date().toLocaleDateString('pt-BR')}:a));
-    showToast(`API "${api.nome}" ${novoStatus==='Ativo'?'ativada!':'inativada.'}`);
+  const handleEditar=(dados)=>{
+    setUsuarios(prev=>prev.map(u=>u.id===modal.usuario.id?{ ...u, perfil:dados.perfil, orgao:dados.orgaoId?ORGAOS.find(o=>o.id===dados.orgaoId)?.shortName||'—':'—', orgaoId:dados.orgaoId, atualizadoEm:now(), atualizadoPor:'João Silva' }:u));
+    showToast(`Usuário "${modal.usuario.nome}" atualizado com sucesso!`,'success');
     setModal(null);
+  };
+
+  const handleInativar=(u)=>{
+    const admsAtivos=usuarios.filter(x=>x.perfil==='ADM'&&x.status==='Ativo');
+    if(u.perfil==='ADM'&&admsAtivos.length<=1){ showToast('Não é possível inativar o único ADM ativo do sistema.','warning'); setModal(null); return; }
+    setUsuarios(prev=>prev.map(x=>x.id===u.id?{...x,status:'Inativo',atualizadoEm:now(),atualizadoPor:'João Silva'}:x));
+    showToast(`Usuário "${u.nome}" inativado. Log de auditoria registrado.`,'success');
+    setModal(null);
+  };
+
+  const handleReativar=(u)=>{
+    setUsuarios(prev=>prev.map(x=>x.id===u.id?{...x,status:'Ativo',atualizadoEm:now(),atualizadoPor:'João Silva'}:x));
+    showToast(`Usuário "${u.nome}" reativado com sucesso!`,'success');
+    setModal(null);
+  };
+
+  const pendentes=usuarios.filter(u=>u.status==='Pendente').length;
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:'28px 24px' }}>
+      {/* Header */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:pendentes>0?16:24 }}>
+        <div>
+          <h1 style={{ fontSize:26, fontWeight:700, color:C.textPrimary, letterSpacing:'-0.15px', marginBottom:4 }}>Controle de Acesso</h1>
+          <p style={{ fontSize:14, color:C.textSecondary }}>Gerencie os usuários com permissão de acesso ao backoffice. Cadastros gerados automaticamente via Login Estadual (SSO).</p>
+        </div>
+      </div>
+
+      {/* Banner pendentes */}
+      {pendentes>0&&(
+        <div style={{ background:C.pendenteBg, border:`1px solid ${C.pendenteBorder}`, borderRadius:8, padding:'12px 16px', marginBottom:20, display:'flex', gap:10, alignItems:'center' }}>
+          <Icon name="clock" size={16} color={C.pendente}/>
+          <span style={{ fontSize:13, color:C.pendente, flex:1 }}><strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso. Revise e defina o perfil para liberar o acesso.</span>
+          <button onClick={()=>setFilter('status','Pendente')} style={{ background:C.pendente, border:'none', borderRadius:5, padding:'5px 12px', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer' }}>Ver pendentes</button>
+        </div>
+      )}
+
+      {/* Cards de resumo */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12, marginBottom:20 }}>
+        {[
+          { label:'Total', valor:usuarios.length, cor:C.brand, bg:C.infoBg },
+          { label:'Ativos', valor:usuarios.filter(u=>u.status==='Ativo').length, cor:C.success, bg:C.successBg },
+          { label:'Pendentes', valor:pendentes, cor:C.pendente, bg:C.pendenteBg },
+          { label:'Inativos', valor:usuarios.filter(u=>u.status==='Inativo').length, cor:'#5F5E5A', bg:'#F1EFE8' },
+        ].map(card=>(<div key={card.label} style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, padding:'14px 16px', cursor:'pointer' }} onClick={()=>card.label!=='Total'?setFilter('status',card.label):clearFilters()}><div style={{ fontSize:11, color:C.textSecondary, marginBottom:4 }}>{card.label}</div><div style={{ fontSize:24, fontWeight:700, color:card.cor }}>{card.valor}</div></div>))}
+      </div>
+
+      {/* Filtros */}
+      <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, padding:'18px 20px', marginBottom:16, boxShadow:'0 0 20px 0 #E7E9EB' }}>
+        <div style={{ display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap' }}>
+          <div style={{ flex:'1 1 180px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Buscar por nome</div><div style={{ position:'relative' }}><span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }}><Icon name="search" size={14} color={C.border}/></span><input value={filters.nome||''} onChange={e=>setFilter('nome',e.target.value)} placeholder="Digite para buscar..." style={{ ...inputStyle(false), paddingLeft:32 }}/></div></div>
+          <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>CPF</div><input value={filters.cpf||''} onChange={e=>setFilter('cpf',e.target.value)} placeholder="Busca parcial" style={{ ...inputStyle(false), fontFamily:'monospace' }}/></div>
+          <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Perfil</div><SelectInput value={filters.perfil||''} onChange={v=>setFilter('perfil',v)} options={[{value:'ADM',label:'ADM'},{value:'Cedente',label:'Cedente'},{value:'Consumidor',label:'Consumidor'}]} placeholder="Todos os perfis"/></div>
+          <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Status</div><SelectInput value={filters.status||''} onChange={v=>setFilter('status',v)} options={[{value:'Ativo',label:'Ativo'},{value:'Pendente',label:'Pendente'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos os status"/></div>
+          <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}><Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar</Btn></div>
+        </div>
+        {hasFilters&&(<div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}><strong style={{ color:C.textPrimary }}>{filtered.length}</strong> resultado{filtered.length!==1?'s':''} encontrado{filtered.length!==1?'s':''}</div>)}
+      </div>
+
+      {/* Tabela */}
+      <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, boxShadow:'0 0 20px 0 #E7E9EB', overflow:'hidden' }}>
+        <div style={{ padding:'14px 20px', borderBottom:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{usuarios.length} usuários{hasFilters&&<span style={{ color:C.brand, fontWeight:400 }}> · {filtered.length} filtrados</span>}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6, background:C.infoBg, border:`1px solid ${C.infoBorder}`, borderRadius:6, padding:'5px 10px' }}>
+              <Icon name="shield" size={13} color={C.brand}/>
+              <span style={{ fontSize:11, color:C.brand, fontWeight:500 }}>CPF mascarado na listagem (LGPD)</span>
+            </div>
+          </div>
+        </div>
+
+        {paged.length===0?(
+          <div style={{ padding:'60px 20px', textAlign:'center' }}><div style={{ fontSize:32, marginBottom:12 }}>👥</div><div style={{ fontSize:16, fontWeight:600, color:C.textPrimary, marginBottom:6 }}>Nenhum usuário encontrado</div><div style={{ fontSize:13, color:C.textSecondary, marginBottom:20 }}>{hasFilters?'Tente ajustar os filtros.':'Os usuários aparecem automaticamente ao tentarem acessar via Login Estadual.'}</div>{hasFilters&&<Btn variant="secondary" onClick={clearFilters}>Limpar filtros</Btn>}</div>
+        ):(
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead>
+                <tr>
+                  {['Nome','CPF (mascarado)','Perfil','Órgão','Status','Último acesso','Ações'].map((h,i)=>(<th key={i} style={{ padding:'10px 14px', textAlign:'left', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, background:'#fff', whiteSpace:'nowrap' }}>{h}</th>))}
+                </tr>
+              </thead>
+              <tbody>
+                {paged.map(u=>(
+                  <tr key={u.id} style={{ background:'#fff', transition:'background 0.1s' }} onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'} onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        <div style={{ width:32, height:32, borderRadius:'50%', background:u.status==='Ativo'?C.brand:u.status==='Pendente'?C.pendenteBg:'#D3D1C7', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:u.status==='Ativo'?'#fff':u.status==='Pendente'?C.pendente:'#888', flexShrink:0 }}>{u.nome.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
+                        <div><div style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{u.nome}</div><div style={{ fontSize:11, color:C.textSecondary }}>Cadastrado em: {u.criadoEm}</div></div>
+                      </div>
+                    </td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
+                      <code style={{ fontSize:12, fontFamily:'monospace', background:C.bg, padding:'2px 6px', borderRadius:3, color:C.textSecondary }}>{u.cpfMascarado}</code>
+                    </td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, fontSize:13 }}>
+                      {u.perfil ? (<span style={{ background:C.infoBg, color:C.brand, border:`1px solid ${C.infoBorder}`, padding:'2px 8px', borderRadius:100, fontSize:12, fontWeight:600 }}>{u.perfil}</span>) : (<span style={{ color:C.border, fontSize:12 }}>—</span>)}
+                    </td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, fontSize:13, color:u.orgao!=='—'?C.textPrimary:C.border }}>{u.orgao}</td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}><Badge status={u.status}/></td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, fontSize:12, color:C.textSecondary, whiteSpace:'nowrap' }}>{u.ultimoAcesso}</td>
+                    <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, textAlign:'right' }}>
+                      <div style={{ display:'flex', gap:4, justifyContent:'flex-end' }}>
+                        {/* Visualizar (CPF completo) */}
+                        <button title="Visualizar detalhes" onClick={()=>setModal({type:'view',usuario:u})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="eye" size={14} color={C.brand}/></button>
+                        {/* Ativar (pendente) */}
+                        {u.status==='Pendente'&&(<button title="Ativar usuário" onClick={()=>setModal({type:'ativar',usuario:u})} style={{ padding:'6px 10px', border:`1px solid ${C.successBorder}`, borderRadius:4, background:C.successBg, cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:12, fontWeight:600, color:C.success }}><Icon name="check" size={13} color={C.success}/>Ativar</button>)}
+                        {/* Editar (ativo) */}
+                        {u.status==='Ativo'&&(<button title="Editar usuário" onClick={()=>setModal({type:'editar',usuario:u})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="edit" size={14} color={C.brand}/></button>)}
+                        {/* Toggle ativar/inativar */}
+                        {u.status!=='Pendente'&&(
+                          <div title={u.status==='Ativo'?'Inativar':'Reativar'} onClick={()=>setModal({type:u.status==='Ativo'?'inativar':'reativar',usuario:u})} style={{ cursor:'pointer', display:'flex', alignItems:'center', padding:'0 4px' }}>
+                            <div style={{ width:36, height:20, borderRadius:100, padding:2, background:u.status==='Ativo'?C.brand:'#CED2D7', display:'flex', alignItems:'center', justifyContent:u.status==='Ativo'?'flex-end':'flex-start', transition:'background 0.2s' }}>
+                              <div style={{ width:16, height:16, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {filtered.length>0&&(<div style={{ padding:'12px 20px', borderTop:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, color:C.textSecondary }}><span>Exibindo {Math.min((page-1)*PAGE_SIZE+1,filtered.length)}–{Math.min(page*PAGE_SIZE,filtered.length)} de {filtered.length}</span><div style={{ display:'flex', gap:4 }}><button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===1?'default':'pointer', color:page===1?C.border:C.textPrimary, fontSize:12 }}>← Anterior</button>{Array.from({length:totalPages},(_,i)=>i+1).map(p=>(<button key={p} onClick={()=>setPage(p)} style={{ padding:'5px 10px', border:`1px solid ${p===page?C.brand:C.divider}`, borderRadius:4, background:p===page?C.brand:'#fff', color:p===page?'#fff':C.textPrimary, fontSize:12, cursor:'pointer', fontWeight:p===page?600:400 }}>{p}</button>))}<button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===totalPages?'default':'pointer', color:page===totalPages?C.border:C.textPrimary, fontSize:12 }}>Próxima →</button></div></div>)}
+      </div>
+
+      {/* ── Modal Visualizar (CPF completo) ── */}
+      {modal?.type==='view'&&(
+        <Modal title="Detalhes do usuário" size="sm" onClose={()=>setModal(null)} footer={<Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Fechar</Btn>}>
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
+              <div style={{ width:48, height:48, borderRadius:'50%', background:C.brand, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#fff', flexShrink:0 }}>{modal.usuario.nome.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
+              <div><div style={{ fontSize:17, fontWeight:700, color:C.textPrimary }}>{modal.usuario.nome}</div><Badge status={modal.usuario.status}/></div>
+            </div>
+            {[
+              ['CPF completo (confidencial)', <code style={{ fontFamily:'monospace', fontSize:13, background:C.bg, padding:'3px 8px', borderRadius:4, color:C.textPrimary }}>{modal.usuario.cpfCompleto}</code>],
+              ['Perfil', modal.usuario.perfil||'—'],
+              ['Órgão', modal.usuario.orgao],
+              ['Último acesso', modal.usuario.ultimoAcesso],
+              ['Origem do cadastro', modal.usuario.origemCadastro+' (via Login Estadual)'],
+              ['Criado em', modal.usuario.criadoEm+' por '+modal.usuario.criadoPor],
+              ['Atualizado em', modal.usuario.atualizadoEm||'—'],
+              ['Atualizado por', modal.usuario.atualizadoPor||'—'],
+            ].map(([k,v])=>(<div key={k} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px', background:C.bg, borderRadius:5, border:`1px solid ${C.divider}` }}><span style={{ fontSize:12, color:C.textSecondary }}>{k}</span><span style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{v}</span></div>))}
+            <div style={{ background:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:6, padding:'10px 14px', display:'flex', gap:8, alignItems:'center', marginTop:4 }}>
+              <Icon name="shield" size={14} color={C.danger}/>
+              <span style={{ fontSize:11, color:C.danger }}>O CPF completo é visível apenas nesta tela de detalhe. Na listagem, exibe-se o formato mascarado conforme LGPD.</span>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Modal Ativar usuário pendente ── */}
+      {(modal?.type==='ativar'||modal?.type==='editar')&&(
+        <ModalAtivacaoUsuario usuario={modal.usuario} modo={modal.type} onSave={modal.type==='ativar'?handleAtivar:handleEditar} onClose={()=>setModal(null)} showToast={showToast}/>
+      )}
+
+      {/* ── Modal Inativar ── */}
+      {modal?.type==='inativar'&&(
+        <Modal title="Inativar usuário" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="danger" onClick={()=>handleInativar(modal.usuario)}>Sim, inativar</Btn></>}>
+          <Alert type="warning" msg={`O usuário "${modal.usuario.nome}" será marcado como Inativo e não poderá mais acessar o sistema.`}/>
+          {modal.usuario.perfil==='ADM'&&(<div style={{ marginTop:12 }}><Alert type="danger" msg="Atenção: este usuário é ADM. Verifique se há outro ADM ativo antes de prosseguir."/></div>)}
+          <p style={{ fontSize:11, color:C.textSecondary, marginTop:12 }}>Esta ação será registrada no log de auditoria.</p>
+        </Modal>
+      )}
+
+      {/* ── Modal Reativar ── */}
+      {modal?.type==='reativar'&&(
+        <Modal title="Reativar usuário" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="success" onClick={()=>handleReativar(modal.usuario)}>Sim, reativar</Btn></>}>
+          <Alert type="info" msg={`O usuário "${modal.usuario.nome}" voltará a ter acesso ao sistema.`}/>
+          <p style={{ fontSize:11, color:C.textSecondary, marginTop:12 }}>Esta ação será registrada no log de auditoria.</p>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ── Modal de Ativação / Edição de usuário ─────────────────── */
+const PERFIL_OPTS = [{value:'ADM',label:'ADM'},{value:'Cedente',label:'Cedente'},{value:'Consumidor',label:'Consumidor'}];
+const ORGAO_OPTS_USR = ORGAOS.map(o=>({ value:o.id, label:`${o.shortName} — ${o.name}` }));
+
+function ModalAtivacaoUsuario({ usuario, modo, onSave, onClose }) {
+  const [perfil, setPerfil] = React.useState(usuario.perfil||'');
+  const [orgaoId, setOrgaoId] = React.useState(usuario.orgaoId||'');
+  const [erros, setErros]  = React.useState({});
+
+  const isAtivar = modo === 'ativar';
+
+  const validate = () => {
+    const e = {};
+    if (!perfil) e.perfil = 'Selecione um perfil de acesso';
+    if (perfil === 'Cedente' && !orgaoId) e.orgaoId = 'Órgão é obrigatório para perfil Cedente';
+    setErros(e);
+    return Object.keys(e).length === 0;
   };
 
   return (
+    <Modal title={isAtivar ? 'Ativar usuário' : 'Editar usuário'} size="sm" onClose={onClose}
+      footer={<><Btn variant="ghost" onClick={onClose}>Cancelar</Btn><Btn variant="primary" icon="check" onClick={()=>{ if(validate()) onSave({perfil,orgaoId}); }}>{isAtivar?'Ativar acesso':'Salvar alterações'}</Btn></>}>
+      <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+        {isAtivar&&<Alert type="info" msg="O CPF e nome foram extraídos automaticamente do token SSO. Defina o perfil e órgão para liberar o acesso."/>}
+
+        {/* Campos somente leitura: nome e CPF do SSO */}
+        <div style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:6, padding:'10px 14px', display:'flex', flexDirection:'column', gap:6 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}><span style={{ color:C.textSecondary }}>Nome</span><span style={{ fontWeight:600, color:C.textPrimary }}>{usuario.nome}</span></div>
+          <div style={{ height:1, background:C.divider }}/>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+            <span style={{ color:C.textSecondary }}>CPF (SSO)</span>
+            <code style={{ fontFamily:'monospace', fontSize:12, background:'#E7E9EB', padding:'1px 6px', borderRadius:3, color:C.textSecondary }}>{usuario.cpfCompleto}</code>
+          </div>
+          <div style={{ height:1, background:C.divider }}/>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}><span style={{ color:C.textSecondary }}>Último acesso</span><span style={{ color:C.textPrimary }}>{usuario.ultimoAcesso}</span></div>
+        </div>
+
+        {/* Perfil */}
+        <Field label="Perfil de acesso" required error={erros.perfil}>
+          <SelectInput value={perfil} onChange={v=>{ setPerfil(v); if(v!=='Cedente') setOrgaoId(''); setErros(e=>({...e,perfil:'',orgaoId:''})); }} options={PERFIL_OPTS} error={erros.perfil}/>
+        </Field>
+
+        {/* Órgão — obrigatório apenas para Cedente */}
+        {perfil==='Cedente'&&(
+          <Field label="Órgão" required error={erros.orgaoId} hint="Obrigatório para perfil Cedente. Populado via API de departamentos.">
+            <SelectInput value={orgaoId} onChange={v=>{ setOrgaoId(v); setErros(e=>({...e,orgaoId:''})); }} options={ORGAO_OPTS_USR} placeholder="Selecione o órgão..." error={erros.orgaoId}/>
+          </Field>
+        )}
+
+        <div style={{ background:C.infoBg, border:`1px solid ${C.infoBorder}`, borderRadius:6, padding:'10px 14px', fontSize:12, color:C.brand, lineHeight:1.55 }}>
+          <strong>Auditoria automática:</strong> Os campos <code>updated_by</code> e <code>updated_at</code> serão preenchidos pelo servidor com base no token SSO do ADM logado.
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APP PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+function App() {
+  const [section, setSection]   = React.useState('apis');
+  const [collapsed, setCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
+  const [toast, setToast]       = React.useState(null);
+
+  const showToast=(msg,type='success')=>{ setToast({msg,type}); setTimeout(()=>setToast(null),4000); };
+  const toggleSidebar=()=>{ const next=!collapsed; setCollapsed(next); localStorage.setItem('pe_sidebar',next?'1':'0'); };
+
+  const pendentesCount = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
+
+  const breadcrumbMap = {
+    'apis':      ['Início','Catálogo de APIs','Gerenciar APIs'],
+    'categorias':['Início','Catálogo de APIs','Gerenciar Categorias'],
+    'usuarios':  ['Início','Controle de Acesso'],
+    'auditoria': ['Início','Auditoria'],
+    'dashboard': ['Início'],
+    'config':    ['Início','Configurações'],
+  };
+
+  const Placeholder = ({ titulo, descricao, icon }) => (
+    <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
+      <div style={{ textAlign:'center', maxWidth:400 }}>
+        <div style={{ fontSize:48, marginBottom:16 }}>{icon}</div>
+        <h2 style={{ fontSize:20, fontWeight:700, color:C.textPrimary, marginBottom:8 }}>{titulo}</h2>
+        <p style={{ fontSize:14, color:C.textSecondary, lineHeight:1.6 }}>{descricao}</p>
+      </div>
+    </div>
+  );
+
+  return (
     <div style={{ display:'flex', height:'100vh', overflow:'hidden' }}>
-      <Sidebar collapsed={sidebarCollapsed} onToggle={()=>{ const next=!sidebarCollapsed; setSidebarCollapsed(next); localStorage.setItem('pe_sidebar',next?'1':'0'); }}/>
+      <Sidebar collapsed={collapsed} onToggle={toggleSidebar} activeSection={section} onNav={setSection}/>
       <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden' }}>
+        {/* GovBar */}
         <div style={{ background:C.brandDark, height:28, display:'flex', alignItems:'center', padding:'0 20px', gap:8, flexShrink:0 }}>
           <span style={{ color:'#FFCD37', fontSize:11 }}>★</span>
           <span style={{ color:'rgba(248,250,252,0.7)', fontSize:11 }}>Governo de Pernambuco</span>
         </div>
-        <Topbar breadcrumbs={['Início','Catálogo de APIs','Gerenciar APIs']}/>
-        <div style={{ flex:1, overflowY:'auto', padding:'28px 24px' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
-            <div>
-              <h1 style={{ fontSize:26, fontWeight:700, color:C.textPrimary, letterSpacing:'-0.15px', marginBottom:4 }}>Gerenciar APIs</h1>
-              <p style={{ fontSize:14, color:C.textSecondary }}>Gerencie as APIs disponíveis no catálogo do portal do governo.</p>
-            </div>
-            <Btn variant="primary" size="md" icon="plus" onClick={()=>setModal({type:'add'})}>Incluir API</Btn>
-          </div>
+        <Topbar breadcrumbs={breadcrumbMap[section]||['Início']} notificacoes={pendentesCount}/>
 
-          {/* Filters */}
-          <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, padding:'18px 20px', marginBottom:16, boxShadow:'0 0 20px 0 #E7E9EB' }}>
-            <div style={{ display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap' }}>
-              <div style={{ flex:'1 1 200px', minWidth:160 }}>
-                <div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Buscar por nome</div>
-                <div style={{ position:'relative' }}>
-                  <span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }}><Icon name="search" size={14} color={C.border}/></span>
-                  <input value={filters.nome||''} onChange={e=>setFilter('nome',e.target.value)} placeholder="Digite para buscar..." style={{ ...inputStyle(false), paddingLeft:32 }}/>
-                </div>
-              </div>
-              <div style={{ flex:'1 1 220px', minWidth:180 }}>
-                <div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Órgão</div>
-                <SelectInput value={filters.orgaoId||''} onChange={v=>setFilter('orgaoId',v)} options={ORGAO_OPTS} placeholder="Todos os órgãos"/>
-              </div>
-              <div style={{ flex:'0 0 160px' }}>
-                <div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Status</div>
-                <SelectInput value={filters.status||'Todos'} onChange={v=>setFilter('status',v==='Todos'?'':v)} options={[{value:'Todos',label:'Todos'},{value:'Ativo',label:'Ativo'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos"/>
-              </div>
-              <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}>
-                <Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar filtros</Btn>
-              </div>
-            </div>
-            {hasFilters && (<div style={{ marginTop:10, fontSize:12, color:C.textSecondary }}><Icon name="filter" size={11} color={C.textSecondary}/>{' '}<strong style={{ color:C.textPrimary }}>{filtered.length}</strong> resultado{filtered.length!==1?'s':''} encontrado{filtered.length!==1?'s':''}</div>)}
-          </div>
-
-          {/* Table */}
-          <div style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:8, boxShadow:'0 0 20px 0 #E7E9EB', overflow:'hidden' }}>
-            <div style={{ padding:'14px 20px', borderBottom:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{apis.length} APIs cadastradas{hasFilters && <span style={{ color:C.brand, fontWeight:400 }}> · {filtered.length} filtradas</span>}</span>
-              <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, color:C.textSecondary }}>
-                <span>Exibir:</span>
-                {[10,25,50].map(n=>(<button key={n} onClick={()=>{ setPageSize(n); setPage(1); }} style={{ padding:'3px 10px', borderRadius:4, border:`1px solid ${pageSize===n?C.brand:C.divider}`, background:pageSize===n?C.infoBg:'transparent', color:pageSize===n?C.brand:C.textSecondary, fontSize:12, fontWeight:pageSize===n?600:400, cursor:'pointer' }}>{n}</button>))}
-              </div>
-            </div>
-            {paged.length===0 ? (
-              <div style={{ padding:'60px 20px', textAlign:'center' }}>
-                <div style={{ fontSize:32, marginBottom:12 }}>📭</div>
-                <div style={{ fontSize:16, fontWeight:600, color:C.textPrimary, marginBottom:6 }}>Nenhuma API encontrada</div>
-                <div style={{ fontSize:13, color:C.textSecondary, marginBottom:20 }}>{hasFilters?'Tente ajustar os filtros aplicados.':'Clique em "Incluir API" para cadastrar a primeira.'}</div>
-                {hasFilters?<Btn variant="secondary" onClick={clearFilters}>Limpar filtros</Btn>:<Btn variant="primary" icon="plus" onClick={()=>setModal({type:'add'})}>Incluir API</Btn>}
-              </div>
-            ):(
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                  <thead><tr>
-                    <Th col="nome"   label="Nome da API" w="25%"/>
-                    <Th col="orgao"  label="Órgão"       w="18%"/>
-                    <Th col="versao" label="Versão"      w="8%"/>
-                    <Th col="status" label="Status"      w="10%"/>
-                    <th style={{ padding:'10px 14px', fontSize:12, fontWeight:600, color:C.textSecondary, borderBottom:`1px solid ${C.divider}`, textAlign:'right', background:'#fff' }}>Ações</th>
-                  </tr></thead>
-                  <tbody>
-                    {paged.map(api=>{
-                      const orgao = getOrgao(api.orgaoId);
-                      const cat   = getCat(api.categoriaId);
-                      return (
-                        <tr key={api.id} style={{ background:'#fff', transition:'background 0.1s' }} onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'} onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
-                            <div style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>{api.nome}</div>
-                            {cat && <span style={{ fontSize:11, fontWeight:500, background:C.infoBg, color:C.brand, padding:'1px 7px', borderRadius:100, border:`1px solid ${C.infoBorder}`, marginTop:3, display:'inline-block' }}>{cat.nome}</span>}
-                          </td>
-                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, fontSize:13, color:C.textSecondary }}>
-                            {orgao?<><span style={{ fontWeight:600, color:C.textPrimary }}>{orgao.shortName}</span><br/><span style={{ fontSize:11 }}>{orgao.name.slice(0,28)}{orgao.name.length>28?'…':''}</span></>:'—'}
-                          </td>
-                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}>
-                            <span style={{ fontSize:12, fontWeight:500, background:C.infoBg, color:C.brand, padding:'2px 8px', borderRadius:100, border:`1px solid ${C.infoBorder}` }}>{api.versao}</span>
-                          </td>
-                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}` }}><Badge status={api.status}/></td>
-                          <td style={{ padding:'12px 14px', borderBottom:`1px solid ${C.divider}`, textAlign:'right' }}>
-                            <div style={{ display:'flex', gap:4, justifyContent:'flex-end' }}>
-                              <button title="Visualizar" onClick={()=>setModal({type:'view',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="eye" size={14} color={C.brand}/></button>
-                              <button title="Editar" onClick={()=>setModal(api.status==='Ativo'?{type:'editConfirm',api}:{type:'edit',api})} style={{ padding:'6px 8px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center' }}><Icon name="edit" size={14} color={C.brand}/></button>
-                              <div title={api.status==='Ativo'?'Inativar':'Ativar'} onClick={()=>setModal({type:'toggle',api})} style={{ cursor:'pointer', display:'flex', alignItems:'center', padding:'0 4px' }}>
-                                <div style={{ width:36, height:20, borderRadius:100, padding:2, background:api.status==='Ativo'?C.brand:'#CED2D7', display:'flex', alignItems:'center', justifyContent:api.status==='Ativo'?'flex-end':'flex-start', transition:'background 0.2s' }}>
-                                  <div style={{ width:16, height:16, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {filtered.length>0 && (
-              <div style={{ padding:'12px 20px', borderTop:`1px solid ${C.divider}`, display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, color:C.textSecondary }}>
-                <span>Exibindo {Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} de {filtered.length}</span>
-                <div style={{ display:'flex', gap:4 }}>
-                  <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===1?'default':'pointer', color:page===1?C.border:C.textPrimary, fontSize:12 }}>← Anterior</button>
-                  {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(<button key={p} onClick={()=>setPage(p)} style={{ padding:'5px 10px', border:`1px solid ${p===page?C.brand:C.divider}`, borderRadius:4, background:p===page?C.brand:'#fff', color:p===page?'#fff':C.textPrimary, fontSize:12, cursor:'pointer', fontWeight:p===page?600:400 }}>{p}</button>))}
-                  <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{ padding:'5px 10px', border:`1px solid ${C.divider}`, borderRadius:4, background:'#fff', cursor:page===totalPages?'default':'pointer', color:page===totalPages?C.border:C.textPrimary, fontSize:12 }}>Próxima →</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Conteúdo por seção */}
+        {section==='apis'      && <GerenciarApis showToast={showToast}/>}
+        {section==='usuarios'  && <ControleAcesso showToast={showToast}/>}
+        {section==='dashboard' && <Placeholder titulo="Dashboard" descricao="Visão geral do sistema, métricas e indicadores." icon="📊"/>}
+        {section==='categorias'&& <Placeholder titulo="Gerenciar Categorias" descricao="Cadastro e gestão de categorias de APIs." icon="🏷️"/>}
+        {section==='auditoria' && <Placeholder titulo="Auditoria" descricao="Log de ações realizadas no backoffice: criação, edição, ativação e inativação de registros." icon="📋"/>}
+        {section==='config'    && <Placeholder titulo="Configurações" descricao="Configurações gerais, de segurança e integrações do portal." icon="⚙️"/>}
       </div>
-
-      {modal?.type==='add' && <Modal title="Incluir nova API" size="lg" onClose={()=>setModal(null)}><ApiForm onSave={d=>handleSave(d,false)} onCancel={()=>setModal(null)} isEdit={false}/></Modal>}
-      {modal?.type==='edit' && <Modal title="Editar API" size="lg" onClose={()=>setModal(null)}><ApiForm initial={modal.api} onSave={d=>handleSave({...modal.api,...d},true)} onCancel={()=>setModal(null)} isEdit={true}/></Modal>}
-      {modal?.type==='editConfirm' && (
-        <Modal title="Confirmar edição" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="primary" onClick={()=>setModal({type:'edit',api:modal.api})}>Continuar edição</Btn></>}>
-          <Alert type="warning" msg={`A API "${modal.api.nome}" está com status Ativo. Deseja realmente editá-la?`}/>
-          <p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>Alterações em APIs ativas podem impactar integrações em uso.</p>
-        </Modal>
-      )}
-      {modal?.type==='view' && (
-        <Modal title={`Detalhes — ${modal.api.nome}`} size="lg" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}>
-          <ApiForm initial={modal.api} readOnly onCancel={()=>setModal(null)}/>
-        </Modal>
-      )}
-      {modal?.type==='toggle' && (
-        <Modal title={modal.api.status==='Ativo'?'Inativar API':'Ativar API'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.api.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.api)}>{modal.api.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>
-          {modal.api.status==='Ativo'
-            ?<><Alert type="warning" msg="Esta ação irá remover a API do catálogo público."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Inativa.</p></>
-            :<><Alert type="info" msg="A API será publicada no catálogo público após ativação."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Ativa.</p></>
-          }
-          <p style={{ fontSize:11, color:C.textSecondary, marginTop:8 }}>Esta ação será registrada no log de auditoria.</p>
-        </Modal>
-      )}
 
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
     </div>
