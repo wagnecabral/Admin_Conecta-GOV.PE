@@ -1498,69 +1498,86 @@ function SeiPeSection({ orgaoFiltro }) {
    evolução de cadastros, solicitações SEI-PE
 ══════════════════════════════════════════════════════════════ */
 function Dashboard({ onNav }) {
-  /* Dados calculados dos datasets já disponíveis */
-  const totalApis       = INITIAL_APIS.length;
-  const apisAtivas      = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
-  const apisInativas    = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
-  const totalOperacoes  = INITIAL_APIS.reduce((s,a)=>s+(a.operacoes||[]).length,0);
-  const totalCategorias = INITIAL_CATS.length;
-  const catAtivas       = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
-  const totalOrgaos     = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
-  const totalUsuarios   = INITIAL_USUARIOS.length;
-  const usrsAtivos      = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
-  const pendentes       = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
+  const totalApis      = INITIAL_APIS.length;
+  const apisAtivas     = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
+  const apisInativas   = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
+  const totalOps       = INITIAL_APIS.reduce((s,a)=>s+(a.operacoes||[]).length,0);
+  const totalCats      = INITIAL_CATS.length;
+  const catAtivas      = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
+  const totalOrgaos    = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
+  const usrsAtivos     = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
+  const pendentes      = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
+  const totalUsuarios  = INITIAL_USUARIOS.length;
 
-  /* SEI-PE — solicitações de acesso */
-  const seiTotal        = SEI_STATUS.reduce((s,i)=>s+i.qtd,0);
-  const seiAprovadas    = SEI_STATUS.find(s=>s.key==='aprovadas')?.qtd||0;
-  const seiAnalise      = SEI_STATUS.find(s=>s.key==='analise')?.qtd||0;
-  const seiPendentes    = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
-  const seiReprovadas   = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
+  const seiTotal       = SEI_STATUS.reduce((s,i)=>s+i.qtd,0);
+  const seiAprovadas   = SEI_STATUS.find(s=>s.key==='aprovadas')?.qtd||0;
+  const seiAnalise     = SEI_STATUS.find(s=>s.key==='analise')?.qtd||0;
+  const seiPendentes   = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
+  const seiReprovadas  = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
 
   const [ultimaAtt] = React.useState(
     new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
   );
 
-  /* Card simples */
-  const Card = ({label,valor,sub,cor,bg,border,nav,badge}) => (
-    <div onClick={nav?()=>onNav(nav):undefined}
-      style={{background:bg||'#fff',border:`1.5px solid ${border||C.divider}`,borderRadius:12,
-        padding:'18px 20px',cursor:nav?'pointer':'default',transition:'all 0.15s',
-        display:'flex',flexDirection:'column',gap:4}}
-      onMouseEnter={e=>{ if(nav){e.currentTarget.style.boxShadow='0 2px 14px rgba(0,52,183,0.10)';e.currentTarget.style.borderColor=cor||C.brand;}}}
-      onMouseLeave={e=>{ if(nav){e.currentTarget.style.boxShadow='none';e.currentTarget.style.borderColor=border||C.divider;}}}
+  /* Card padronizado — altura fixa, mesma estrutura em todas as seções */
+  const Card = ({label, valor, sub, cor, bg, border, nav}) => (
+    <div
+      onClick={nav ? ()=>onNav(nav) : undefined}
+      style={{
+        background: bg||'#fff',
+        border: `1.5px solid ${border||C.divider}`,
+        borderRadius: 10,
+        padding: '12px 14px',
+        minHeight: 90,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        cursor: nav ? 'pointer' : 'default',
+        transition: 'box-shadow 0.15s, border-color 0.15s',
+        boxSizing: 'border-box',
+      }}
+      onMouseEnter={e=>{ if(nav){ e.currentTarget.style.boxShadow='0 2px 10px rgba(0,52,183,0.10)'; e.currentTarget.style.borderColor=cor||C.brand; }}}
+      onMouseLeave={e=>{ if(nav){ e.currentTarget.style.boxShadow='none'; e.currentTarget.style.borderColor=border||C.divider; }}}
     >
-      <div style={{fontSize:11,color:cor||C.textSecondary,fontWeight:500}}>{label}</div>
-      <div style={{fontSize:28,fontWeight:700,color:cor||C.textPrimary,lineHeight:1.1}}>{valor}</div>
-      {sub&&<div style={{fontSize:11,color:C.textSecondary}}>{sub}</div>}
-      {badge&&<div style={{marginTop:4,fontSize:10,fontWeight:600,color:cor,background:bg,padding:'2px 8px',borderRadius:100,border:`1px solid ${border}`,alignSelf:'flex-start'}}>{badge}</div>}
+      <div style={{fontSize:11,fontWeight:600,color:cor||C.textSecondary,lineHeight:1.3}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:700,color:cor||C.textPrimary,lineHeight:1.1,margin:'4px 0 2px'}}>{valor}</div>
+      {sub && <div style={{fontSize:11,color:cor?cor+'99':C.textSecondary}}>{sub}</div>}
+    </div>
+  );
+
+  /* Grade de 5 colunas fixas — igual em todas as seções */
+  const Grid5 = ({children}) => (
+    <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:20}}>
+      {children}
+    </div>
+  );
+
+  /* Grade de 3 colunas para Controle de Acesso */
+  const Grid3 = ({children}) => (
+    <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:20}}>
+      {children}
     </div>
   );
 
   const SectionLabel = ({children}) => (
-    <div style={{fontSize:11,fontWeight:700,color:C.textSecondary,textTransform:'uppercase',
-      letterSpacing:'0.6px',marginBottom:10,marginTop:4,paddingBottom:6,
-      borderBottom:`1px solid ${C.divider}`}}>
+    <div style={{fontSize:10,fontWeight:700,color:C.textSecondary,textTransform:'uppercase',
+      letterSpacing:'0.7px',marginBottom:8,paddingBottom:6,borderBottom:`1px solid ${C.divider}`}}>
       {children}
     </div>
   );
 
   return (
-    <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
+    <div style={{flex:1,overflowY:'auto',padding:'24px'}}>
 
       {/* Header */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
         <div>
-          <h1 style={{fontSize:26,fontWeight:700,color:C.textPrimary,letterSpacing:'-0.15px',marginBottom:4}}>
-            Dashboard
-          </h1>
-          <p style={{fontSize:14,color:C.textSecondary}}>
-            Indicadores do portal Conecta Gov.PE
-          </p>
+          <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:2}}>Dashboard</h1>
+          <p style={{fontSize:13,color:C.textSecondary}}>Indicadores do portal Conecta Gov.PE</p>
         </div>
         <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,
-          padding:'5px 12px',fontSize:12,color:C.brand,display:'flex',gap:6,alignItems:'center'}}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2">
+          padding:'4px 10px',fontSize:11,color:C.brand,display:'flex',gap:5,alignItems:'center'}}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
           Atualizado às {ultimaAtt}
@@ -1568,10 +1585,10 @@ function Dashboard({ onNav }) {
       </div>
 
       {/* Alerta pendentes */}
-      {pendentes>0&&(
+      {pendentes>0 && (
         <div style={{background:C.pendenteBg,border:`1px solid ${C.pendenteBorder}`,borderRadius:8,
-          padding:'10px 16px',marginBottom:20,display:'flex',gap:10,alignItems:'center'}}>
-          <Icon name="clock" size={15} color={C.pendente}/>
+          padding:'9px 14px',marginBottom:16,display:'flex',gap:8,alignItems:'center'}}>
+          <Icon name="clock" size={14} color={C.pendente}/>
           <span style={{fontSize:13,color:C.pendente,flex:1}}>
             <strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso.
           </span>
@@ -1582,116 +1599,41 @@ function Dashboard({ onNav }) {
         </div>
       )}
 
-      {/* Bloco único de cards */}
-      <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:12,padding:'20px 22px',
-        boxShadow:'0 0 20px 0 #E7E9EB'}}>
+      {/* Bloco único */}
+      <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:12,
+        padding:'18px 20px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
 
-        {/* ── APIs ── */}
+        {/* Catálogo de APIs — 5 colunas */}
         <SectionLabel>Catálogo de APIs</SectionLabel>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:12,marginBottom:22}}>
-          <Card
-            label="APIs Disponíveis"
-            valor={apisAtivas}
-            sub={`de ${totalApis} cadastradas`}
-            cor="#2B6418" bg="#EAFBD7" border="#86D562"
-            nav="apis"
-          />
-          <Card
-            label="Operações publicadas"
-            valor={totalOperacoes}
-            sub="endpoints ativos"
-            cor={C.brand} bg={C.infoBg} border={C.infoBorder}
-            nav="apis"
-          />
-          <Card
-            label="APIs Inativas"
-            valor={apisInativas}
-            sub="fora do catálogo público"
-            cor="#AC1010" bg="#FFE4E4" border="#E45F5F"
-            nav="apis"
-          />
-          <Card
-            label="Categorias Ativas"
-            valor={catAtivas}
-            sub={`de ${totalCategorias} cadastradas`}
-            cor={C.brand} bg={C.infoBg} border={C.infoBorder}
-            nav="categorias"
-          />
-          <Card
-            label="Órgãos cedentes"
-            valor={totalOrgaos}
-            sub="com APIs cadastradas"
-            cor={C.brand} bg={C.infoBg} border={C.infoBorder}
-            nav="apis"
-          />
-        </div>
+        <Grid5>
+          <Card label="APIs Disponíveis"     valor={apisAtivas}    sub={`de ${totalApis} cadastradas`}      cor="#2B6418" bg="#EAFBD7" border="#86D562"     nav="apis"/>
+          <Card label="Operações publicadas" valor={totalOps}       sub="endpoints ativos"                   cor={C.brand} bg={C.infoBg} border={C.infoBorder} nav="apis"/>
+          <Card label="APIs Inativas"        valor={apisInativas}   sub="fora do catálogo público"           cor="#AC1010" bg="#FFE4E4" border="#E45F5F"     nav="apis"/>
+          <Card label="Categorias Ativas"    valor={catAtivas}      sub={`de ${totalCats} cadastradas`}      cor={C.brand} bg={C.infoBg} border={C.infoBorder} nav="categorias"/>
+          <Card label="Órgãos cedentes"      valor={totalOrgaos}    sub="com APIs cadastradas"               cor={C.brand} bg={C.infoBg} border={C.infoBorder} nav="apis"/>
+        </Grid5>
 
-        {/* ── Usuários ── */}
+        {/* Controle de Acesso — 3 colunas */}
         <SectionLabel>Controle de Acesso</SectionLabel>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:12,marginBottom:22}}>
-          <Card
-            label="Usuários Ativos"
-            valor={usrsAtivos}
-            sub="com acesso liberado"
-            cor="#2B6418" bg="#EAFBD7" border="#86D562"
-            nav="usuarios"
-          />
-          <Card
-            label="Pendentes de aprovação"
-            valor={seiPendentes + pendentes}
-            sub="aguardam revisão do ADM"
-            cor="#B77706" bg="#FFF6CE" border="#FFE082"
-            nav="usuarios"
-            badge={pendentes>0?`${pendentes} novo${pendentes>1?'s':''}`:undefined}
-          />
-          <Card
-            label="Total de usuários"
-            valor={totalUsuarios}
-            sub="cadastros no sistema"
-            cor={C.brand} bg={C.infoBg} border={C.infoBorder}
-            nav="usuarios"
-          />
-        </div>
+        <Grid3>
+          <Card label="Usuários Ativos"          valor={usrsAtivos}    sub="com acesso liberado"        cor="#2B6418" bg="#EAFBD7" border="#86D562"     nav="usuarios"/>
+          <Card label="Pendentes de aprovação"   valor={pendentes}     sub="aguardam revisão do ADM"   cor="#B77706" bg="#FFF6CE" border="#FFE082"     nav="usuarios"/>
+          <Card label="Total de usuários"        valor={totalUsuarios} sub="cadastros no sistema"       cor={C.brand} bg={C.infoBg} border={C.infoBorder} nav="usuarios"/>
+        </Grid3>
 
-        {/* ── Solicitações SEI-PE ── */}
+        {/* Solicitações SEI-PE — 5 colunas */}
         <SectionLabel>Solicitações de Acesso — SEI-PE</SectionLabel>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:12}}>
-          <Card
-            label="Total de solicitações"
-            valor={seiTotal}
-            sub="no período"
-            cor={C.brand} bg="#fff" border={C.divider}
-          />
-          <Card
-            label="Aprovadas"
-            valor={seiAprovadas}
-            sub={`${Math.round((seiAprovadas/seiTotal)*100)}% do total`}
-            cor="#2B6418" bg="#EAFBD7" border="#86D562"
-          />
-          <Card
-            label="Em análise"
-            valor={seiAnalise}
-            sub={`${Math.round((seiAnalise/seiTotal)*100)}% do total`}
-            cor="#B77706" bg="#FFF6CE" border="#FFE082"
-          />
-          <Card
-            label="Pendentes"
-            valor={seiPendentes}
-            sub={`${Math.round((seiPendentes/seiTotal)*100)}% do total`}
-            cor="#0034B7" bg="#E6F3FF" border="#99C6FF"
-          />
-          <Card
-            label="Reprovadas"
-            valor={seiReprovadas}
-            sub={`${Math.round((seiReprovadas/seiTotal)*100)}% do total`}
-            cor="#AC1010" bg="#FFE4E4" border="#E45F5F"
-          />
-        </div>
+        <Grid5>
+          <Card label="Total de solicitações" valor={seiTotal}      sub="no período"                            cor={C.brand}   bg="#fff"      border={C.divider}/>
+          <Card label="Aprovadas"             valor={seiAprovadas}  sub={`${Math.round(seiAprovadas/seiTotal*100)}% do total`}  cor="#2B6418" bg="#EAFBD7" border="#86D562"/>
+          <Card label="Em análise"            valor={seiAnalise}    sub={`${Math.round(seiAnalise/seiTotal*100)}% do total`}    cor="#B77706" bg="#FFF6CE" border="#FFE082"/>
+          <Card label="Pendentes"             valor={seiPendentes}  sub={`${Math.round(seiPendentes/seiTotal*100)}% do total`}  cor="#0034B7" bg="#E6F3FF" border="#99C6FF"/>
+          <Card label="Reprovadas"            valor={seiReprovadas} sub={`${Math.round(seiReprovadas/seiTotal*100)}% do total`} cor="#AC1010" bg="#FFE4E4" border="#E45F5F"/>
+        </Grid5>
 
         {/* Nota SEI */}
-        <div style={{marginTop:14,padding:'8px 12px',background:C.bg,borderRadius:6,
-          border:`1px solid ${C.divider}`,display:'flex',gap:8,alignItems:'center'}}>
-          <Icon name="info" size={13} color={C.textSecondary}/>
+        <div style={{display:'flex',gap:6,alignItems:'center',paddingTop:4}}>
+          <Icon name="info" size={12} color={C.textSecondary}/>
           <span style={{fontSize:11,color:C.textSecondary}}>
             Dados do SEI-PE somente leitura. Sincronizado via integração backend — próxima sync em ~7 min.
           </span>
