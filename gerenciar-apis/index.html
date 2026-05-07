@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1008,6 +1007,11 @@ function GerenciarCategorias({ showToast }) {
 /* ═══════════════════════════════════════════════════════════════
    SEÇÃO: DASHBOARD
 ══════════════════════════════════════════════════════════════ */
+/* === END OF PART 1 === */
+</script>
+
+<script type="text/babel">
+/* === PART 2: Dashboard, SEI-PE, Relatórios, App === */
 /* ═══════════════════════════════════════════════════════════════
    DADOS SIMULADOS PARA DASHBOARD E RELATÓRIOS
    Representam métricas reais de governança que um gestor público
@@ -1989,7 +1993,7 @@ function Relatorios({ showToast }) {
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
             <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:12}}>Sumário</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {aba==='cadastradas'?[
+              {(aba==='cadastradas'?[
                 {label:'Registros',         valor:apisCad.length},
                 {label:'APIs Ativas',        valor:apisCad.filter(a=>a.status==='Ativo').length},
                 {label:'APIs Inativas',      valor:apisCad.filter(a=>a.status==='Inativo').length},
@@ -1999,7 +2003,7 @@ function Relatorios({ showToast }) {
                 {label:'Total requisições',   valor:dadosUso.reduce((s,a)=>s+a.requisicoes,0).toLocaleString('pt-BR')},
                 {label:'Total erros',         valor:dadosUso.reduce((s,a)=>s+a.erros,0).toLocaleString('pt-BR')},
                 {label:'Disp. média',         valor:(dadosUso.length?dadosUso.reduce((s,a)=>s+a.dispMedia,0)/dadosUso.length:0).toFixed(1)+'%'},
-              ].map(item=>(
+              ]).map(item=>(
                 <div key={item.label} style={{background:C.bg,borderRadius:6,padding:'8px 10px'}}>
                   <div style={{fontSize:10,color:C.textSecondary,marginBottom:3}}>{item.label}</div>
                   <div style={{fontSize:16,fontWeight:700,color:C.brand}}>{item.valor}</div>
@@ -2124,6 +2128,7 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
 </script>
 </body>
 </html>
