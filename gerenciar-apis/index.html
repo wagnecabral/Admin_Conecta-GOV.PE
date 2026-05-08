@@ -2097,29 +2097,30 @@ function RelCadastradas({ showToast }) {
    ADM vê todas as APIs. Cedente vê apenas APIs do seu órgão.
 ══════════════════════════════════════════════════════════════ */
 
-/* Dados simulados de consumo — refletem quem usou qual API e quantas vezes
-   Em produção: virão do endpoint GET /v1/reports/usage com filtros de período */
+/* Dados simulados — solicitações de acesso às APIs
+   Cada linha = um órgão/empresa que solicitou acesso a uma API
+   Em produção: consumido via GET /v1/reports/usage */
 const DADOS_USO_APIS = [
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEFAZ',  chamadas:1840, periodo:'Abr/2025' },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SES',    chamadas:1320, periodo:'Abr/2025' },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEE',    chamadas:980,  periodo:'Abr/2025' },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEDS',   chamadas:680,  periodo:'Abr/2025' },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SES',    chamadas:2100, periodo:'Abr/2025' },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SEPLAG', chamadas:1540, periodo:'Abr/2025' },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SEDS',   chamadas:1060, periodo:'Abr/2025' },
-  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'ATI',    chamadas:870,  periodo:'Abr/2025' },
-  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SERES',  chamadas:430,  periodo:'Abr/2025' },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SES',    chamadas:1200, periodo:'Abr/2025' },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SEE',    chamadas:760,  periodo:'Abr/2025' },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SEDS',   chamadas:540,  periodo:'Abr/2025' },
-  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   orgaoConsumidor:'SEPLAG', chamadas:620,  periodo:'Abr/2025' },
-  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   orgaoConsumidor:'ATI',    chamadas:380,  periodo:'Abr/2025' },
-  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    orgaoConsumidor:'ATI',    chamadas:310,  periodo:'Abr/2025' },
-  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    orgaoConsumidor:'SEFAZ',  chamadas:290,  periodo:'Abr/2025' },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEFAZ',  chamadas:1620, periodo:'Mar/2025' },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SES',    chamadas:1890, periodo:'Mar/2025' },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SES',    chamadas:1050, periodo:'Mar/2025' },
-  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'ATI',    chamadas:780,  periodo:'Mar/2025' },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'03/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'10/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'15/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'22/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'08/01/2025', status:'Ativo'    },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'14/01/2025', status:'Ativo'    },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'20/02/2025', status:'Pendente' },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'12/02/2025', status:'Ativo'    },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'SERES',            tipo:'Órgão público',   dataSolicitacao:'18/02/2025', status:'Ativo'    },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'DataPE Soluções',  tipo:'Empresa privada', dataSolicitacao:'01/03/2025', status:'Ativo'    },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'10/02/2025', status:'Ativo'    },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'Univ. Federal PE', tipo:'Empresa privada', dataSolicitacao:'28/02/2025', status:'Pendente' },
+  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'15/03/2025', status:'Ativo'    },
+  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'22/03/2025', status:'Ativo'    },
+  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'01/04/2025', status:'Ativo'    },
+  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'HealthPE Tech',    tipo:'Empresa privada', dataSolicitacao:'08/04/2025', status:'Pendente' },
+  { api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', status:'Ativo'    },
+  { api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', status:'Ativo'    },
 ];
 
 function RelUso({ showToast }) {
@@ -2128,34 +2129,51 @@ function RelUso({ showToast }) {
   const [resultado, setResultado] = React.useState([]);
   const [f, setF] = React.useState({
     apiNome:         '',
-    orgaoResponsavel:'',   /* filtro do Cedente — fixo se perfil Cedente */
-    orgaoConsumidor: '',
-    periodo:         '',   /* ex: "Abr/2025" */
+    orgaoResponsavel:'',
+    solicitante:     '',
+    dataInicio:      '',
+    dataFim:         '',
   });
 
   const setFil = (k,v) => setF(p=>({...p,[k]:v}));
 
-  /* Lista única de APIs, períodos e órgãos para os dropdowns */
-  const apisUnicas      = [...new Set(DADOS_USO_APIS.map(d=>d.api))].sort();
-  const periodosUnicos  = [...new Set(DADOS_USO_APIS.map(d=>d.periodo))].reverse();
-  const orgaosResp      = [...new Set(DADOS_USO_APIS.map(d=>d.orgaoResponsavel))].sort();
-  const orgaosCons      = [...new Set(DADOS_USO_APIS.map(d=>d.orgaoConsumidor))].sort();
+  /* Listas para dropdowns */
+  const apisUnicas    = [...new Set(DADOS_USO_APIS.map(d=>d.api))].sort();
+  const orgaosResp    = [...new Set(DADOS_USO_APIS.map(d=>d.orgaoResponsavel))].sort();
+  const solicitantes  = [...new Set(DADOS_USO_APIS.map(d=>d.solicitante))].sort();
+
+  /* Converte dd/mm/aaaa para Date */
+  const parseDate = str => {
+    if(!str) return null;
+    const [d,m,y] = str.split('/');
+    return new Date(+y, +m-1, +d);
+  };
 
   const getDados = () => DADOS_USO_APIS.filter(d=>{
     if(f.apiNome          && d.api              !== f.apiNome)          return false;
     if(f.orgaoResponsavel && d.orgaoResponsavel !== f.orgaoResponsavel) return false;
-    if(f.orgaoConsumidor  && d.orgaoConsumidor  !== f.orgaoConsumidor)  return false;
-    if(f.periodo          && d.periodo          !== f.periodo)          return false;
+    if(f.solicitante      && d.solicitante      !== f.solicitante)      return false;
+    if(f.dataInicio){
+      const ini = parseDate(f.dataInicio.split('-').reverse().join('/'));
+      const rec = parseDate(d.dataSolicitacao);
+      if(rec && ini && rec < ini) return false;
+    }
+    if(f.dataFim){
+      const fim = parseDate(f.dataFim.split('-').reverse().join('/'));
+      const rec = parseDate(d.dataSolicitacao);
+      if(rec && fim && rec > fim) return false;
+    }
     return true;
   });
 
   const filtrosLabel = () => {
     const p=[];
     if(f.apiNome)          p.push('API: '+f.apiNome);
-    if(f.orgaoResponsavel) p.push('Órgão responsável: '+f.orgaoResponsavel);
-    if(f.orgaoConsumidor)  p.push('Órgão consumidor: '+f.orgaoConsumidor);
-    if(f.periodo)          p.push('Período: '+f.periodo);
-    return p.length ? p.join(' | ') : 'Sem filtros — exibindo todos os registros';
+    if(f.orgaoResponsavel) p.push('Órgão resp.: '+f.orgaoResponsavel);
+    if(f.solicitante)      p.push('Solicitante: '+f.solicitante);
+    if(f.dataInicio)       p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
+    if(f.dataFim)          p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
+    return p.length ? p.join(' | ') : 'Sem filtros — todos os registros';
   };
 
   const now = () => {
@@ -2168,56 +2186,54 @@ function RelUso({ showToast }) {
   };
 
   const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
-  const handleLimpar = () => { setF({apiNome:'',orgaoResponsavel:'',orgaoConsumidor:'',periodo:''}); setResultado([]); setBuscado(false); };
+  const handleLimpar = () => {
+    setF({apiNome:'',orgaoResponsavel:'',solicitante:'',dataInicio:'',dataFim:''});
+    setResultado([]); setBuscado(false);
+  };
 
-  /* Total de chamadas do resultado */
-  const totalChamadas = resultado.reduce((s,d)=>s+d.chamadas, 0);
+  /* Status badge */
+  const StatusBadge = ({status}) => {
+    const cfg = status==='Ativo'
+      ? {bg:'#EAFBD7',color:'#2B6418',border:'#86D562'}
+      : {bg:'#FFF6CE',color:'#B77706',border:'#FFE082'};
+    return (
+      <span style={{fontSize:11,fontWeight:600,background:cfg.bg,color:cfg.color,
+        padding:'2px 8px',borderRadius:100,border:`1px solid ${cfg.border}`}}>
+        {status}
+      </span>
+    );
+  };
 
-  /* ── Geração PDF ── */
+  /* ── PDF ── */
   const gerarPDF = async (dados) => {
     const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
     const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
     const W=doc.internal.pageSize.getWidth();
-    doc.setFillColor(0,26,122);doc.rect(0,0,W,30,'F');
-    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.setFillColor(0,26,122); doc.rect(0,0,W,30,'F');
+    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
     doc.text('Conecta Gov.PE — Relatório de Uso das APIs',14,12);
-    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,19);
     doc.text(`Filtros: ${filtrosLabel()}`,14,24);
-    doc.text(`Total de chamadas no período: ${totalChamadas.toLocaleString('pt-BR')}`,14,29);
+    doc.text(`Total de solicitações: ${dados.length}`,14,29);
     doc.autoTable({
-      head:[['#','API','Órgão Responsável','Órgão Consumidor','Qtd. de Chamadas','Período']],
-      body:dados.map((d,i)=>[
-        i+1,
-        d.api,
-        d.orgaoResponsavel,
-        d.orgaoConsumidor,
-        d.chamadas.toLocaleString('pt-BR'),
-        d.periodo,
-      ]),
+      head:[['#','API','Órgão Responsável','Solicitante','Tipo','Data da Solicitação','Status']],
+      body:dados.map((d,i)=>[i+1,d.api,d.orgaoResponsavel,d.solicitante,d.tipo,d.dataSolicitacao,d.status]),
       startY:33,
       styles:{fontSize:9,cellPadding:3},
       headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
       alternateRowStyles:{fillColor:[230,243,255]},
-      columnStyles:{
-        0:{cellWidth:10},
-        1:{cellWidth:60},
-        2:{cellWidth:40},
-        3:{cellWidth:40},
-        4:{cellWidth:35,halign:'right'},
-        5:{cellWidth:30},
-      },
+      columnStyles:{0:{cellWidth:10},1:{cellWidth:58},2:{cellWidth:32},3:{cellWidth:42},4:{cellWidth:28},5:{cellWidth:30},6:{cellWidth:22}},
       didDrawPage:()=>{
-        const pg=doc.internal.getCurrentPageInfo().pageNumber;
-        doc.setFontSize(7);doc.setTextColor(120);
-        doc.text(`Pág. ${pg}  |  ${dados.length} registros  |  Total: ${totalChamadas.toLocaleString('pt-BR')} chamadas`,
+        doc.setFontSize(7); doc.setTextColor(120);
+        doc.text(`Pág. ${doc.internal.getCurrentPageInfo().pageNumber}  |  ${dados.length} solicitações`,
           14, doc.internal.pageSize.getHeight()-5);
       },
     });
     doc.save(`relatorio-uso-apis_${slug}.pdf`);
   };
 
-  /* ── Geração Excel ── */
+  /* ── Excel ── */
   const gerarXLSX = (dados) => {
     const {utils,write}=window.XLSX; const {data,hora,slug}=now();
     const cab=[
@@ -2225,22 +2241,18 @@ function RelUso({ showToast }) {
       [`Gerado em: ${data} às ${hora}`],
       [`Usuário: João Silva (ADM)`],
       [`Filtros: ${filtrosLabel()}`],
-      [`Total de chamadas: ${totalChamadas.toLocaleString('pt-BR')}`],
+      [`Total de solicitações: ${dados.length}`],
       [],
-      ['#','API','Órgão Responsável','Órgão Consumidor','Quantidade de Chamadas','Período'],
+      ['#','API','Órgão Responsável','Solicitante','Tipo de Solicitante','Data da Solicitação','Status'],
     ];
-    const linhas = dados.map((d,i)=>[
-      i+1, d.api, d.orgaoResponsavel, d.orgaoConsumidor, d.chamadas, d.periodo,
-    ]);
+    const linhas=dados.map((d,i)=>[i+1,d.api,d.orgaoResponsavel,d.solicitante,d.tipo,d.dataSolicitacao,d.status]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:40},{wch:22},{wch:22},{wch:24},{wch:14}];
-    const wb=utils.book_new();
-    utils.book_append_sheet(wb,ws,'Uso das APIs');
+    ws['!cols']=[{wch:4},{wch:40},{wch:20},{wch:30},{wch:20},{wch:22},{wch:12}];
+    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso das APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click();
+    const a=document.createElement('a'); a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -2250,7 +2262,7 @@ function RelUso({ showToast }) {
     try{
       await new Promise(r=>setTimeout(r,900));
       fmt==='pdf' ? await gerarPDF(resultado) : gerarXLSX(resultado);
-      showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
+      showToast(`Relatório exportado! ${resultado.length} solicitação(ões).`,'success');
     }catch(e){ showToast('Erro ao gerar o arquivo.','warning'); }
     finally{ setLoading(false); }
   };
@@ -2284,8 +2296,8 @@ function RelUso({ showToast }) {
       {/* Card filtros */}
       <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
-        {/* Linha 1: API + Órgão responsável + Órgão consumidor + Período */}
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:16,marginBottom:14}}>
+        {/* Linha 1: API + Órgão responsável + Solicitante */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>API</label>
             <Sel value={f.apiNome} onChange={v=>setFil('apiNome',v)}>
@@ -2301,49 +2313,50 @@ function RelUso({ showToast }) {
             </Sel>
           </div>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão consumidor</label>
-            <Sel value={f.orgaoConsumidor} onChange={v=>setFil('orgaoConsumidor',v)}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Solicitante</label>
+            <Sel value={f.solicitante} onChange={v=>setFil('solicitante',v)}>
               <option value="">Todos</option>
-              {orgaosCons.map(o=><option key={o} value={o}>{o}</option>)}
-            </Sel>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Período</label>
-            <Sel value={f.periodo} onChange={v=>setFil('periodo',v)}>
-              <option value="">Todos</option>
-              {periodosUnicos.map(p=><option key={p} value={p}>{p}</option>)}
+              {solicitantes.map(s=><option key={s} value={s}>{s}</option>)}
             </Sel>
           </div>
         </div>
 
-        {/* Botões */}
-        <div style={{display:'flex',justifyContent:'flex-end',gap:8}}>
-          <button onClick={handleLimpar}
-            style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
-            onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
-            onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-            Limpar
-          </button>
-          <button onClick={handleBuscar}
-            style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
-            onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
-            onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
-            Aplicar
-          </button>
+        {/* Linha 2: Data Início + Data Fim + botões */}
+        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
+            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
+            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+            <button onClick={handleLimpar}
+              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
+              onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+              Limpar
+            </button>
+            <button onClick={handleBuscar}
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+              Aplicar
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Resultado */}
       {buscado && (
         <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-
-          {/* Cabeçalho resultado */}
           <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
-            <div style={{display:'flex',alignItems:'center',gap:10,fontSize:13,color:'#28272C',fontWeight:500}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'#28272C',fontWeight:500}}>
               <Icon name="filter" size={14} color="#494C57"/>
               Resultado da pesquisa
               <span style={{fontSize:12,color:'#888',fontWeight:400}}>
-                ({resultado.length} registro{resultado.length!==1?'s':''}{resultado.length>0?` · ${totalChamadas.toLocaleString('pt-BR')} chamadas`:''})
+                ({resultado.length} solicitação{resultado.length!==1?'ões':''})
               </span>
             </div>
             <div style={{display:'flex',gap:6}}>
@@ -2363,17 +2376,16 @@ function RelUso({ showToast }) {
             </div>
           </div>
 
-          {/* Tabela */}
           {resultado.length===0 ? (
             <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>
-              Nenhum registro encontrado com os filtros aplicados.
+              Nenhuma solicitação encontrada com os filtros aplicados.
             </div>
           ) : (
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr>
-                    {['#','API','Órgão Responsável','Órgão Consumidor','Qtd. de Chamadas','Período'].map(h=>(
+                    {['#','API','Órgão Responsável','Solicitante','Tipo','Data da Solicitação','Status'].map(h=>(
                       <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
                         {h}
                       </th>
@@ -2393,27 +2405,16 @@ function RelUso({ showToast }) {
                           {d.orgaoResponsavel}
                         </span>
                       </td>
+                      <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
                       <td style={{padding:'9px 14px'}}>
-                        <span style={{fontSize:11,fontWeight:600,background:'#F8FAFC',color:'#494C57',padding:'2px 8px',borderRadius:100,border:'1px solid #CED2D7'}}>
-                          {d.orgaoConsumidor}
+                        <span style={{fontSize:11,color:'#494C57',background:'#F8FAFC',padding:'2px 8px',borderRadius:100,border:'1px solid #CED2D7'}}>
+                          {d.tipo}
                         </span>
                       </td>
-                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:700,color:'#0034B7',textAlign:'right'}}>
-                        {d.chamadas.toLocaleString('pt-BR')}
-                      </td>
-                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.periodo}</td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.dataSolicitacao}</td>
+                      <td style={{padding:'9px 14px'}}><StatusBadge status={d.status}/></td>
                     </tr>
                   ))}
-                  {/* Linha de total */}
-                  <tr style={{background:'#F0F5FF',borderTop:'2px solid #99C6FF'}}>
-                    <td colSpan={4} style={{padding:'9px 14px',fontSize:12,fontWeight:600,color:'#0034B7',textAlign:'right'}}>
-                      Total de chamadas
-                    </td>
-                    <td style={{padding:'9px 14px',fontSize:14,fontWeight:700,color:'#001A7A',textAlign:'right'}}>
-                      {totalChamadas.toLocaleString('pt-BR')}
-                    </td>
-                    <td/>
-                  </tr>
                 </tbody>
               </table>
             </div>
