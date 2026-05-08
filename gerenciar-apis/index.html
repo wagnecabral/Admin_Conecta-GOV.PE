@@ -283,34 +283,122 @@ const Toast = ({ msg, type, onClose }) => (
 ══════════════════════════════════════════════════════════════ */
 const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
   const [configOpen, setConfigOpen] = React.useState(false);
+  const [relOpen,    setRelOpen]    = React.useState(
+    activeSection==='rel_cadastradas' || activeSection==='rel_uso'
+  );
+
   const items = [
-    { label:'Visão Geral',          key:'dashboard',   icon:'grid' },
-    { label:'Gerenciar APIs',       key:'apis',        icon:'api' },
-    { label:'Gerenciar Categoria',  key:'categorias',  icon:'sort' },
-    { label:'Controle de Acesso',   key:'usuarios',    icon:'users' },
-    { label:'Relatórios',           key:'relatorios',  icon:'relatorio' },
-    { label:'Auditoria',            key:'auditoria',   icon:'audit' },
-    { label:'Configurações',        key:'config',      icon:'settings', hasDropdown:true },
+    { label:'Visão Geral',         key:'dashboard',  icon:'grid' },
+    { label:'Gerenciar APIs',      key:'apis',       icon:'api' },
+    { label:'Gerenciar Categoria', key:'categorias', icon:'sort' },
+    { label:'Controle de Acesso',  key:'usuarios',   icon:'users' },
+    { label:'Relatórios',          key:'relatorios', icon:'relatorio',
+      hasDropdown:true,
+      subItems:[
+        {label:'APIs Cadastradas', key:'rel_cadastradas'},
+        {label:'Uso e Consumo',    key:'rel_uso'},
+      ]
+    },
+    { label:'Auditoria',           key:'auditoria',  icon:'audit' },
+    { label:'Configurações',       key:'config',     icon:'settings', hasDropdown:true },
   ];
   const W = collapsed ? 56 : 200;
 
+  const Chev = ({open}) => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="rgba(248,250,252,0.55)" strokeWidth="2.5" strokeLinecap="round">
+      {open ? <polyline points="18 15 12 9 6 15"/> : <polyline points="6 9 12 15 18 9"/>}
+    </svg>
+  );
+
   const NavItem = ({ item }) => {
-    const isActive = activeSection === item.key;
+    const isActive   = activeSection === item.key;
+    const isRelGroup = item.key === 'relatorios' &&
+                       (activeSection==='rel_cadastradas' || activeSection==='rel_uso');
+    const highlight  = isActive || isRelGroup;
+
+    const handleClick = () => {
+      if (item.key === 'relatorios')           { setRelOpen(o=>!o); return; }
+      if (item.hasDropdown)                    { setConfigOpen(o=>!o); return; }
+      onNav(item.key);
+    };
+
     return (
       <div>
-        <div title={collapsed?item.label:undefined}
-          onClick={()=>{ if(item.hasDropdown){ setConfigOpen(o=>!o); return; } onNav(item.key); }}
-          style={{ display:'flex', alignItems:'center', gap:10, padding:collapsed?'12px 0':'11px 16px', justifyContent:collapsed?'center':'flex-start', cursor:'pointer', color:isActive?'#fff':'rgba(248,250,252,0.75)', fontSize:13, fontWeight:isActive?600:400, borderBottom:'1px solid rgba(248,250,252,0.10)', background:isActive?'rgba(255,255,255,0.13)':'transparent', borderLeft:isActive?`3px solid rgba(255,255,255,0.6)`:collapsed?'none':'3px solid transparent', transition:'all 0.15s' }}
-          onMouseEnter={e=>{ if(!isActive){ e.currentTarget.style.color='#fff'; e.currentTarget.style.background='rgba(255,255,255,0.08)'; }}}
-          onMouseLeave={e=>{ if(!isActive){ e.currentTarget.style.color='rgba(248,250,252,0.75)'; e.currentTarget.style.background='transparent'; }}}
+        {/* Item principal */}
+        <div
+          title={collapsed ? item.label : undefined}
+          onClick={handleClick}
+          style={{
+            display:'flex', alignItems:'center', gap:10,
+            padding: collapsed ? '12px 0' : '11px 16px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            cursor: 'pointer',
+            color: highlight ? '#fff' : 'rgba(248,250,252,0.75)',
+            fontSize: 13, fontWeight: highlight ? 600 : 400,
+            borderBottom: '1px solid rgba(248,250,252,0.10)',
+            borderLeft: highlight
+              ? '3px solid rgba(255,255,255,0.6)'
+              : collapsed ? 'none' : '3px solid transparent',
+            background: highlight ? 'rgba(255,255,255,0.13)' : 'transparent',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e=>{ if(!highlight){ e.currentTarget.style.color='#fff'; e.currentTarget.style.background='rgba(255,255,255,0.08)'; }}}
+          onMouseLeave={e=>{ if(!highlight){ e.currentTarget.style.color='rgba(248,250,252,0.75)'; e.currentTarget.style.background='transparent'; }}}
         >
-          <Icon name={item.icon} size={16} color={isActive?'#fff':'rgba(248,250,252,0.6)'}/>
-          {!collapsed && (<><span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{item.label}</span>{item.hasDropdown && (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,0.6)" strokeWidth="2.5" strokeLinecap="round">{configOpen?<polyline points="18 15 12 9 6 15"/>:<polyline points="6 9 12 15 18 9"/>}</svg>)}</>)}
+          <Icon name={item.icon} size={16} color={highlight?'#fff':'rgba(248,250,252,0.6)'}/>
+          {!collapsed && (
+            <>
+              <span style={{flex:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{item.label}</span>
+              {item.key==='relatorios'               && <Chev open={relOpen}/>}
+              {item.hasDropdown && item.key!=='relatorios' && <Chev open={configOpen}/>}
+            </>
+          )}
         </div>
-        {item.hasDropdown && configOpen && !collapsed && (
-          <div style={{ background:'rgba(0,0,0,0.15)' }}>
+
+        {/* Sub-items: Relatórios */}
+        {item.key==='relatorios' && relOpen && !collapsed && (
+          <div style={{background:'rgba(0,0,0,0.18)'}}>
+            {item.subItems.map(sub => {
+              const sa = activeSection === sub.key;
+              return (
+                <div key={sub.key}
+                  onClick={()=>onNav(sub.key)}
+                  style={{
+                    padding:'9px 16px 9px 44px', fontSize:12,
+                    fontWeight: sa ? 600 : 400,
+                    color: sa ? '#fff' : 'rgba(248,250,252,0.70)',
+                    cursor:'pointer',
+                    borderBottom:'1px solid rgba(248,250,252,0.06)',
+                    borderLeft: sa ? '3px solid rgba(255,255,255,0.5)' : '3px solid transparent',
+                    background: sa ? 'rgba(255,255,255,0.10)' : 'transparent',
+                    transition:'all 0.15s',
+                    display:'flex', alignItems:'center', gap:8,
+                  }}
+                  onMouseEnter={e=>{ if(!sa){ e.currentTarget.style.color='#fff'; e.currentTarget.style.background='rgba(255,255,255,0.07)'; }}}
+                  onMouseLeave={e=>{ if(!sa){ e.currentTarget.style.color='rgba(248,250,252,0.70)'; e.currentTarget.style.background='transparent'; }}}
+                >
+                  <span style={{width:5,height:5,borderRadius:'50%',
+                    background: sa?'#fff':'rgba(248,250,252,0.4)',flexShrink:0}}/>
+                  {sub.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Sub-items: Configurações */}
+        {item.hasDropdown && item.key!=='relatorios' && configOpen && !collapsed && (
+          <div style={{background:'rgba(0,0,0,0.15)'}}>
             {['Geral','Segurança','Integrações'].map(sub=>(
-              <div key={sub} style={{ padding:'9px 16px 9px 42px', fontSize:12, color:'rgba(248,250,252,0.65)', cursor:'pointer', borderBottom:'1px solid rgba(248,250,252,0.06)', transition:'color 0.15s' }} onMouseEnter={e=>e.currentTarget.style.color='#fff'} onMouseLeave={e=>e.currentTarget.style.color='rgba(248,250,252,0.65)'}>{sub}</div>
+              <div key={sub}
+                style={{padding:'9px 16px 9px 42px',fontSize:12,
+                  color:'rgba(248,250,252,0.65)',cursor:'pointer',
+                  borderBottom:'1px solid rgba(248,250,252,0.06)',transition:'color 0.15s'}}
+                onMouseEnter={e=>e.currentTarget.style.color='#fff'}
+                onMouseLeave={e=>e.currentTarget.style.color='rgba(248,250,252,0.65)'}>
+                {sub}
+              </div>
             ))}
           </div>
         )}
@@ -319,15 +407,36 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
   };
 
   return (
-    <div style={{ width:W, minWidth:W, background:C.brandDark, display:'flex', flexDirection:'column', flexShrink:0, minHeight:'100%', transition:'width 0.22s ease, min-width 0.22s ease', overflow:'hidden' }}>
-      <div style={{ padding:collapsed?'14px 0':'12px 12px', display:'flex', alignItems:'center', justifyContent:collapsed?'center':'space-between', borderBottom:'1px solid rgba(248,250,252,0.10)', minHeight:72 }}>
-        {!collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'6px 8px', display:'flex', alignItems:'center', justifyContent:'center', flex:1, marginRight:8 }}><img src="ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>{ e.target.style.display='none'; }}/></div>)}
-        {collapsed && (<div style={{ background:'#fff', borderRadius:6, padding:'4px', display:'flex', alignItems:'center', justifyContent:'center' }}><img src="ati_logo.png" alt="ATI" style={{ height:30, width:30, objectFit:'contain' }} onError={e=>{ e.target.style.display='none'; }}/></div>)}
-        <button onClick={onToggle} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(248,250,252,0.7)', fontSize:16, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:4, flexShrink:0, marginTop:collapsed?6:0 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>{collapsed?'»':'«'}</button>
+    <div style={{width:W,minWidth:W,background:C.brandDark,display:'flex',flexDirection:'column',
+      flexShrink:0,minHeight:'100%',transition:'width 0.22s ease, min-width 0.22s ease',overflow:'hidden'}}>
+      <div style={{padding:collapsed?'14px 0':'12px 12px',display:'flex',alignItems:'center',
+        justifyContent:collapsed?'center':'space-between',borderBottom:'1px solid rgba(248,250,252,0.10)',minHeight:72}}>
+        {!collapsed && (
+          <div style={{background:'#fff',borderRadius:6,padding:'6px 8px',display:'flex',
+            alignItems:'center',justifyContent:'center',flex:1,marginRight:8}}>
+            <img src="ati_logo.png" alt="ATI" style={{height:44,width:'auto',objectFit:'contain'}}
+              onError={e=>e.target.style.display='none'}/>
+          </div>
+        )}
+        {collapsed && (
+          <div style={{background:'#fff',borderRadius:6,padding:'4px',display:'flex',alignItems:'center'}}>
+            <img src="ati_logo.png" alt="ATI" style={{height:30,width:30,objectFit:'contain'}}
+              onError={e=>e.target.style.display='none'}/>
+          </div>
+        )}
+        <button onClick={onToggle}
+          style={{background:'none',border:'none',cursor:'pointer',color:'rgba(248,250,252,0.7)',
+            fontSize:16,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',
+            width:28,height:28,borderRadius:4,flexShrink:0,marginTop:collapsed?6:0}}
+          onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'}
+          onMouseLeave={e=>e.currentTarget.style.background='none'}>
+          {collapsed?'»':'«'}
+        </button>
       </div>
-      <nav style={{ flex:1 }}>{items.map(item=><NavItem key={item.key} item={item}/>)}</nav>
+      <nav style={{flex:1}}>{items.map(item=><NavItem key={item.key} item={item}/>)}</nav>
     </div>
   );
+}
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1620,7 +1729,7 @@ function Dashboard({ onNav }) {
           <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',letterSpacing:'-0.3px',marginBottom:1}}>Dashboard — Conecta Gov.PE</h1>
           <div style={{fontSize:12,color:'#888'}}>Atualizado em {new Date().toLocaleDateString('pt-BR')} às {ts} · Perfil: ADM</div>
         </div>
-        <div style={{display:'flex',gap:8'}}>
+        <div style={{display:'flex',gap:8}}>
           <button onClick={()=>onNav('relatorios')} style={{height:32,padding:'0 14px',borderRadius:6,border:`1px solid ${C.brand}`,background:'#fff',color:C.brand,fontSize:12,fontWeight:600,cursor:'pointer'}}>Relatórios</button>
         </div>
       </div>
@@ -1757,367 +1866,164 @@ function Dashboard({ onNav }) {
    - Exportação PDF e Excel com dados gerenciais reais
    - Cabeçalho com data, usuário e filtros aplicados
 ══════════════════════════════════════════════════════════════ */
-function Relatorios({ showToast }) {
-  const [aba, setAba]           = React.useState('cadastradas'); /* cadastradas | uso */
-  const [loading, setLoading]   = React.useState(false);
-  const [formato, setFormato]   = React.useState('pdf');
-  const [preview, setPreview]   = React.useState(false);
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.03 — Relatório de APIs Cadastradas
+══════════════════════════════════════════════════════════════ */
+function RelCadastradas({ showToast }) {
+  const [loading, setLoading] = React.useState(false);
+  const [formato, setFormato] = React.useState('pdf');
+  const [preview, setPreview] = React.useState(false);
+  const [f, setF] = React.useState({ orgaoId:'', status:'', categoriaId:'', dataInicio:'', dataFim:'' });
 
-  /* Filtros HU.03.03 */
-  const [f1, setF1] = React.useState({ orgaoId:'', status:'', categoriaId:'', dataInicio:'', dataFim:'' });
-  /* Filtros HU.03.04 */
-  const [f2, setF2] = React.useState({ apiNome:'', orgaoConsumidor:'', periodo:'6m' });
+  const setFil = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const getApis = () => INITIAL_APIS.filter(a=>{
+    if(f.orgaoId     && a.orgaoId     !== f.orgaoId)     return false;
+    if(f.status      && a.status      !== f.status)       return false;
+    if(f.categoriaId && a.categoriaId !== f.categoriaId)  return false;
+    return true;
+  });
+
+  const filtrosLabel = () => {
+    const p=[];
+    if(f.orgaoId)     p.push('Órgão: '+(ORGAOS.find(o=>o.id===f.orgaoId)?.shortName||''));
+    if(f.status)      p.push('Status: '+f.status);
+    if(f.categoriaId) p.push('Categoria: '+(CATEGORIAS.find(c=>c.id===f.categoriaId)?.nome||''));
+    if(f.dataInicio)  p.push('De: '+f.dataInicio);
+    if(f.dataFim)     p.push('Até: '+f.dataFim);
+    return p.length?p.join(' | '):'Sem filtros';
+  };
 
   const now = () => {
-    const d = new Date();
-    return { data:d.toLocaleDateString('pt-BR'), hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h') };
+    const d=new Date();
+    return {data:d.toLocaleDateString('pt-BR'),hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h')};
   };
 
-  const getApisCadastradas = () => INITIAL_APIS.filter(a=>{
-    if(f1.orgaoId && a.orgaoId!==f1.orgaoId) return false;
-    if(f1.status  && a.status!==f1.status)   return false;
-    if(f1.categoriaId && a.categoriaId!==f1.categoriaId) return false;
-    return true;
-  });
-
-  const getUsoFiltrado = () => RANKING_APIS.filter(a=>{
-    if(f2.apiNome && !a.nome.toLowerCase().includes(f2.apiNome.toLowerCase())) return false;
-    if(f2.orgaoConsumidor && a.orgao!==f2.orgaoConsumidor) return false;
-    return true;
-  });
-
-  const filtrosLabel1 = () => {
-    const parts=[];
-    if(f1.orgaoId)     parts.push('Órgão: '+(ORGAOS.find(o=>o.id===f1.orgaoId)?.shortName||''));
-    if(f1.status)      parts.push('Status: '+f1.status);
-    if(f1.categoriaId) parts.push('Categoria: '+(CATEGORIAS.find(c=>c.id===f1.categoriaId)?.nome||''));
-    if(f1.dataInicio)  parts.push('De: '+f1.dataInicio);
-    if(f1.dataFim)     parts.push('Até: '+f1.dataFim);
-    return parts.length?parts.join(' | '):'Sem filtros';
-  };
-
-  const filtrosLabel2 = () => {
-    const parts=[];
-    if(f2.apiNome)          parts.push('API: '+f2.apiNome);
-    if(f2.orgaoConsumidor)  parts.push('Órgão: '+f2.orgaoConsumidor);
-    const pMap={'1m':'Último mês','3m':'Últimos 3 meses','6m':'Últimos 6 meses','12m':'Último ano'};
-    parts.push('Período: '+(pMap[f2.periodo]||f2.periodo));
-    return parts.join(' | ');
-  };
-
-  /* ── PDF APIs Cadastradas ── */
-  const gerarPDFCadastradas = async (apis) => {
+  const gerarPDF = async (apis) => {
     const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
     const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
     const W=doc.internal.pageSize.getWidth();
     doc.setFillColor(0,26,122); doc.rect(0,0,W,26,'F');
-    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
     doc.text('Conecta Gov.PE — Relatório de APIs Cadastradas',14,11);
-    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
     doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
-    doc.text(`Filtros: ${filtrosLabel1()}`,14,22);
+    doc.text(`Filtros: ${filtrosLabel()}`,14,22);
     doc.autoTable({
       head:[['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em']],
       body:apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—']),
-      startY:30, styles:{fontSize:8,cellPadding:2.5},
-      headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
-      alternateRowStyles:{fillColor:[230,243,255]},
+      startY:30,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,243,255]},
       columnStyles:{0:{cellWidth:7},1:{cellWidth:50},2:{cellWidth:18},3:{cellWidth:15},4:{cellWidth:25},5:{cellWidth:16},6:{cellWidth:40},7:{cellWidth:20},8:{cellWidth:20}},
-      didDrawPage:()=>{const pg=doc.internal.getCurrentPageInfo().pageNumber; doc.setFontSize(7);doc.setTextColor(120);doc.text(`Pág. ${pg} | Total: ${apis.length} APIs`,14,doc.internal.pageSize.getHeight()-5);doc.text('Gerado automaticamente pelo sistema Conecta Gov.PE — ATI-PE',W/2,doc.internal.pageSize.getHeight()-5,{align:'center'});}
     });
     doc.save(`relatorio-apis_${slug}.pdf`);
   };
 
-  /* ── PDF Uso ── */
-  const gerarPDFUso = async (dados) => {
-    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
-    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-    const W=doc.internal.pageSize.getWidth();
-    doc.setFillColor(0,52,183); doc.rect(0,0,W,26,'F');
-    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-    doc.text('Conecta Gov.PE — Relatório de Uso das APIs',14,11);
-    doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
-    doc.text(`Filtros: ${filtrosLabel2()}`,14,22);
-    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
-    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
-    doc.setFontSize(9); doc.setTextColor(0);
-    doc.text(`Total de requisições no período: ${totalReq.toLocaleString('pt-BR')}   |   Total de erros: ${totalErr}   |   Disponibilidade média: ${(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1)}%`,14,32);
-    doc.autoTable({
-      head:[['#','API','Órgão','Total Requisições','Erros','% Erro','Disp. Média','Tendência Mês']],
-      body:dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes.toLocaleString('pt-BR'),a.erros,((a.erros/a.requisicoes)*100).toFixed(2)+'%',a.dispMedia+'%',(a.tendencia>0?'+':'')+a.tendencia+'%']),
-      startY:37, styles:{fontSize:8,cellPadding:2.5},
-      headStyles:{fillColor:[0,52,183],textColor:255,fontStyle:'bold'},
-      alternateRowStyles:{fillColor:[230,243,255]},
-      columnStyles:{0:{cellWidth:7},1:{cellWidth:55},2:{cellWidth:18},3:{cellWidth:28},4:{cellWidth:15},5:{cellWidth:16},6:{cellWidth:20},7:{cellWidth:22}},
-      didDrawPage:()=>{doc.setFontSize(7);doc.setTextColor(120);doc.text(`Pág. ${doc.internal.getCurrentPageInfo().pageNumber}`,14,doc.internal.pageSize.getHeight()-5);}
-    });
-    doc.save(`relatorio-uso-apis_${slug}.pdf`);
-  };
-
-  /* ── Excel Cadastradas ── */
-  const gerarXLSXCadastradas = (apis) => {
+  const gerarXLSX = (apis) => {
     const {utils,write}=window.XLSX; const {data,hora,slug}=now();
-    const cab=[['Conecta Gov.PE — Relatório de APIs Cadastradas'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel1()}`],[`Total de registros: ${apis.length}`],[],
-      ['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em','Responsável','Operações principais']];
-    const linhas=apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.name||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—',a.autor||'—',(a.operacoes||[]).map(op=>`${op.metodo} ${op.endpoint}`).join('; ')]);
+    const cab=[['Conecta Gov.PE — Relatório de APIs Cadastradas'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel()}`],[`Total: ${apis.length} registros`],[],
+      ['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em','Responsável']];
+    const linhas=apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.name||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—',a.autor||'—']);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:38},{wch:40},{wch:8},{wch:22},{wch:10},{wch:38},{wch:12},{wch:12},{wch:18},{wch:50}];
-    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'APIs');
+    ws['!cols']=[{wch:4},{wch:38},{wch:40},{wch:8},{wch:22},{wch:10},{wch:38},{wch:12},{wch:12},{wch:18}];
+    const wb=utils.book_new();utils.book_append_sheet(wb,ws,'APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`relatorio-apis_${slug}.xlsx`; a.click(); URL.revokeObjectURL(url);
-  };
-
-  /* ── Excel Uso ── */
-  const gerarXLSXUso = (dados) => {
-    const {utils,write}=window.XLSX; const {data,hora,slug}=now();
-    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
-    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
-    const cab=[['Conecta Gov.PE — Relatório de Uso das APIs'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel2()}`],[`Total de requisições: ${totalReq.toLocaleString('pt-BR')} | Total de erros: ${totalErr} | Disponibilidade média: ${(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1)}%`],[],
-      ['#','API','Órgão Cedente','Total Requisições','Total Erros','% Erro','Disp. Média (%)','Tendência Mensal (%)']];
-    const linhas=dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes,a.erros,+((a.erros/a.requisicoes)*100).toFixed(2),a.dispMedia,a.tendencia]);
-    /* Aba de consumo mensal */
-    const ws2=utils.aoa_to_sheet([['Consumo Mensal por API'],['Mês','Catálogo de Serviços','Consulta de CPF','Boletim de Ocorrência','Emissão de Certidões','Programas Habitacionais'],...CONSUMO_MENSAL.map(m=>[m.mes,m['Catálogo de Serviços'],m['Consulta de CPF'],m['Boletim de Ocorrência'],m['Emissão de Certidões'],m['Programas Habitacionais']])]);
-    ws2['!cols']=[{wch:10},{wch:22},{wch:18},{wch:22},{wch:22},{wch:24}];
-    const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:38},{wch:16},{wch:20},{wch:14},{wch:10},{wch:18},{wch:20}];
-    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso por API'); utils.book_append_sheet(wb,ws2,'Consumo Mensal');
-    const buf=write(wb,{bookType:'xlsx',type:'array'});
-    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click(); URL.revokeObjectURL(url);
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`relatorio-apis_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
   };
 
   const handleGerar = async () => {
-    const dados = aba==='cadastradas' ? getApisCadastradas() : getUsoFiltrado();
-    if(dados.length===0){showToast('Nenhum dado encontrado com os filtros aplicados.','warning');return;}
+    const apis=getApis();
+    if(!apis.length){showToast('Nenhuma API com os filtros aplicados.','warning');return;}
     setLoading(true);
-    try {
-      await new Promise(r=>setTimeout(r,1400));
-      if(aba==='cadastradas'){ formato==='pdf'?await gerarPDFCadastradas(dados):gerarXLSXCadastradas(dados); }
-      else                   { formato==='pdf'?await gerarPDFUso(dados):gerarXLSXUso(dados); }
-      showToast(`Relatório gerado com sucesso! ${dados.length} registro(s) exportado(s).`,'success');
-    } catch(e){ console.error(e); showToast('Erro ao gerar o relatório. Tente novamente.','warning'); }
-    finally{ setLoading(false); }
+    try{
+      await new Promise(r=>setTimeout(r,1200));
+      formato==='pdf'?await gerarPDF(apis):gerarXLSX(apis);
+      showToast(`Relatório gerado! ${apis.length} API(s) exportada(s).`,'success');
+    }catch(e){showToast('Erro ao gerar o relatório.','warning');}
+    finally{setLoading(false);}
   };
 
-  const apisCad   = getApisCadastradas();
-  const dadosUso  = getUsoFiltrado();
-  const dadosAtivos = aba==='cadastradas'?apisCad:dadosUso;
-  const {slug}    = now();
-
-  const inputSt = {height:38,borderRadius:5,border:`1px solid ${C.border}`,padding:'0 10px',fontSize:13,color:C.textPrimary,background:'#fff',outline:'none',width:'100%'};
+  const apis   = getApis();
+  const iSt    = {height:38,borderRadius:5,border:`1px solid ${C.border}`,padding:'0 10px',fontSize:13,color:C.textPrimary,background:'#fff',outline:'none',width:'100%'};
+  const {slug} = now();
 
   return (
     <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
       <div style={{marginBottom:20}}>
-        <h1 style={{fontSize:26,fontWeight:700,color:C.textPrimary,letterSpacing:'-0.15px',marginBottom:4}}>Relatórios</h1>
-        <p style={{fontSize:14,color:C.textSecondary}}>Gere relatórios para análise, auditoria e prestação de contas do ecossistema de APIs.</p>
+        <div style={{fontSize:11,color:C.textSecondary,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Relatórios</div>
+        <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:4}}>APIs Cadastradas</h1>
+        <p style={{fontSize:13,color:C.textSecondary}}>Inventário completo das APIs do catálogo com exportação em PDF e Excel. <span style={{color:C.brand,fontSize:11,fontWeight:500}}>HU.03.03</span></p>
       </div>
 
-      {/* Abas */}
-      <div style={{display:'flex',gap:0,borderBottom:`2px solid ${C.divider}`,marginBottom:20}}>
-        {[
-          {key:'cadastradas', label:'APIs Cadastradas',     desc:'HU.03.03'},
-          {key:'uso',         label:'Uso e Consumo de APIs',desc:'HU.03.04'},
-        ].map(tab=>(
-          <button key={tab.key} onClick={()=>setAba(tab.key)}
-            style={{padding:'10px 20px',border:'none',background:'none',cursor:'pointer',fontSize:13,fontWeight:aba===tab.key?700:400,color:aba===tab.key?C.brand:C.textSecondary,borderBottom:`2px solid ${aba===tab.key?C.brand:'transparent'}`,marginBottom:-2,display:'flex',alignItems:'center',gap:8,transition:'all 0.15s'}}>
-            {tab.label}
-            <span style={{fontSize:10,background:aba===tab.key?C.infoBg:C.divider,color:aba===tab.key?C.brand:C.textSecondary,padding:'1px 6px',borderRadius:100,fontWeight:600}}>{tab.desc}</span>
-          </button>
-        ))}
-      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20,alignItems:'start'}}>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:20,alignItems:'start'}}>
-
-        {/* Painel esquerdo: filtros + preview tabela */}
+        {/* Filtros */}
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
-
-          {/* Filtros */}
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{background:C.brandDark,padding:'12px 18px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <div>
-                <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Filtros</div>
-                <div style={{fontSize:11,color:'rgba(248,250,252,0.65)'}}>Serão aplicados na geração e registrados no cabeçalho</div>
-              </div>
+            <div style={{background:C.brandDark,padding:'12px 18px'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Filtros</div>
+              <div style={{fontSize:11,color:'rgba(248,250,252,0.6)'}}>Aplicados na geração e registrados no cabeçalho do arquivo</div>
             </div>
-            <div style={{padding:'16px 18px'}}>
-              {aba==='cadastradas' ? (
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                  {/* Órgão */}
-                  <div>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div>
-                    <div style={{position:'relative'}}>
-                      <select value={f1.orgaoId} onChange={e=>setF1(p=>({...p,orgaoId:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
-                        <option value="">Todos</option>
-                        {ORGAOS.map(o=><option key={o.id} value={o.id}>{o.shortName}</option>)}
-                      </select>
-                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
-                    </div>
-                  </div>
-                  {/* Status */}
-                  <div>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Status</div>
-                    <div style={{position:'relative'}}>
-                      <select value={f1.status} onChange={e=>setF1(p=>({...p,status:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
-                        <option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option>
-                      </select>
-                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
-                    </div>
-                  </div>
-                  {/* Categoria */}
-                  <div>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Categoria</div>
-                    <div style={{position:'relative'}}>
-                      <select value={f1.categoriaId} onChange={e=>setF1(p=>({...p,categoriaId:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
-                        <option value="">Todas</option>
-                        {CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
-                      </select>
-                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
-                    </div>
-                  </div>
-                  {/* Data */}
-                  <div>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Data criação — de</div>
-                    <input type="date" value={f1.dataInicio} onChange={e=>setF1(p=>({...p,dataInicio:e.target.value}))} style={inputSt}/>
-                  </div>
-                  <div style={{gridColumn:'1/-1'}}>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Data criação — até</div>
-                    <input type="date" value={f1.dataFim} onChange={e=>setF1(p=>({...p,dataFim:e.target.value}))} style={inputSt}/>
-                  </div>
-                </div>
-              ) : (
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                  {/* API */}
-                  <div style={{gridColumn:'1/-1'}}>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Nome da API</div>
-                    <input value={f2.apiNome} onChange={e=>setF2(p=>({...p,apiNome:e.target.value}))} placeholder="Busca parcial..." style={inputSt}/>
-                  </div>
-                  {/* Órgão consumidor */}
-                  <div>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div>
-                    <div style={{position:'relative'}}>
-                      <select value={f2.orgaoConsumidor} onChange={e=>setF2(p=>({...p,orgaoConsumidor:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
-                        <option value="">Todos</option>
-                        {['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES'].map(o=><option key={o} value={o}>{o}</option>)}
-                      </select>
-                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
-                    </div>
-                  </div>
-                  {/* Período */}
-                  <div>
-                    <div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Período</div>
-                    <div style={{position:'relative'}}>
-                      <select value={f2.periodo} onChange={e=>setF2(p=>({...p,periodo:e.target.value}))} style={{...inputSt,appearance:'none',paddingRight:28,cursor:'pointer'}}>
-                        <option value="1m">Último mês</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="12m">Último ano</option>
-                      </select>
-                      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <button onClick={()=>aba==='cadastradas'?setF1({orgaoId:'',status:'',categoriaId:'',dataInicio:'',dataFim:''}):setF2({apiNome:'',orgaoConsumidor:'',periodo:'6m'})}
-                style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:C.brand,marginTop:10,padding:0,textDecoration:'underline'}}>Limpar filtros</button>
+            <div style={{padding:'16px 18px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div><div style={{position:'relative'}}><select value={f.orgaoId} onChange={e=>setFil('orgaoId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todos</option>{ORGAOS.map(o=><option key={o.id} value={o.id}>{o.shortName}</option>)}</select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
+              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Status</div><div style={{position:'relative'}}><select value={f.status} onChange={e=>setFil('status',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
+              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Categoria</div><div style={{position:'relative'}}><select value={f.categoriaId} onChange={e=>setFil('categoriaId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todas</option>{CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
+              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Criação — de</div><input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt}/></div>
+              <div style={{gridColumn:'1/-1'}}><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Criação — até</div><input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt}/></div>
+              <div style={{gridColumn:'1/-1'}}><button onClick={()=>setF({orgaoId:'',status:'',categoriaId:'',dataInicio:'',dataFim:''})} style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:C.brand,padding:0,textDecoration:'underline'}}>Limpar filtros</button></div>
             </div>
           </div>
 
-          {/* Preview tabela de dados */}
+          {/* Prévia */}
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>Prévia dos dados — {dadosAtivos.length} registro{dadosAtivos.length!==1?'s':''}</span>
-              <button onClick={()=>setPreview(p=>!p)} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>{preview?'Ocultar':'Expandir'}</button>
+            <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>Prévia — {apis.length} registro{apis.length!==1?'s':''}</span>
+              <button onClick={()=>setPreview(p=>!p)} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>{preview?'Recolher':'Expandir'}</button>
             </div>
-            <div style={{overflowX:'auto',maxHeight:preview?280:140,transition:'max-height 0.3s'}}>
+            <div style={{overflowX:'auto',maxHeight:preview?260:120,overflow:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
-                {aba==='cadastradas'?(
-                  <>
-                    <thead><tr>{['Nome','Órgão','Versão','Status','Categoria'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
-                    <tbody>{apisCad.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,color:C.textPrimary,fontWeight:500}}>{a.nome}</td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{ORGAOS.find(o=>o.id===a.orgaoId)?.shortName}</td><td style={{padding:'7px 12px',fontSize:11}}>{a.versao}</td><td style={{padding:'7px 12px'}}><BadgeApi status={a.status}/></td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td></tr>)}</tbody>
-                  </>
-                ):(
-                  <>
-                    <thead><tr>{['API','Órgão','Requisições','Erros','Disp.','Tendência'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
-                    <tbody>{dadosUso.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,color:C.textPrimary,fontWeight:500}}>{a.nome}</td><td style={{padding:'7px 12px',fontSize:11}}><span style={{background:C.infoBg,color:C.brand,padding:'1px 6px',borderRadius:100,fontSize:10,fontWeight:600}}>{a.orgao}</span></td><td style={{padding:'7px 12px',fontSize:12,fontWeight:700,color:C.brand}}>{a.requisicoes.toLocaleString('pt-BR')}</td><td style={{padding:'7px 12px',fontSize:12,color:a.erros>200?C.danger:C.textSecondary}}>{a.erros}</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.dispMedia>=98?C.success:C.warning}}>{a.dispMedia}%</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.tendencia>0?C.success:C.danger}}>{a.tendencia>0?'+':''}{a.tendencia}%</td></tr>)}</tbody>
-                  </>
-                )}
+                <thead><tr>{['Nome','Órgão','Versão','Status','Categoria'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+                <tbody>{apis.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,fontWeight:500,color:C.textPrimary}}>{a.nome}</td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{ORGAOS.find(o=>o.id===a.orgaoId)?.shortName}</td><td style={{padding:'7px 12px',fontSize:11}}>{a.versao}</td><td style={{padding:'7px 12px'}}><BadgeApi status={a.status}/></td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td></tr>)}</tbody>
               </table>
             </div>
           </div>
-
-          {/* Gráfico de barras — uso */}
-          {aba==='uso'&&(
-            <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px 18px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-              <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:14}}>APIs mais consumidas no período</div>
-              <BarChart
-                data={getUsoFiltrado().slice(0,6).map(a=>({...a,mes:a.orgao}))}
-                keys={['requisicoes']}
-                colors={['#0034B7']}
-                height={110}
-              />
-            </div>
-          )}
         </div>
 
-        {/* Painel direito: exportação */}
+        {/* Exportação */}
         <div style={{display:'flex',flexDirection:'column',gap:14}}>
-          {/* Sumário */}
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
             <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:12}}>Sumário</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {(aba==='cadastradas'?[
-                {label:'Registros',         valor:apisCad.length},
-                {label:'APIs Ativas',        valor:apisCad.filter(a=>a.status==='Ativo').length},
-                {label:'APIs Inativas',      valor:apisCad.filter(a=>a.status==='Inativo').length},
-                {label:'Órgãos únicos',      valor:[...new Set(apisCad.map(a=>a.orgaoId))].length},
-              ]:[
-                {label:'APIs no relatório',   valor:dadosUso.length},
-                {label:'Total requisições',   valor:dadosUso.reduce((s,a)=>s+a.requisicoes,0).toLocaleString('pt-BR')},
-                {label:'Total erros',         valor:dadosUso.reduce((s,a)=>s+a.erros,0).toLocaleString('pt-BR')},
-                {label:'Disp. média',         valor:(dadosUso.length?dadosUso.reduce((s,a)=>s+a.dispMedia,0)/dadosUso.length:0).toFixed(1)+'%'},
-              ]).map(item=>(
+              {[{label:'Registros',valor:apis.length},{label:'Ativas',valor:apis.filter(a=>a.status==='Ativo').length},{label:'Inativas',valor:apis.filter(a=>a.status==='Inativo').length},{label:'Órgãos',valor:[...new Set(apis.map(a=>a.orgaoId))].length}].map(item=>(
                 <div key={item.label} style={{background:C.bg,borderRadius:6,padding:'8px 10px'}}>
-                  <div style={{fontSize:10,color:C.textSecondary,marginBottom:3}}>{item.label}</div>
-                  <div style={{fontSize:16,fontWeight:700,color:C.brand}}>{item.valor}</div>
+                  <div style={{fontSize:10,color:C.textSecondary,marginBottom:2}}>{item.label}</div>
+                  <div style={{fontSize:18,fontWeight:700,color:C.brand}}>{item.valor}</div>
                 </div>
               ))}
             </div>
-            <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:C.brand,lineHeight:1.6}}>
-              <strong>Filtros ativos:</strong><br/>{aba==='cadastradas'?filtrosLabel1():filtrosLabel2()}
+            <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:C.brand,lineHeight:1.5}}>
+              <strong>Filtros:</strong> {filtrosLabel()}
             </div>
           </div>
 
-          {/* Formato */}
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Formato de exportação</div>
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Formato</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {[{key:'pdf',label:'PDF',desc:'Relatório formatado',icon:'📄'},{key:'xlsx',label:'Excel',desc:'Planilha (.xlsx)',icon:'📊'}].map(fmt=>(
-                <div key={fmt.key} onClick={()=>setFormato(fmt.key)}
-                  style={{border:`2px solid ${formato===fmt.key?C.brand:C.divider}`,borderRadius:8,padding:'10px 12px',cursor:'pointer',background:formato===fmt.key?C.infoBg:'#fff',transition:'all 0.15s'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{fontSize:16}}>{fmt.icon}</span><span style={{fontSize:13,fontWeight:formato===fmt.key?700:500,color:formato===fmt.key?C.brand:C.textPrimary}}>{fmt.label}</span></div>
-                  <div style={{fontSize:11,color:C.textSecondary}}>{fmt.desc}</div>
+              {[{key:'pdf',icon:'📄',label:'PDF',desc:'Formatado'},{key:'xlsx',icon:'📊',label:'Excel',desc:'Planilha'}].map(fmt=>(
+                <div key={fmt.key} onClick={()=>setFormato(fmt.key)} style={{border:`2px solid ${formato===fmt.key?C.brand:C.divider}`,borderRadius:8,padding:'10px',cursor:'pointer',background:formato===fmt.key?C.infoBg:'#fff',transition:'all 0.15s'}}>
+                  <div style={{fontSize:14,marginBottom:2}}>{fmt.icon} <span style={{fontWeight:formato===fmt.key?700:500,color:formato===fmt.key?C.brand:C.textPrimary,fontSize:13}}>{fmt.label}</span></div>
+                  <div style={{fontSize:10,color:C.textSecondary}}>{fmt.desc}</div>
                 </div>
               ))}
             </div>
-            {/* Nome do arquivo */}
-            <div style={{background:C.bg,border:`1px solid ${C.divider}`,borderRadius:5,padding:'7px 10px',fontSize:10,color:C.textSecondary,marginBottom:12,fontFamily:'monospace',wordBreak:'break-all'}}>
-              {aba==='cadastradas'?'relatorio-apis':'relatorio-uso-apis'}_{slug}.{formato}
+            <div style={{background:C.bg,borderRadius:5,padding:'6px 10px',fontSize:10,color:C.textSecondary,marginBottom:12,fontFamily:'monospace',wordBreak:'break-all'}}>
+              relatorio-apis_{slug}.{formato}
             </div>
-            {/* Botão */}
-            <button onClick={handleGerar} disabled={loading||dadosAtivos.length===0}
-              style={{width:'100%',height:44,borderRadius:8,background:loading||dadosAtivos.length===0?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||dadosAtivos.length===0?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}
-              onMouseEnter={e=>{if(!loading&&dadosAtivos.length>0)e.currentTarget.style.background=C.brandDark;}}
-              onMouseLeave={e=>{if(!loading&&dadosAtivos.length>0)e.currentTarget.style.background=C.brand;}}
-            >
-              {loading?<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando...</>
-              :<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar {formato.toUpperCase()}</>}
+            <button onClick={handleGerar} disabled={loading||!apis.length}
+              style={{width:'100%',height:42,borderRadius:8,background:loading||!apis.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!apis.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
+              {loading?<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando...</>:<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar {formato.toUpperCase()}</>}
             </button>
-            {dadosAtivos.length===0&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:6}}>Nenhum registro com os filtros aplicados.</p>}
-          </div>
-
-          {/* Nota técnica */}
-          <div style={{background:C.warningBg,border:'1px solid #FFE082',borderRadius:8,padding:'10px 14px',fontSize:11,color:C.warning,lineHeight:1.6}}>
-            <strong>Produção:</strong> Os dados virão dos endpoints <code style={{background:'rgba(0,0,0,0.06)',padding:'1px 4px',borderRadius:3}}>GET /v1/reports/apis</code> e <code style={{background:'rgba(0,0,0,0.06)',padding:'1px 4px',borderRadius:3}}>/v1/reports/usage</code>. A geração será assíncrona no backend para grandes volumes.
+            {!apis.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:6}}>Nenhum registro com os filtros aplicados.</p>}
           </div>
         </div>
       </div>
@@ -2125,6 +2031,186 @@ function Relatorios({ showToast }) {
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.04 — Relatório de Uso e Consumo das APIs
+══════════════════════════════════════════════════════════════ */
+function RelUso({ showToast }) {
+  const [loading, setLoading] = React.useState(false);
+  const [formato, setFormato] = React.useState('pdf');
+  const [preview, setPreview] = React.useState(false);
+  const [f, setF] = React.useState({ apiNome:'', orgaoConsumidor:'', periodo:'6m' });
+
+  const setFil = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const getDados = () => RANKING_APIS.filter(a=>{
+    if(f.apiNome       && !a.nome.toLowerCase().includes(f.apiNome.toLowerCase())) return false;
+    if(f.orgaoConsumidor && a.orgao!==f.orgaoConsumidor) return false;
+    return true;
+  });
+
+  const periodoLabel = {'1m':'Último mês','3m':'Últimos 3 meses','6m':'Últimos 6 meses','12m':'Último ano'}[f.periodo];
+
+  const filtrosLabel = () => {
+    const p=[];
+    if(f.apiNome)         p.push('API: '+f.apiNome);
+    if(f.orgaoConsumidor) p.push('Órgão: '+f.orgaoConsumidor);
+    p.push('Período: '+periodoLabel);
+    return p.join(' | ');
+  };
+
+  const now = () => {
+    const d=new Date();
+    return {data:d.toLocaleDateString('pt-BR'),hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h')};
+  };
+
+  const gerarPDF = async (dados) => {
+    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W=doc.internal.pageSize.getWidth();
+    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
+    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
+    const dispMedia=(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1);
+    doc.setFillColor(0,52,183);doc.rect(0,0,W,26,'F');
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text('Conecta Gov.PE — Relatório de Uso e Consumo das APIs',14,11);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
+    doc.text(`Filtros: ${filtrosLabel()}`,14,22);
+    doc.setFontSize(9);doc.setTextColor(0);
+    doc.text(`Total requisições: ${totalReq.toLocaleString('pt-BR')}   |   Erros: ${totalErr}   |   Disponibilidade média: ${dispMedia}%`,14,32);
+    doc.autoTable({
+      head:[['#','API','Órgão','Requisições','Erros','% Erro','Disp. Média','Tendência']],
+      body:dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes.toLocaleString('pt-BR'),a.erros,((a.erros/a.requisicoes)*100).toFixed(2)+'%',a.dispMedia+'%',(a.tendencia>0?'+':'')+a.tendencia+'%']),
+      startY:37,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[0,52,183],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,243,255]},
+    });
+    doc.save(`relatorio-uso-apis_${slug}.pdf`);
+  };
+
+  const gerarXLSX = (dados) => {
+    const {utils,write}=window.XLSX; const {slug}=now();
+    const {data,hora}=now();
+    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
+    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
+    const cab=[['Conecta Gov.PE — Relatório de Uso e Consumo das APIs'],[`Gerado em: ${data} às ${hora}`],[`Filtros: ${filtrosLabel()}`],[`Total: ${totalReq.toLocaleString('pt-BR')} req | ${totalErr} erros`],[],
+      ['#','API','Órgão','Requisições','Erros','% Erro','Disp. Média (%)','Tendência (%)']];
+    const linhas=dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes,a.erros,+((a.erros/a.requisicoes)*100).toFixed(2),a.dispMedia,a.tendencia]);
+    const ws2=utils.aoa_to_sheet([['Consumo Mensal'],['Mês','Catálogo de Serviços','Consulta de CPF','Boletim de Ocorrência','Emissão de Certidões','Programas Habitacionais'],...CONSUMO_MENSAL.map(m=>[m.mes,m['Catálogo de Serviços'],m['Consulta de CPF'],m['Boletim de Ocorrência'],m['Emissão de Certidões'],m['Programas Habitacionais']])]);
+    ws2['!cols']=[{wch:10},{wch:22},{wch:18},{wch:22},{wch:22},{wch:24}];
+    const ws=utils.aoa_to_sheet([...cab,...linhas]);
+    ws['!cols']=[{wch:4},{wch:38},{wch:14},{wch:18},{wch:12},{wch:10},{wch:16},{wch:16}];
+    const wb=utils.book_new();utils.book_append_sheet(wb,ws,'Uso por API');utils.book_append_sheet(wb,ws2,'Consumo Mensal');
+    const buf=write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`relatorio-uso-apis_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
+  };
+
+  const handleGerar = async () => {
+    const dados=getDados();
+    if(!dados.length){showToast('Nenhum dado com os filtros aplicados.','warning');return;}
+    setLoading(true);
+    try{
+      await new Promise(r=>setTimeout(r,1400));
+      formato==='pdf'?await gerarPDF(dados):gerarXLSX(dados);
+      showToast(`Relatório gerado! ${dados.length} API(s) exportada(s).`,'success');
+    }catch(e){showToast('Erro ao gerar o relatório.','warning');}
+    finally{setLoading(false);}
+  };
+
+  const dados  = getDados();
+  const iSt    = {height:38,borderRadius:5,border:`1px solid ${C.border}`,padding:'0 10px',fontSize:13,color:C.textPrimary,background:'#fff',outline:'none',width:'100%'};
+  const {slug} = now();
+  const totalReq = dados.reduce((s,a)=>s+a.requisicoes,0);
+  const totalErr = dados.reduce((s,a)=>s+a.erros,0);
+  const dispMedia= dados.length?(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1):'—';
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:11,color:C.textSecondary,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Relatórios</div>
+        <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:4}}>Uso e Consumo das APIs</h1>
+        <p style={{fontSize:13,color:C.textSecondary}}>Métricas de uso, disponibilidade e tendência por API. <span style={{color:C.brand,fontSize:11,fontWeight:500}}>HU.03.04</span></p>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20,alignItems:'start'}}>
+
+        {/* Filtros + prévia */}
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{background:C.brand,padding:'12px 18px'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Filtros</div>
+              <div style={{fontSize:11,color:'rgba(248,250,252,0.65)'}}>Aplicados na geração e registrados no cabeçalho</div>
+            </div>
+            <div style={{padding:'16px 18px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div style={{gridColumn:'1/-1'}}><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Nome da API</div><input value={f.apiNome} onChange={e=>setFil('apiNome',e.target.value)} placeholder="Busca parcial..." style={iSt}/></div>
+              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div><div style={{position:'relative'}}><select value={f.orgaoConsumidor} onChange={e=>setFil('orgaoConsumidor',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todos</option>{['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES'].map(o=><option key={o} value={o}>{o}</option>)}</select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
+              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Período</div><div style={{position:'relative'}}><select value={f.periodo} onChange={e=>setFil('periodo',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="1m">Último mês</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="12m">Último ano</option></select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
+              <div style={{gridColumn:'1/-1'}}><button onClick={()=>setF({apiNome:'',orgaoConsumidor:'',periodo:'6m'})} style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:C.brand,padding:0,textDecoration:'underline'}}>Limpar filtros</button></div>
+            </div>
+          </div>
+
+          {/* Prévia tabela */}
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>Prévia — {dados.length} API{dados.length!==1?'s':''}</span>
+              <button onClick={()=>setPreview(p=>!p)} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>{preview?'Recolher':'Expandir'}</button>
+            </div>
+            <div style={{overflowX:'auto',maxHeight:preview?280:130,overflow:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse'}}>
+                <thead><tr>{['API','Órgão','Requisições','Erros','Disp.','Tendência'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+                <tbody>{dados.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,fontWeight:500,color:C.textPrimary}}>{a.nome}</td><td style={{padding:'7px 12px'}}><span style={{fontSize:10,background:C.infoBg,color:C.brand,padding:'1px 6px',borderRadius:100,fontWeight:600}}>{a.orgao}</span></td><td style={{padding:'7px 12px',fontSize:12,fontWeight:700,color:C.brand}}>{a.requisicoes.toLocaleString('pt-BR')}</td><td style={{padding:'7px 12px',fontSize:12,color:a.erros>200?C.danger:C.textSecondary}}>{a.erros}</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.dispMedia>=98?C.success:C.warning}}>{a.dispMedia}%</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.tendencia>0?C.success:C.danger}}>{a.tendencia>0?'+':''}{a.tendencia}%</td></tr>)}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Exportação */}
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:12}}>Sumário do período</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+              {[{label:'APIs',valor:dados.length},{label:'Requisições',valor:totalReq.toLocaleString('pt-BR')},{label:'Erros',valor:totalErr.toLocaleString('pt-BR')},{label:'Disponib. média',valor:dispMedia+'%'}].map(item=>(
+                <div key={item.label} style={{background:C.bg,borderRadius:6,padding:'8px 10px'}}>
+                  <div style={{fontSize:10,color:C.textSecondary,marginBottom:2}}>{item.label}</div>
+                  <div style={{fontSize:16,fontWeight:700,color:C.brand}}>{item.valor}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:C.brand,lineHeight:1.5}}>
+              <strong>Filtros:</strong> {filtrosLabel()}
+            </div>
+          </div>
+
+          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Formato</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+              {[{key:'pdf',icon:'📄',label:'PDF',desc:'Formatado'},{key:'xlsx',icon:'📊',label:'Excel',desc:'2 abas'}].map(fmt=>(
+                <div key={fmt.key} onClick={()=>setFormato(fmt.key)} style={{border:`2px solid ${formato===fmt.key?C.brand:C.divider}`,borderRadius:8,padding:'10px',cursor:'pointer',background:formato===fmt.key?C.infoBg:'#fff',transition:'all 0.15s'}}>
+                  <div style={{fontSize:14,marginBottom:2}}>{fmt.icon} <span style={{fontWeight:formato===fmt.key?700:500,color:formato===fmt.key?C.brand:C.textPrimary,fontSize:13}}>{fmt.label}</span></div>
+                  <div style={{fontSize:10,color:C.textSecondary}}>{fmt.desc}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.bg,borderRadius:5,padding:'6px 10px',fontSize:10,color:C.textSecondary,marginBottom:12,fontFamily:'monospace',wordBreak:'break-all'}}>
+              relatorio-uso-apis_{slug}.{formato}
+            </div>
+            <button onClick={handleGerar} disabled={loading||!dados.length}
+              style={{width:'100%',height:42,borderRadius:8,background:loading||!dados.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!dados.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
+              {loading?<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando...</>:<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar {formato.toUpperCase()}</>}
+            </button>
+            {!dados.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:6}}>Nenhum dado com os filtros aplicados.</p>}
+          </div>
+
+          <div style={{background:C.warningBg,border:'1px solid #FFE082',borderRadius:8,padding:'10px 14px',fontSize:11,color:C.warning,lineHeight:1.55}}>
+            <strong>Produção:</strong> dados via <code style={{background:'rgba(0,0,0,0.06)',padding:'1px 4px',borderRadius:3}}>GET /v1/reports/usage</code> com geração assíncrona no backend.
+          </div>
+        </div>
+      </div>
+      <ScriptLoader/>
+    </div>
+  );
+}
+
 
 /* Carrega jsPDF + autoTable + SheetJS sob demanda */
 function ScriptLoader() {
@@ -2189,7 +2275,8 @@ function App() {
         {section==='apis'       && <GerenciarApis showToast={showToast}/>}
         {section==='categorias' && <GerenciarCategorias showToast={showToast}/>}
         {section==='usuarios'   && <ControleAcesso showToast={showToast}/>}
-        {section==='relatorios' && <Relatorios showToast={showToast}/>}
+        {section==='rel_cadastradas' && <RelCadastradas showToast={showToast}/>}
+        {section==='rel_uso'         && <RelUso showToast={showToast}/>}
         {section==='auditoria'  && <Placeholder titulo="Auditoria" descricao="Log de ações realizadas no backoffice: criação, edição, ativação e inativação de registros. Disponível na próxima sprint." icon="📋"/>}
         {section==='config'     && <Placeholder titulo="Configurações" descricao="Configurações gerais, de segurança e integrações do portal. Disponível na próxima sprint." icon="⚙️"/>}
       </div>
