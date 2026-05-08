@@ -2128,21 +2128,18 @@ function RelUso({ showToast }) {
   const [buscado,   setBuscado]   = React.useState(false);
   const [resultado, setResultado] = React.useState([]);
   const [f, setF] = React.useState({
-    apiNome:         '',
-    orgaoResponsavel:'',
-    solicitante:     '',
-    dataInicio:      '',
-    dataFim:         '',
+    apiNome:    '',
+    tipo:       '',   /* 'Órgão público' | 'Empresa privada' | '' */
+    dataInicio: '',
+    dataFim:    '',
   });
 
   const setFil = (k,v) => setF(p=>({...p,[k]:v}));
 
-  /* Listas para dropdowns */
-  const apisUnicas    = [...new Set(DADOS_USO_APIS.map(d=>d.api))].sort();
-  const orgaosResp    = [...new Set(DADOS_USO_APIS.map(d=>d.orgaoResponsavel))].sort();
-  const solicitantes  = [...new Set(DADOS_USO_APIS.map(d=>d.solicitante))].sort();
+  /* Listas para dropdown de API */
+  const apisUnicas = [...new Set(DADOS_USO_APIS.map(d=>d.api))].sort();
 
-  /* Converte dd/mm/aaaa para Date */
+  /* Converte dd/mm/aaaa → Date */
   const parseDate = str => {
     if(!str) return null;
     const [d,m,y] = str.split('/');
@@ -2150,29 +2147,27 @@ function RelUso({ showToast }) {
   };
 
   const getDados = () => DADOS_USO_APIS.filter(d=>{
-    if(f.apiNome          && d.api              !== f.apiNome)          return false;
-    if(f.orgaoResponsavel && d.orgaoResponsavel !== f.orgaoResponsavel) return false;
-    if(f.solicitante      && d.solicitante      !== f.solicitante)      return false;
+    if(f.apiNome && d.api  !== f.apiNome) return false;
+    if(f.tipo    && d.tipo !== f.tipo)    return false;
     if(f.dataInicio){
-      const ini = parseDate(f.dataInicio.split('-').reverse().join('/'));
+      const ini = new Date(f.dataInicio);
       const rec = parseDate(d.dataSolicitacao);
-      if(rec && ini && rec < ini) return false;
+      if(rec && rec < ini) return false;
     }
     if(f.dataFim){
-      const fim = parseDate(f.dataFim.split('-').reverse().join('/'));
+      const fim = new Date(f.dataFim);
       const rec = parseDate(d.dataSolicitacao);
-      if(rec && fim && rec > fim) return false;
+      if(rec && rec > fim) return false;
     }
     return true;
   });
 
   const filtrosLabel = () => {
     const p=[];
-    if(f.apiNome)          p.push('API: '+f.apiNome);
-    if(f.orgaoResponsavel) p.push('Órgão resp.: '+f.orgaoResponsavel);
-    if(f.solicitante)      p.push('Solicitante: '+f.solicitante);
-    if(f.dataInicio)       p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
-    if(f.dataFim)          p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
+    if(f.apiNome)    p.push('API: '+f.apiNome);
+    if(f.tipo)       p.push('Tipo: '+f.tipo);
+    if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
+    if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
     return p.length ? p.join(' | ') : 'Sem filtros — todos os registros';
   };
 
@@ -2187,11 +2182,25 @@ function RelUso({ showToast }) {
 
   const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
   const handleLimpar = () => {
-    setF({apiNome:'',orgaoResponsavel:'',solicitante:'',dataInicio:'',dataFim:''});
+    setF({apiNome:'',tipo:'',dataInicio:'',dataFim:''});
     setResultado([]); setBuscado(false);
   };
 
-  /* Status badge */
+  /* Badge tipo */
+  const TipoBadge = ({tipo}) => {
+    const isOrgao = tipo === 'Órgão público';
+    return (
+      <span style={{fontSize:11,fontWeight:600,
+        background: isOrgao ? '#E6F3FF' : '#EAFBD7',
+        color:      isOrgao ? '#0034B7' : '#2B6418',
+        border:     `1px solid ${isOrgao?'#99C6FF':'#86D562'}`,
+        padding:'2px 8px',borderRadius:100,whiteSpace:'nowrap'}}>
+        {tipo}
+      </span>
+    );
+  };
+
+  /* Badge status */
   const StatusBadge = ({status}) => {
     const cfg = status==='Ativo'
       ? {bg:'#EAFBD7',color:'#2B6418',border:'#86D562'}
@@ -2215,15 +2224,22 @@ function RelUso({ showToast }) {
     doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,19);
     doc.text(`Filtros: ${filtrosLabel()}`,14,24);
-    doc.text(`Total de solicitações: ${dados.length}`,14,29);
+    doc.text(`Total: ${dados.length} solicitação(ões)`,14,29);
     doc.autoTable({
-      head:[['#','API','Órgão Responsável','Solicitante','Tipo','Data da Solicitação','Status']],
-      body:dados.map((d,i)=>[i+1,d.api,d.orgaoResponsavel,d.solicitante,d.tipo,d.dataSolicitacao,d.status]),
+      head:[['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Status']],
+      body:dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.status]),
       startY:33,
       styles:{fontSize:9,cellPadding:3},
       headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
       alternateRowStyles:{fillColor:[230,243,255]},
-      columnStyles:{0:{cellWidth:10},1:{cellWidth:58},2:{cellWidth:32},3:{cellWidth:42},4:{cellWidth:28},5:{cellWidth:30},6:{cellWidth:22}},
+      columnStyles:{
+        0:{cellWidth:10},
+        1:{cellWidth:58},
+        2:{cellWidth:42},
+        3:{cellWidth:32},
+        4:{cellWidth:30},
+        5:{cellWidth:20},
+      },
       didDrawPage:()=>{
         doc.setFontSize(7); doc.setTextColor(120);
         doc.text(`Pág. ${doc.internal.getCurrentPageInfo().pageNumber}  |  ${dados.length} solicitações`,
@@ -2241,13 +2257,13 @@ function RelUso({ showToast }) {
       [`Gerado em: ${data} às ${hora}`],
       [`Usuário: João Silva (ADM)`],
       [`Filtros: ${filtrosLabel()}`],
-      [`Total de solicitações: ${dados.length}`],
+      [`Total: ${dados.length} solicitação(ões)`],
       [],
-      ['#','API','Órgão Responsável','Solicitante','Tipo de Solicitante','Data da Solicitação','Status'],
+      ['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Status'],
     ];
-    const linhas=dados.map((d,i)=>[i+1,d.api,d.orgaoResponsavel,d.solicitante,d.tipo,d.dataSolicitacao,d.status]);
+    const linhas=dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.status]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:40},{wch:20},{wch:30},{wch:20},{wch:22},{wch:12}];
+    ws['!cols']=[{wch:4},{wch:42},{wch:32},{wch:20},{wch:22},{wch:12}];
     const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso das APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2296,8 +2312,8 @@ function RelUso({ showToast }) {
       {/* Card filtros */}
       <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
-        {/* Linha 1: API + Órgão responsável + Solicitante */}
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
+        {/* Linha 1: API + Tipo */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:16,marginBottom:14}}>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>API</label>
             <Sel value={f.apiNome} onChange={v=>setFil('apiNome',v)}>
@@ -2306,17 +2322,11 @@ function RelUso({ showToast }) {
             </Sel>
           </div>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão responsável</label>
-            <Sel value={f.orgaoResponsavel} onChange={v=>setFil('orgaoResponsavel',v)}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Tipo de Solicitante</label>
+            <Sel value={f.tipo} onChange={v=>setFil('tipo',v)}>
               <option value="">Todos</option>
-              {orgaosResp.map(o=><option key={o} value={o}>{o}</option>)}
-            </Sel>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Solicitante</label>
-            <Sel value={f.solicitante} onChange={v=>setFil('solicitante',v)}>
-              <option value="">Todos</option>
-              {solicitantes.map(s=><option key={s} value={s}>{s}</option>)}
+              <option value="Órgão público">Órgão público</option>
+              <option value="Empresa privada">Empresa privada</option>
             </Sel>
           </div>
         </div>
@@ -2385,7 +2395,7 @@ function RelUso({ showToast }) {
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr>
-                    {['#','API','Órgão Responsável','Solicitante','Tipo','Data da Solicitação','Status'].map(h=>(
+                    {['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Status'].map(h=>(
                       <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
                         {h}
                       </th>
@@ -2400,17 +2410,8 @@ function RelUso({ showToast }) {
                       onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{i+1}</td>
                       <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{d.api}</td>
-                      <td style={{padding:'9px 14px'}}>
-                        <span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 8px',borderRadius:100,border:'1px solid #99C6FF'}}>
-                          {d.orgaoResponsavel}
-                        </span>
-                      </td>
                       <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
-                      <td style={{padding:'9px 14px'}}>
-                        <span style={{fontSize:11,color:'#494C57',background:'#F8FAFC',padding:'2px 8px',borderRadius:100,border:'1px solid #CED2D7'}}>
-                          {d.tipo}
-                        </span>
-                      </td>
+                      <td style={{padding:'9px 14px'}}><TipoBadge tipo={d.tipo}/></td>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.dataSolicitacao}</td>
                       <td style={{padding:'9px 14px'}}><StatusBadge status={d.status}/></td>
                     </tr>
