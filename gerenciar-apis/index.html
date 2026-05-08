@@ -2008,12 +2008,16 @@ function RelCadastradas({ showToast }) {
           {/* Botões alinhados à direita */}
           <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'flex-end'}}>
             <button onClick={handleLimpar}
-              style={{height:38,padding:'0 16px',borderRadius:4,border:'1px solid #CED2D7',background:'#fff',color:'#494C57',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-              ✕ Limpar
+              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#E6F3FF';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+              Limpar
             </button>
             <button onClick={handleBuscar}
-              style={{height:38,padding:'0 20px',borderRadius:4,border:'none',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-              <Icon name="search" size={13} color="#fff"/> Buscar
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+              Aplicar
             </button>
           </div>
         </div>
@@ -2032,12 +2036,16 @@ function RelCadastradas({ showToast }) {
             {/* Botões de exportação */}
             <div style={{display:'flex',gap:6}}>
               <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
-                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#1D6F42',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
-                <span>📊</span> Excel
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#E6F3FF';}}}
+                onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+                Excel
               </button>
               <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
-                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#AC1010',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
-                <span>📄</span> PDF
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#001A7A'}`,background:loading||!resultado.length?'#CED2D7':'#001A7A',color:'#fff',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}}
+                onMouseLeave={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}}>
+                PDF
               </button>
               {loading&&<span style={{fontSize:11,color:'#888',alignSelf:'center',marginLeft:4}}>Gerando...</span>}
             </div>
@@ -2220,12 +2228,16 @@ function RelUso({ showToast }) {
           </div>
           <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'flex-end'}}>
             <button onClick={handleLimpar}
-              style={{height:38,padding:'0 16px',borderRadius:4,border:'1px solid #CED2D7',background:'#fff',color:'#494C57',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-              ✕ Limpar
+              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#E6F3FF';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+              Limpar
             </button>
             <button onClick={handleBuscar}
-              style={{height:38,padding:'0 20px',borderRadius:4,border:'none',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-              <Icon name="search" size={13} color="#fff"/> Buscar
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+              Aplicar
             </button>
           </div>
         </div>
@@ -2242,12 +2254,16 @@ function RelUso({ showToast }) {
             </div>
             <div style={{display:'flex',gap:6}}>
               <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
-                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#1D6F42',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
-                <span>📊</span> Excel
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#E6F3FF';}}}
+                onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+                Excel
               </button>
               <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
-                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#AC1010',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
-                <span>📄</span> PDF
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#001A7A'}`,background:loading||!resultado.length?'#CED2D7':'#001A7A',color:'#fff',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}}
+                onMouseLeave={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}}>
+                PDF
               </button>
               {loading&&<span style={{fontSize:11,color:'#888',alignSelf:'center',marginLeft:4}}>Gerando...</span>}
             </div>
