@@ -299,8 +299,8 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
         {label:'Uso e Consumo',    key:'rel_uso'},
       ]
     },
-    { label:'Auditoria',           key:'auditoria',  icon:'audit' },
-    { label:'Configurações',       key:'config',     icon:'settings', hasDropdown:true },
+    { label:'Auditoria',           key:'auditoria',  icon:'audit',    hidden:true },
+    { label:'Configurações',       key:'config',     icon:'settings', hasDropdown:true, hidden:true },
   ];
   const W = collapsed ? 56 : 200;
 
@@ -433,7 +433,7 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
           {collapsed?'»':'«'}
         </button>
       </div>
-      <nav style={{flex:1}}>{items.map(item=><NavItem key={item.key} item={item}/>)}</nav>
+      <nav style={{flex:1}}>{items.filter(i=>!i.hidden).map(item=><NavItem key={item.key} item={item}/>)}</nav>
     </div>
   );
 }
@@ -1951,7 +1951,7 @@ function RelCadastradas({ showToast }) {
       <div style={{marginBottom:20}}>
         <div style={{fontSize:11,color:C.textSecondary,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Relatórios</div>
         <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:4}}>APIs Cadastradas</h1>
-        <p style={{fontSize:13,color:C.textSecondary}}>Inventário completo das APIs do catálogo com exportação em PDF e Excel. <span style={{color:C.brand,fontSize:11,fontWeight:500}}>HU.03.03</span></p>
+
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20,alignItems:'start'}}>
@@ -1991,38 +1991,20 @@ function RelCadastradas({ showToast }) {
         {/* Exportação */}
         <div style={{display:'flex',flexDirection:'column',gap:14}}>
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:12}}>Sumário</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {[{label:'Registros',valor:apis.length},{label:'Ativas',valor:apis.filter(a=>a.status==='Ativo').length},{label:'Inativas',valor:apis.filter(a=>a.status==='Inativo').length},{label:'Órgãos',valor:[...new Set(apis.map(a=>a.orgaoId))].length}].map(item=>(
-                <div key={item.label} style={{background:C.bg,borderRadius:6,padding:'8px 10px'}}>
-                  <div style={{fontSize:10,color:C.textSecondary,marginBottom:2}}>{item.label}</div>
-                  <div style={{fontSize:18,fontWeight:700,color:C.brand}}>{item.valor}</div>
-                </div>
-              ))}
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:6}}>Exportar relatório</div>
+            <div style={{fontSize:11,color:C.textSecondary,marginBottom:14}}>{apis.length} registro{apis.length!==1?'s':''} · {filtrosLabel()}</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <button onClick={()=>{setFormato('pdf');setTimeout(handleGerar,50);}} disabled={loading||!apis.length}
+                style={{width:'100%',height:42,borderRadius:8,background:loading||!apis.length?C.border:C.brandDark,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!apis.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
+                <span style={{fontSize:15}}>📄</span> Exportar PDF
+              </button>
+              <button onClick={()=>{setFormato('xlsx');setTimeout(handleGerar,50);}} disabled={loading||!apis.length}
+                style={{width:'100%',height:42,borderRadius:8,background:loading||!apis.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!apis.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
+                <span style={{fontSize:15}}>📊</span> Exportar Excel (.xlsx)
+              </button>
             </div>
-            <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:C.brand,lineHeight:1.5}}>
-              <strong>Filtros:</strong> {filtrosLabel()}
-            </div>
-          </div>
-
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Formato</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {[{key:'pdf',icon:'📄',label:'PDF',desc:'Formatado'},{key:'xlsx',icon:'📊',label:'Excel',desc:'Planilha'}].map(fmt=>(
-                <div key={fmt.key} onClick={()=>setFormato(fmt.key)} style={{border:`2px solid ${formato===fmt.key?C.brand:C.divider}`,borderRadius:8,padding:'10px',cursor:'pointer',background:formato===fmt.key?C.infoBg:'#fff',transition:'all 0.15s'}}>
-                  <div style={{fontSize:14,marginBottom:2}}>{fmt.icon} <span style={{fontWeight:formato===fmt.key?700:500,color:formato===fmt.key?C.brand:C.textPrimary,fontSize:13}}>{fmt.label}</span></div>
-                  <div style={{fontSize:10,color:C.textSecondary}}>{fmt.desc}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{background:C.bg,borderRadius:5,padding:'6px 10px',fontSize:10,color:C.textSecondary,marginBottom:12,fontFamily:'monospace',wordBreak:'break-all'}}>
-              relatorio-apis_{slug}.{formato}
-            </div>
-            <button onClick={handleGerar} disabled={loading||!apis.length}
-              style={{width:'100%',height:42,borderRadius:8,background:loading||!apis.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!apis.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
-              {loading?<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando...</>:<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar {formato.toUpperCase()}</>}
-            </button>
-            {!apis.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:6}}>Nenhum registro com os filtros aplicados.</p>}
+            {loading&&<p style={{fontSize:11,color:C.textSecondary,textAlign:'center',marginTop:8,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando arquivo...</p>}
+            {!apis.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:8}}>Nenhum registro com os filtros aplicados.</p>}
           </div>
         </div>
       </div>
@@ -2128,7 +2110,7 @@ function RelUso({ showToast }) {
       <div style={{marginBottom:20}}>
         <div style={{fontSize:11,color:C.textSecondary,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Relatórios</div>
         <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:4}}>Uso e Consumo das APIs</h1>
-        <p style={{fontSize:13,color:C.textSecondary}}>Métricas de uso, disponibilidade e tendência por API. <span style={{color:C.brand,fontSize:11,fontWeight:500}}>HU.03.04</span></p>
+
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20,alignItems:'start'}}>
@@ -2166,42 +2148,20 @@ function RelUso({ showToast }) {
         {/* Exportação */}
         <div style={{display:'flex',flexDirection:'column',gap:14}}>
           <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:12}}>Sumário do período</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {[{label:'APIs',valor:dados.length},{label:'Requisições',valor:totalReq.toLocaleString('pt-BR')},{label:'Erros',valor:totalErr.toLocaleString('pt-BR')},{label:'Disponib. média',valor:dispMedia+'%'}].map(item=>(
-                <div key={item.label} style={{background:C.bg,borderRadius:6,padding:'8px 10px'}}>
-                  <div style={{fontSize:10,color:C.textSecondary,marginBottom:2}}>{item.label}</div>
-                  <div style={{fontSize:16,fontWeight:700,color:C.brand}}>{item.valor}</div>
-                </div>
-              ))}
+            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:6}}>Exportar relatório</div>
+            <div style={{fontSize:11,color:C.textSecondary,marginBottom:14}}>{dados.length} API{dados.length!==1?'s':''} · {filtrosLabel()}</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <button onClick={()=>{setFormato('pdf');setTimeout(handleGerar,50);}} disabled={loading||!dados.length}
+                style={{width:'100%',height:42,borderRadius:8,background:loading||!dados.length?C.border:C.brandDark,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!dados.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
+                <span style={{fontSize:15}}>📄</span> Exportar PDF
+              </button>
+              <button onClick={()=>{setFormato('xlsx');setTimeout(handleGerar,50);}} disabled={loading||!dados.length}
+                style={{width:'100%',height:42,borderRadius:8,background:loading||!dados.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!dados.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
+                <span style={{fontSize:15}}>📊</span> Exportar Excel (.xlsx)
+              </button>
             </div>
-            <div style={{background:C.infoBg,border:`1px solid ${C.infoBorder}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:C.brand,lineHeight:1.5}}>
-              <strong>Filtros:</strong> {filtrosLabel()}
-            </div>
-          </div>
-
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:10}}>Formato</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {[{key:'pdf',icon:'📄',label:'PDF',desc:'Formatado'},{key:'xlsx',icon:'📊',label:'Excel',desc:'2 abas'}].map(fmt=>(
-                <div key={fmt.key} onClick={()=>setFormato(fmt.key)} style={{border:`2px solid ${formato===fmt.key?C.brand:C.divider}`,borderRadius:8,padding:'10px',cursor:'pointer',background:formato===fmt.key?C.infoBg:'#fff',transition:'all 0.15s'}}>
-                  <div style={{fontSize:14,marginBottom:2}}>{fmt.icon} <span style={{fontWeight:formato===fmt.key?700:500,color:formato===fmt.key?C.brand:C.textPrimary,fontSize:13}}>{fmt.label}</span></div>
-                  <div style={{fontSize:10,color:C.textSecondary}}>{fmt.desc}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{background:C.bg,borderRadius:5,padding:'6px 10px',fontSize:10,color:C.textSecondary,marginBottom:12,fontFamily:'monospace',wordBreak:'break-all'}}>
-              relatorio-uso-apis_{slug}.{formato}
-            </div>
-            <button onClick={handleGerar} disabled={loading||!dados.length}
-              style={{width:'100%',height:42,borderRadius:8,background:loading||!dados.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!dados.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
-              {loading?<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando...</>:<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar {formato.toUpperCase()}</>}
-            </button>
-            {!dados.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:6}}>Nenhum dado com os filtros aplicados.</p>}
-          </div>
-
-          <div style={{background:C.warningBg,border:'1px solid #FFE082',borderRadius:8,padding:'10px 14px',fontSize:11,color:C.warning,lineHeight:1.55}}>
-            <strong>Produção:</strong> dados via <code style={{background:'rgba(0,0,0,0.06)',padding:'1px 4px',borderRadius:3}}>GET /v1/reports/usage</code> com geração assíncrona no backend.
+            {loading&&<p style={{fontSize:11,color:C.textSecondary,textAlign:'center',marginTop:8,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando arquivo...</p>}
+            {!dados.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:8}}>Nenhum dado com os filtros aplicados.</p>}
           </div>
         </div>
       </div>
