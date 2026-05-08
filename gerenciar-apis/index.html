@@ -2090,92 +2090,187 @@ function RelCadastradas({ showToast }) {
 /* ═══════════════════════════════════════════════════════════════
    HU.03.04 — Relatório de Uso e Consumo das APIs
 ══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.04 — Relatório de Uso das APIs
+   Responde: quais órgãos estão consumindo quais APIs?
+   Colunas: API | Órgão responsável | Qtd. chamadas | Período | Órgão consumidor
+   ADM vê todas as APIs. Cedente vê apenas APIs do seu órgão.
+══════════════════════════════════════════════════════════════ */
+
+/* Dados simulados de consumo — refletem quem usou qual API e quantas vezes
+   Em produção: virão do endpoint GET /v1/reports/usage com filtros de período */
+const DADOS_USO_APIS = [
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEFAZ',  chamadas:1840, periodo:'Abr/2025' },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SES',    chamadas:1320, periodo:'Abr/2025' },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEE',    chamadas:980,  periodo:'Abr/2025' },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEDS',   chamadas:680,  periodo:'Abr/2025' },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SES',    chamadas:2100, periodo:'Abr/2025' },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SEPLAG', chamadas:1540, periodo:'Abr/2025' },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SEDS',   chamadas:1060, periodo:'Abr/2025' },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'ATI',    chamadas:870,  periodo:'Abr/2025' },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SERES',  chamadas:430,  periodo:'Abr/2025' },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SES',    chamadas:1200, periodo:'Abr/2025' },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SEE',    chamadas:760,  periodo:'Abr/2025' },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SEDS',   chamadas:540,  periodo:'Abr/2025' },
+  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   orgaoConsumidor:'SEPLAG', chamadas:620,  periodo:'Abr/2025' },
+  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   orgaoConsumidor:'ATI',    chamadas:380,  periodo:'Abr/2025' },
+  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    orgaoConsumidor:'ATI',    chamadas:310,  periodo:'Abr/2025' },
+  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    orgaoConsumidor:'SEFAZ',  chamadas:290,  periodo:'Abr/2025' },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    orgaoConsumidor:'SEFAZ',  chamadas:1620, periodo:'Mar/2025' },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'SES',    chamadas:1890, periodo:'Mar/2025' },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', orgaoConsumidor:'SES',    chamadas:1050, periodo:'Mar/2025' },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  orgaoConsumidor:'ATI',    chamadas:780,  periodo:'Mar/2025' },
+];
+
 function RelUso({ showToast }) {
-  const [loading, setLoading] = React.useState(false);
-  const [buscado, setBuscado] = React.useState(false);
-  const [f, setF] = React.useState({ apiNome:'', orgaoConsumidor:'', dataInicio:'', dataFim:'', periodo:'6m' });
+  const [loading,   setLoading]   = React.useState(false);
+  const [buscado,   setBuscado]   = React.useState(false);
   const [resultado, setResultado] = React.useState([]);
+  const [f, setF] = React.useState({
+    apiNome:         '',
+    orgaoResponsavel:'',   /* filtro do Cedente — fixo se perfil Cedente */
+    orgaoConsumidor: '',
+    periodo:         '',   /* ex: "Abr/2025" */
+  });
 
   const setFil = (k,v) => setF(p=>({...p,[k]:v}));
 
-  const getDados = () => RANKING_APIS.filter(a=>{
-    if(f.apiNome        && !a.nome.toLowerCase().includes(f.apiNome.toLowerCase())) return false;
-    if(f.orgaoConsumidor && a.orgao!==f.orgaoConsumidor) return false;
+  /* Lista única de APIs, períodos e órgãos para os dropdowns */
+  const apisUnicas      = [...new Set(DADOS_USO_APIS.map(d=>d.api))].sort();
+  const periodosUnicos  = [...new Set(DADOS_USO_APIS.map(d=>d.periodo))].reverse();
+  const orgaosResp      = [...new Set(DADOS_USO_APIS.map(d=>d.orgaoResponsavel))].sort();
+  const orgaosCons      = [...new Set(DADOS_USO_APIS.map(d=>d.orgaoConsumidor))].sort();
+
+  const getDados = () => DADOS_USO_APIS.filter(d=>{
+    if(f.apiNome          && d.api              !== f.apiNome)          return false;
+    if(f.orgaoResponsavel && d.orgaoResponsavel !== f.orgaoResponsavel) return false;
+    if(f.orgaoConsumidor  && d.orgaoConsumidor  !== f.orgaoConsumidor)  return false;
+    if(f.periodo          && d.periodo          !== f.periodo)          return false;
     return true;
   });
 
-  const periodoLabel = {'1m':'Último mês','3m':'Últimos 3 meses','6m':'Últimos 6 meses','12m':'Último ano'}[f.periodo];
-
   const filtrosLabel = () => {
     const p=[];
-    if(f.apiNome)         p.push('API: '+f.apiNome);
-    if(f.orgaoConsumidor) p.push('Órgão: '+f.orgaoConsumidor);
-    p.push('Período: '+periodoLabel);
-    return p.join(' | ');
+    if(f.apiNome)          p.push('API: '+f.apiNome);
+    if(f.orgaoResponsavel) p.push('Órgão responsável: '+f.orgaoResponsavel);
+    if(f.orgaoConsumidor)  p.push('Órgão consumidor: '+f.orgaoConsumidor);
+    if(f.periodo)          p.push('Período: '+f.periodo);
+    return p.length ? p.join(' | ') : 'Sem filtros — exibindo todos os registros';
   };
 
   const now = () => {
     const d=new Date();
-    return {data:d.toLocaleDateString('pt-BR'),hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h')};
+    return {
+      data: d.toLocaleDateString('pt-BR'),
+      hora: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+      slug: d.toISOString().slice(0,16).replace('T','_').replace(':','h'),
+    };
   };
 
   const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
-  const handleLimpar = () => { setF({apiNome:'',orgaoConsumidor:'',dataInicio:'',dataFim:'',periodo:'6m'}); setResultado([]); setBuscado(false); };
+  const handleLimpar = () => { setF({apiNome:'',orgaoResponsavel:'',orgaoConsumidor:'',periodo:''}); setResultado([]); setBuscado(false); };
 
+  /* Total de chamadas do resultado */
+  const totalChamadas = resultado.reduce((s,d)=>s+d.chamadas, 0);
+
+  /* ── Geração PDF ── */
   const gerarPDF = async (dados) => {
     const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
     const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
     const W=doc.internal.pageSize.getWidth();
-    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
-    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
-    const dispMedia=(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1);
-    doc.setFillColor(0,52,183);doc.rect(0,0,W,26,'F');
+    doc.setFillColor(0,26,122);doc.rect(0,0,W,30,'F');
     doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text('Conecta Gov.PE — Relatório de Uso e Consumo das APIs',14,11);
+    doc.text('Conecta Gov.PE — Relatório de Uso das APIs',14,12);
     doc.setFontSize(8);doc.setFont('helvetica','normal');
-    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
-    doc.text(`Filtros: ${filtrosLabel()}`,14,22);
-    doc.setFontSize(9);doc.setTextColor(0);
-    doc.text(`Total requisições: ${totalReq.toLocaleString('pt-BR')}   |   Erros: ${totalErr}   |   Disponibilidade média: ${dispMedia}%`,14,32);
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,19);
+    doc.text(`Filtros: ${filtrosLabel()}`,14,24);
+    doc.text(`Total de chamadas no período: ${totalChamadas.toLocaleString('pt-BR')}`,14,29);
     doc.autoTable({
-      head:[['#','API','Órgão','Requisições','Erros','% Erro','Disp. Média','Tendência']],
-      body:dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes.toLocaleString('pt-BR'),a.erros,((a.erros/a.requisicoes)*100).toFixed(2)+'%',a.dispMedia+'%',(a.tendencia>0?'+':'')+a.tendencia+'%']),
-      startY:37,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[0,52,183],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,243,255]},
+      head:[['#','API','Órgão Responsável','Órgão Consumidor','Qtd. de Chamadas','Período']],
+      body:dados.map((d,i)=>[
+        i+1,
+        d.api,
+        d.orgaoResponsavel,
+        d.orgaoConsumidor,
+        d.chamadas.toLocaleString('pt-BR'),
+        d.periodo,
+      ]),
+      startY:33,
+      styles:{fontSize:9,cellPadding:3},
+      headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[230,243,255]},
+      columnStyles:{
+        0:{cellWidth:10},
+        1:{cellWidth:60},
+        2:{cellWidth:40},
+        3:{cellWidth:40},
+        4:{cellWidth:35,halign:'right'},
+        5:{cellWidth:30},
+      },
+      didDrawPage:()=>{
+        const pg=doc.internal.getCurrentPageInfo().pageNumber;
+        doc.setFontSize(7);doc.setTextColor(120);
+        doc.text(`Pág. ${pg}  |  ${dados.length} registros  |  Total: ${totalChamadas.toLocaleString('pt-BR')} chamadas`,
+          14, doc.internal.pageSize.getHeight()-5);
+      },
     });
     doc.save(`relatorio-uso-apis_${slug}.pdf`);
   };
 
+  /* ── Geração Excel ── */
   const gerarXLSX = (dados) => {
     const {utils,write}=window.XLSX; const {data,hora,slug}=now();
-    const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
-    const totalErr=dados.reduce((s,a)=>s+a.erros,0);
-    const cab=[['Conecta Gov.PE — Relatório de Uso e Consumo das APIs'],[`Gerado em: ${data} às ${hora}`],[`Filtros: ${filtrosLabel()}`],[`Total: ${totalReq.toLocaleString('pt-BR')} req | ${totalErr} erros`],[],
-      ['#','API','Órgão','Requisições','Erros','% Erro','Disp. Média (%)','Tendência (%)']];
-    const linhas=dados.map((a,i)=>[i+1,a.nome,a.orgao,a.requisicoes,a.erros,+((a.erros/a.requisicoes)*100).toFixed(2),a.dispMedia,a.tendencia]);
-    const ws2=utils.aoa_to_sheet([['Consumo Mensal'],['Mês','Catálogo de Serviços','Consulta de CPF','Boletim de Ocorrência','Emissão de Certidões','Programas Habitacionais'],...CONSUMO_MENSAL.map(m=>[m.mes,m['Catálogo de Serviços'],m['Consulta de CPF'],m['Boletim de Ocorrência'],m['Emissão de Certidões'],m['Programas Habitacionais']])]);
-    ws2['!cols']=[{wch:10},{wch:22},{wch:18},{wch:22},{wch:22},{wch:24}];
+    const cab=[
+      ['Conecta Gov.PE — Relatório de Uso das APIs'],
+      [`Gerado em: ${data} às ${hora}`],
+      [`Usuário: João Silva (ADM)`],
+      [`Filtros: ${filtrosLabel()}`],
+      [`Total de chamadas: ${totalChamadas.toLocaleString('pt-BR')}`],
+      [],
+      ['#','API','Órgão Responsável','Órgão Consumidor','Quantidade de Chamadas','Período'],
+    ];
+    const linhas = dados.map((d,i)=>[
+      i+1, d.api, d.orgaoResponsavel, d.orgaoConsumidor, d.chamadas, d.periodo,
+    ]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:38},{wch:14},{wch:18},{wch:12},{wch:10},{wch:16},{wch:16}];
-    const wb=utils.book_new();utils.book_append_sheet(wb,ws,'Uso por API');utils.book_append_sheet(wb,ws2,'Consumo Mensal');
+    ws['!cols']=[{wch:4},{wch:40},{wch:22},{wch:22},{wch:24},{wch:14}];
+    const wb=utils.book_new();
+    utils.book_append_sheet(wb,ws,'Uso das APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`relatorio-uso-apis_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleExport = async (fmt) => {
-    if(!resultado.length){showToast('Clique em Buscar antes de exportar.','warning');return;}
+    if(!resultado.length){showToast('Clique em Aplicar antes de exportar.','warning');return;}
     setLoading(true);
     try{
       await new Promise(r=>setTimeout(r,900));
-      fmt==='pdf'?await gerarPDF(resultado):gerarXLSX(resultado);
+      fmt==='pdf' ? await gerarPDF(resultado) : gerarXLSX(resultado);
       showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
-    }catch(e){showToast('Erro ao gerar o arquivo.','warning');}
-    finally{setLoading(false);}
+    }catch(e){ showToast('Erro ao gerar o arquivo.','warning'); }
+    finally{ setLoading(false); }
   };
 
   const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
   const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
   const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
+
+  const Sel = ({value, onChange, children}) => (
+    <div style={{position:'relative'}}>
+      <select value={value} onChange={e=>onChange(e.target.value)}
+        style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}
+        onFocus={onFocus} onBlur={onBlur}>
+        {children}
+      </select>
+      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+        <Icon name="chevDown" size={13} color="#888"/>
+      </span>
+    </div>
+  );
 
   return (
     <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
@@ -2183,80 +2278,79 @@ function RelUso({ showToast }) {
       {/* Título */}
       <div style={{marginBottom:16}}>
         <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Relatórios</div>
-        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>Uso e Consumo das APIs</h1>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>Uso das APIs</h1>
       </div>
 
-      {/* Card de filtros */}
+      {/* Card filtros */}
       <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
-        {/* Linha 1: API + Órgão + Período */}
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
+        {/* Linha 1: API + Órgão responsável + Órgão consumidor + Período */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:16,marginBottom:14}}>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Nome da API</label>
-            <input value={f.apiNome} onChange={e=>setFil('apiNome',e.target.value)} placeholder="Busca parcial..." style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>API</label>
+            <Sel value={f.apiNome} onChange={v=>setFil('apiNome',v)}>
+              <option value="">Todas as APIs</option>
+              {apisUnicas.map(a=><option key={a} value={a}>{a}</option>)}
+            </Sel>
           </div>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão cedente</label>
-            <div style={{position:'relative'}}>
-              <select value={f.orgaoConsumidor} onChange={e=>setFil('orgaoConsumidor',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
-                <option value="">Todos</option>
-                {['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES'].map(o=><option key={o} value={o}>{o}</option>)}
-              </select>
-              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
-            </div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão responsável</label>
+            <Sel value={f.orgaoResponsavel} onChange={v=>setFil('orgaoResponsavel',v)}>
+              <option value="">Todos</option>
+              {orgaosResp.map(o=><option key={o} value={o}>{o}</option>)}
+            </Sel>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão consumidor</label>
+            <Sel value={f.orgaoConsumidor} onChange={v=>setFil('orgaoConsumidor',v)}>
+              <option value="">Todos</option>
+              {orgaosCons.map(o=><option key={o} value={o}>{o}</option>)}
+            </Sel>
           </div>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Período</label>
-            <div style={{position:'relative'}}>
-              <select value={f.periodo} onChange={e=>setFil('periodo',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
-                <option value="1m">Último mês</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="12m">Último ano</option>
-              </select>
-              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
-            </div>
+            <Sel value={f.periodo} onChange={v=>setFil('periodo',v)}>
+              <option value="">Todos</option>
+              {periodosUnicos.map(p=><option key={p} value={p}>{p}</option>)}
+            </Sel>
           </div>
         </div>
 
-        {/* Linha 2: Data Inicial + Data Final + botões */}
-        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
-          <div style={{flex:'0 0 200px'}}>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Inicial</label>
-            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
-          </div>
-          <div style={{flex:'0 0 200px'}}>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Final</label>
-            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
-          </div>
-          <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'flex-end'}}>
-            <button onClick={handleLimpar}
-              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
-              onMouseEnter={e=>{e.currentTarget.style.background='#E6F3FF';}}
-              onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
-              Limpar
-            </button>
-            <button onClick={handleBuscar}
-              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
-              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
-              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
-              Aplicar
-            </button>
-          </div>
+        {/* Botões */}
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8}}>
+          <button onClick={handleLimpar}
+            style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+            onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
+            onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+            Limpar
+          </button>
+          <button onClick={handleBuscar}
+            style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+            onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+            onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+            Aplicar
+          </button>
         </div>
       </div>
 
       {/* Resultado */}
       {buscado && (
         <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+
+          {/* Cabeçalho resultado */}
           <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
-            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'#28272C',fontWeight:500}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,fontSize:13,color:'#28272C',fontWeight:500}}>
               <Icon name="filter" size={14} color="#494C57"/>
               Resultado da pesquisa
-              <span style={{fontSize:12,color:'#888',fontWeight:400}}>({resultado.length} API{resultado.length!==1?'s':''})</span>
+              <span style={{fontSize:12,color:'#888',fontWeight:400}}>
+                ({resultado.length} registro{resultado.length!==1?'s':''}{resultado.length>0?` · ${totalChamadas.toLocaleString('pt-BR')} chamadas`:''})
+              </span>
             </div>
             <div style={{display:'flex',gap:6}}>
               <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
                 style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
-                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#E6F3FF';}}}
-                onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+                onMouseEnter={e=>{if(!loading&&resultado.length)e.currentTarget.style.background='#E6F3FF';}}
+                onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
                 Excel
               </button>
               <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
@@ -2269,30 +2363,57 @@ function RelUso({ showToast }) {
             </div>
           </div>
 
-          {resultado.length===0?(
-            <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>Nenhum dado encontrado com os filtros aplicados.</div>
-          ):(
+          {/* Tabela */}
+          {resultado.length===0 ? (
+            <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>
+              Nenhum registro encontrado com os filtros aplicados.
+            </div>
+          ) : (
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
-                  <tr>{['API','Órgão','Requisições','Erros','% Erro','Disponib. Média','Tendência'].map(h=>(
-                    <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>
-                  ))}</tr>
+                  <tr>
+                    {['#','API','Órgão Responsável','Órgão Consumidor','Qtd. de Chamadas','Período'].map(h=>(
+                      <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
                 </thead>
                 <tbody>
-                  {resultado.map((a,i)=>(
-                    <tr key={i} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                  {resultado.map((d,i)=>(
+                    <tr key={i}
+                      style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
                       onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
                       onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{a.nome}</td>
-                      <td style={{padding:'9px 14px'}}><span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 7px',borderRadius:100,border:'1px solid #99C6FF'}}>{a.orgao}</span></td>
-                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:700,color:'#0034B7'}}>{a.requisicoes.toLocaleString('pt-BR')}</td>
-                      <td style={{padding:'9px 14px',fontSize:13,color:a.erros>200?'#AC1010':'#494C57'}}>{a.erros}</td>
-                      <td style={{padding:'9px 14px',fontSize:13,color:'#494C57'}}>{((a.erros/a.requisicoes)*100).toFixed(2)}%</td>
-                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:600,color:a.dispMedia>=98?'#2B6418':'#B77706'}}>{a.dispMedia}%</td>
-                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:600,color:a.tendencia>0?'#2B6418':'#AC1010'}}>{a.tendencia>0?'+':''}{a.tendencia}%</td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{i+1}</td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{d.api}</td>
+                      <td style={{padding:'9px 14px'}}>
+                        <span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 8px',borderRadius:100,border:'1px solid #99C6FF'}}>
+                          {d.orgaoResponsavel}
+                        </span>
+                      </td>
+                      <td style={{padding:'9px 14px'}}>
+                        <span style={{fontSize:11,fontWeight:600,background:'#F8FAFC',color:'#494C57',padding:'2px 8px',borderRadius:100,border:'1px solid #CED2D7'}}>
+                          {d.orgaoConsumidor}
+                        </span>
+                      </td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:700,color:'#0034B7',textAlign:'right'}}>
+                        {d.chamadas.toLocaleString('pt-BR')}
+                      </td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.periodo}</td>
                     </tr>
                   ))}
+                  {/* Linha de total */}
+                  <tr style={{background:'#F0F5FF',borderTop:'2px solid #99C6FF'}}>
+                    <td colSpan={4} style={{padding:'9px 14px',fontSize:12,fontWeight:600,color:'#0034B7',textAlign:'right'}}>
+                      Total de chamadas
+                    </td>
+                    <td style={{padding:'9px 14px',fontSize:14,fontWeight:700,color:'#001A7A',textAlign:'right'}}>
+                      {totalChamadas.toLocaleString('pt-BR')}
+                    </td>
+                    <td/>
+                  </tr>
                 </tbody>
               </table>
             </div>
