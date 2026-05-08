@@ -1868,18 +1868,21 @@ function Dashboard({ onNav }) {
 /* ═══════════════════════════════════════════════════════════════
    HU.03.03 — Relatório de APIs Cadastradas
 ══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.03 — Relatório de APIs Cadastradas
+══════════════════════════════════════════════════════════════ */
 function RelCadastradas({ showToast }) {
   const [loading, setLoading] = React.useState(false);
-  const [formato, setFormato] = React.useState('pdf');
-  const [preview, setPreview] = React.useState(false);
+  const [buscado, setBuscado] = React.useState(false);
   const [f, setF] = React.useState({ orgaoId:'', status:'', categoriaId:'', dataInicio:'', dataFim:'' });
+  const [resultado, setResultado] = React.useState([]);
 
   const setFil = (k,v) => setF(p=>({...p,[k]:v}));
 
   const getApis = () => INITIAL_APIS.filter(a=>{
-    if(f.orgaoId     && a.orgaoId     !== f.orgaoId)     return false;
-    if(f.status      && a.status      !== f.status)       return false;
-    if(f.categoriaId && a.categoriaId !== f.categoriaId)  return false;
+    if(f.orgaoId     && a.orgaoId     !== f.orgaoId)    return false;
+    if(f.status      && a.status      !== f.status)      return false;
+    if(f.categoriaId && a.categoriaId !== f.categoriaId) return false;
     return true;
   });
 
@@ -1898,11 +1901,14 @@ function RelCadastradas({ showToast }) {
     return {data:d.toLocaleDateString('pt-BR'),hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h')};
   };
 
+  const handleBuscar = () => { setResultado(getApis()); setBuscado(true); };
+  const handleLimpar = () => { setF({orgaoId:'',status:'',categoriaId:'',dataInicio:'',dataFim:''}); setResultado([]); setBuscado(false); };
+
   const gerarPDF = async (apis) => {
     const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
     const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
     const W=doc.internal.pageSize.getWidth();
-    doc.setFillColor(0,26,122); doc.rect(0,0,W,26,'F');
+    doc.setFillColor(0,26,122);doc.rect(0,0,W,26,'F');
     doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
     doc.text('Conecta Gov.PE — Relatório de APIs Cadastradas',14,11);
     doc.setFontSize(8);doc.setFont('helvetica','normal');
@@ -1912,7 +1918,6 @@ function RelCadastradas({ showToast }) {
       head:[['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em']],
       body:apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—']),
       startY:30,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,243,255]},
-      columnStyles:{0:{cellWidth:7},1:{cellWidth:50},2:{cellWidth:18},3:{cellWidth:15},4:{cellWidth:25},5:{cellWidth:16},6:{cellWidth:40},7:{cellWidth:20},8:{cellWidth:20}},
     });
     doc.save(`relatorio-apis_${slug}.pdf`);
   };
@@ -1930,84 +1935,145 @@ function RelCadastradas({ showToast }) {
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`relatorio-apis_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
   };
 
-  const handleGerar = async () => {
-    const apis=getApis();
-    if(!apis.length){showToast('Nenhuma API com os filtros aplicados.','warning');return;}
+  const handleExport = async (fmt) => {
+    if(!resultado.length){showToast('Clique em Buscar antes de exportar.','warning');return;}
     setLoading(true);
     try{
-      await new Promise(r=>setTimeout(r,1200));
-      formato==='pdf'?await gerarPDF(apis):gerarXLSX(apis);
-      showToast(`Relatório gerado! ${apis.length} API(s) exportada(s).`,'success');
-    }catch(e){showToast('Erro ao gerar o relatório.','warning');}
+      await new Promise(r=>setTimeout(r,900));
+      fmt==='pdf'?await gerarPDF(resultado):gerarXLSX(resultado);
+      showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
+    }catch(e){showToast('Erro ao gerar o arquivo.','warning');}
     finally{setLoading(false);}
   };
 
-  const apis   = getApis();
-  const iSt    = {height:38,borderRadius:5,border:`1px solid ${C.border}`,padding:'0 10px',fontSize:13,color:C.textPrimary,background:'#fff',outline:'none',width:'100%'};
-  const {slug} = now();
+  const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
+  const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
+  const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
 
   return (
-    <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
-      <div style={{marginBottom:20}}>
-        <div style={{fontSize:11,color:C.textSecondary,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Relatórios</div>
-        <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:4}}>APIs Cadastradas</h1>
+    <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
 
+      {/* Título */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Relatórios</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>APIs Cadastradas</h1>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20,alignItems:'start'}}>
+      {/* Card de filtros */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
-        {/* Filtros */}
-        <div style={{display:'flex',flexDirection:'column',gap:16}}>
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{background:C.brandDark,padding:'12px 18px'}}>
-              <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Filtros</div>
-              <div style={{fontSize:11,color:'rgba(248,250,252,0.6)'}}>Aplicados na geração e registrados no cabeçalho do arquivo</div>
+        {/* Linha 1: Órgão + Status + Categoria */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:14}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão cedente</label>
+            <div style={{position:'relative'}}>
+              <select value={f.orgaoId} onChange={e=>setFil('orgaoId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todos</option>
+                {ORGAOS.map(o=><option key={o.id} value={o.id}>{o.shortName} — {o.name}</option>)}
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
             </div>
-            <div style={{padding:'16px 18px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div><div style={{position:'relative'}}><select value={f.orgaoId} onChange={e=>setFil('orgaoId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todos</option>{ORGAOS.map(o=><option key={o.id} value={o.id}>{o.shortName}</option>)}</select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
-              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Status</div><div style={{position:'relative'}}><select value={f.status} onChange={e=>setFil('status',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
-              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Categoria</div><div style={{position:'relative'}}><select value={f.categoriaId} onChange={e=>setFil('categoriaId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todas</option>{CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
-              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Criação — de</div><input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt}/></div>
-              <div style={{gridColumn:'1/-1'}}><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Criação — até</div><input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt}/></div>
-              <div style={{gridColumn:'1/-1'}}><button onClick={()=>setF({orgaoId:'',status:'',categoriaId:'',dataInicio:'',dataFim:''})} style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:C.brand,padding:0,textDecoration:'underline'}}>Limpar filtros</button></div>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Status</label>
+            <div style={{position:'relative'}}>
+              <select value={f.status} onChange={e=>setFil('status',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option>
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
+            </div>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Categoria</label>
+            <div style={{position:'relative'}}>
+              <select value={f.categoriaId} onChange={e=>setFil('categoriaId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todas</option>
+                {CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Linha 2: Data Inicial + Data Final + botões alinhados à direita */}
+        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Inicial</label>
+            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Final</label>
+            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          {/* Botões alinhados à direita */}
+          <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'flex-end'}}>
+            <button onClick={handleLimpar}
+              style={{height:38,padding:'0 16px',borderRadius:4,border:'1px solid #CED2D7',background:'#fff',color:'#494C57',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+              ✕ Limpar
+            </button>
+            <button onClick={handleBuscar}
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'none',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+              <Icon name="search" size={13} color="#fff"/> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Resultado da pesquisa */}
+      {buscado && (
+        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          {/* Cabeçalho resultado */}
+          <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'#28272C',fontWeight:500}}>
+              <Icon name="filter" size={14} color="#494C57"/>
+              Resultado da pesquisa
+              <span style={{fontSize:12,color:'#888',fontWeight:400}}>({resultado.length} registro{resultado.length!==1?'s':''})</span>
+            </div>
+            {/* Botões de exportação */}
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#1D6F42',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
+                <span>📊</span> Excel
+              </button>
+              <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#AC1010',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
+                <span>📄</span> PDF
+              </button>
+              {loading&&<span style={{fontSize:11,color:'#888',alignSelf:'center',marginLeft:4}}>Gerando...</span>}
             </div>
           </div>
 
-          {/* Prévia */}
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>Prévia — {apis.length} registro{apis.length!==1?'s':''}</span>
-              <button onClick={()=>setPreview(p=>!p)} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>{preview?'Recolher':'Expandir'}</button>
-            </div>
-            <div style={{overflowX:'auto',maxHeight:preview?260:120,overflow:'auto'}}>
+          {/* Tabela */}
+          {resultado.length===0?(
+            <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>Nenhum registro encontrado com os filtros aplicados.</div>
+          ):(
+            <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
-                <thead><tr>{['Nome','Órgão','Versão','Status','Categoria'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
-                <tbody>{apis.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,fontWeight:500,color:C.textPrimary}}>{a.nome}</td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{ORGAOS.find(o=>o.id===a.orgaoId)?.shortName}</td><td style={{padding:'7px 12px',fontSize:11}}>{a.versao}</td><td style={{padding:'7px 12px'}}><BadgeApi status={a.status}/></td><td style={{padding:'7px 12px',fontSize:11,color:C.textSecondary}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td></tr>)}</tbody>
+                <thead>
+                  <tr>{['Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em'].map(h=>(
+                    <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {resultado.map((a,i)=>(
+                    <tr key={i} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                      onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
+                      onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{a.nome}</td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—'}</td>
+                      <td style={{padding:'9px 14px'}}><span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 7px',borderRadius:100,border:'1px solid #99C6FF'}}>{a.versao}</span></td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td>
+                      <td style={{padding:'9px 14px'}}><BadgeApi status={a.status}/></td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.baseSistema||'—'}</td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{a.criado||'—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
-          </div>
+          )}
         </div>
-
-        {/* Exportação */}
-        <div style={{display:'flex',flexDirection:'column',gap:14}}>
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:6}}>Exportar relatório</div>
-            <div style={{fontSize:11,color:C.textSecondary,marginBottom:14}}>{apis.length} registro{apis.length!==1?'s':''} · {filtrosLabel()}</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <button onClick={()=>{setFormato('pdf');setTimeout(handleGerar,50);}} disabled={loading||!apis.length}
-                style={{width:'100%',height:42,borderRadius:8,background:loading||!apis.length?C.border:C.brandDark,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!apis.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
-                <span style={{fontSize:15}}>📄</span> Exportar PDF
-              </button>
-              <button onClick={()=>{setFormato('xlsx');setTimeout(handleGerar,50);}} disabled={loading||!apis.length}
-                style={{width:'100%',height:42,borderRadius:8,background:loading||!apis.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!apis.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
-                <span style={{fontSize:15}}>📊</span> Exportar Excel (.xlsx)
-              </button>
-            </div>
-            {loading&&<p style={{fontSize:11,color:C.textSecondary,textAlign:'center',marginTop:8,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando arquivo...</p>}
-            {!apis.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:8}}>Nenhum registro com os filtros aplicados.</p>}
-          </div>
-        </div>
-      </div>
+      )}
       <ScriptLoader/>
     </div>
   );
@@ -2018,14 +2084,14 @@ function RelCadastradas({ showToast }) {
 ══════════════════════════════════════════════════════════════ */
 function RelUso({ showToast }) {
   const [loading, setLoading] = React.useState(false);
-  const [formato, setFormato] = React.useState('pdf');
-  const [preview, setPreview] = React.useState(false);
-  const [f, setF] = React.useState({ apiNome:'', orgaoConsumidor:'', periodo:'6m' });
+  const [buscado, setBuscado] = React.useState(false);
+  const [f, setF] = React.useState({ apiNome:'', orgaoConsumidor:'', dataInicio:'', dataFim:'', periodo:'6m' });
+  const [resultado, setResultado] = React.useState([]);
 
   const setFil = (k,v) => setF(p=>({...p,[k]:v}));
 
   const getDados = () => RANKING_APIS.filter(a=>{
-    if(f.apiNome       && !a.nome.toLowerCase().includes(f.apiNome.toLowerCase())) return false;
+    if(f.apiNome        && !a.nome.toLowerCase().includes(f.apiNome.toLowerCase())) return false;
     if(f.orgaoConsumidor && a.orgao!==f.orgaoConsumidor) return false;
     return true;
   });
@@ -2044,6 +2110,9 @@ function RelUso({ showToast }) {
     const d=new Date();
     return {data:d.toLocaleDateString('pt-BR'),hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h')};
   };
+
+  const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
+  const handleLimpar = () => { setF({apiNome:'',orgaoConsumidor:'',dataInicio:'',dataFim:'',periodo:'6m'}); setResultado([]); setBuscado(false); };
 
   const gerarPDF = async (dados) => {
     const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
@@ -2069,8 +2138,7 @@ function RelUso({ showToast }) {
   };
 
   const gerarXLSX = (dados) => {
-    const {utils,write}=window.XLSX; const {slug}=now();
-    const {data,hora}=now();
+    const {utils,write}=window.XLSX; const {data,hora,slug}=now();
     const totalReq=dados.reduce((s,a)=>s+a.requisicoes,0);
     const totalErr=dados.reduce((s,a)=>s+a.erros,0);
     const cab=[['Conecta Gov.PE — Relatório de Uso e Consumo das APIs'],[`Gerado em: ${data} às ${hora}`],[`Filtros: ${filtrosLabel()}`],[`Total: ${totalReq.toLocaleString('pt-BR')} req | ${totalErr} erros`],[],
@@ -2086,85 +2154,135 @@ function RelUso({ showToast }) {
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`relatorio-uso-apis_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
   };
 
-  const handleGerar = async () => {
-    const dados=getDados();
-    if(!dados.length){showToast('Nenhum dado com os filtros aplicados.','warning');return;}
+  const handleExport = async (fmt) => {
+    if(!resultado.length){showToast('Clique em Buscar antes de exportar.','warning');return;}
     setLoading(true);
     try{
-      await new Promise(r=>setTimeout(r,1400));
-      formato==='pdf'?await gerarPDF(dados):gerarXLSX(dados);
-      showToast(`Relatório gerado! ${dados.length} API(s) exportada(s).`,'success');
-    }catch(e){showToast('Erro ao gerar o relatório.','warning');}
+      await new Promise(r=>setTimeout(r,900));
+      fmt==='pdf'?await gerarPDF(resultado):gerarXLSX(resultado);
+      showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
+    }catch(e){showToast('Erro ao gerar o arquivo.','warning');}
     finally{setLoading(false);}
   };
 
-  const dados  = getDados();
-  const iSt    = {height:38,borderRadius:5,border:`1px solid ${C.border}`,padding:'0 10px',fontSize:13,color:C.textPrimary,background:'#fff',outline:'none',width:'100%'};
-  const {slug} = now();
-  const totalReq = dados.reduce((s,a)=>s+a.requisicoes,0);
-  const totalErr = dados.reduce((s,a)=>s+a.erros,0);
-  const dispMedia= dados.length?(dados.reduce((s,a)=>s+a.dispMedia,0)/dados.length).toFixed(1):'—';
+  const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
+  const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
+  const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
 
   return (
-    <div style={{flex:1,overflowY:'auto',padding:'28px 24px'}}>
-      <div style={{marginBottom:20}}>
-        <div style={{fontSize:11,color:C.textSecondary,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Relatórios</div>
-        <h1 style={{fontSize:22,fontWeight:700,color:C.textPrimary,marginBottom:4}}>Uso e Consumo das APIs</h1>
+    <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
 
+      {/* Título */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Relatórios</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>Uso e Consumo das APIs</h1>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20,alignItems:'start'}}>
+      {/* Card de filtros */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
-        {/* Filtros + prévia */}
-        <div style={{display:'flex',flexDirection:'column',gap:16}}>
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{background:C.brand,padding:'12px 18px'}}>
-              <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Filtros</div>
-              <div style={{fontSize:11,color:'rgba(248,250,252,0.65)'}}>Aplicados na geração e registrados no cabeçalho</div>
+        {/* Linha 1: API + Órgão + Período */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Nome da API</label>
+            <input value={f.apiNome} onChange={e=>setFil('apiNome',e.target.value)} placeholder="Busca parcial..." style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão cedente</label>
+            <div style={{position:'relative'}}>
+              <select value={f.orgaoConsumidor} onChange={e=>setFil('orgaoConsumidor',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todos</option>
+                {['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES'].map(o=><option key={o} value={o}>{o}</option>)}
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
             </div>
-            <div style={{padding:'16px 18px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-              <div style={{gridColumn:'1/-1'}}><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Nome da API</div><input value={f.apiNome} onChange={e=>setFil('apiNome',e.target.value)} placeholder="Busca parcial..." style={iSt}/></div>
-              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Órgão cedente</div><div style={{position:'relative'}}><select value={f.orgaoConsumidor} onChange={e=>setFil('orgaoConsumidor',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="">Todos</option>{['ATI','SEFAZ','SEPLAG','SES','SEE','SEDS','SERES'].map(o=><option key={o} value={o}>{o}</option>)}</select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
-              <div><div style={{fontSize:11,fontWeight:500,color:C.textSecondary,marginBottom:4}}>Período</div><div style={{position:'relative'}}><select value={f.periodo} onChange={e=>setFil('periodo',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}><option value="1m">Último mês</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="12m">Último ano</option></select><span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={12} color={C.textSecondary}/></span></div></div>
-              <div style={{gridColumn:'1/-1'}}><button onClick={()=>setF({apiNome:'',orgaoConsumidor:'',periodo:'6m'})} style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:C.brand,padding:0,textDecoration:'underline'}}>Limpar filtros</button></div>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Período</label>
+            <div style={{position:'relative'}}>
+              <select value={f.periodo} onChange={e=>setFil('periodo',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="1m">Último mês</option><option value="3m">Últimos 3 meses</option><option value="6m">Últimos 6 meses</option><option value="12m">Último ano</option>
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Linha 2: Data Inicial + Data Final + botões */}
+        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Inicial</label>
+            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Final</label>
+            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'flex-end'}}>
+            <button onClick={handleLimpar}
+              style={{height:38,padding:'0 16px',borderRadius:4,border:'1px solid #CED2D7',background:'#fff',color:'#494C57',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+              ✕ Limpar
+            </button>
+            <button onClick={handleBuscar}
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'none',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+              <Icon name="search" size={13} color="#fff"/> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Resultado */}
+      {buscado && (
+        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'#28272C',fontWeight:500}}>
+              <Icon name="filter" size={14} color="#494C57"/>
+              Resultado da pesquisa
+              <span style={{fontSize:12,color:'#888',fontWeight:400}}>({resultado.length} API{resultado.length!==1?'s':''})</span>
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#1D6F42',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
+                <span>📊</span> Excel
+              </button>
+              <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 14px',borderRadius:4,border:'none',background:loading?'#CED2D7':'#AC1010',color:'#fff',fontSize:12,fontWeight:600,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:5}}>
+                <span>📄</span> PDF
+              </button>
+              {loading&&<span style={{fontSize:11,color:'#888',alignSelf:'center',marginLeft:4}}>Gerando...</span>}
             </div>
           </div>
 
-          {/* Prévia tabela */}
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>Prévia — {dados.length} API{dados.length!==1?'s':''}</span>
-              <button onClick={()=>setPreview(p=>!p)} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:C.brand}}>{preview?'Recolher':'Expandir'}</button>
-            </div>
-            <div style={{overflowX:'auto',maxHeight:preview?280:130,overflow:'auto'}}>
+          {resultado.length===0?(
+            <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>Nenhum dado encontrado com os filtros aplicados.</div>
+          ):(
+            <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
-                <thead><tr>{['API','Órgão','Requisições','Erros','Disp.','Tendência'].map(h=><th key={h} style={{padding:'7px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:`1px solid ${C.divider}`,background:C.bg,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
-                <tbody>{dados.slice(0,preview?99:3).map((a,i)=><tr key={i} style={{borderBottom:`1px solid ${C.divider}`}}><td style={{padding:'7px 12px',fontSize:12,fontWeight:500,color:C.textPrimary}}>{a.nome}</td><td style={{padding:'7px 12px'}}><span style={{fontSize:10,background:C.infoBg,color:C.brand,padding:'1px 6px',borderRadius:100,fontWeight:600}}>{a.orgao}</span></td><td style={{padding:'7px 12px',fontSize:12,fontWeight:700,color:C.brand}}>{a.requisicoes.toLocaleString('pt-BR')}</td><td style={{padding:'7px 12px',fontSize:12,color:a.erros>200?C.danger:C.textSecondary}}>{a.erros}</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.dispMedia>=98?C.success:C.warning}}>{a.dispMedia}%</td><td style={{padding:'7px 12px',fontSize:12,fontWeight:600,color:a.tendencia>0?C.success:C.danger}}>{a.tendencia>0?'+':''}{a.tendencia}%</td></tr>)}</tbody>
+                <thead>
+                  <tr>{['API','Órgão','Requisições','Erros','% Erro','Disponib. Média','Tendência'].map(h=>(
+                    <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {resultado.map((a,i)=>(
+                    <tr key={i} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                      onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
+                      onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{a.nome}</td>
+                      <td style={{padding:'9px 14px'}}><span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 7px',borderRadius:100,border:'1px solid #99C6FF'}}>{a.orgao}</span></td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:700,color:'#0034B7'}}>{a.requisicoes.toLocaleString('pt-BR')}</td>
+                      <td style={{padding:'9px 14px',fontSize:13,color:a.erros>200?'#AC1010':'#494C57'}}>{a.erros}</td>
+                      <td style={{padding:'9px 14px',fontSize:13,color:'#494C57'}}>{((a.erros/a.requisicoes)*100).toFixed(2)}%</td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:600,color:a.dispMedia>=98?'#2B6418':'#B77706'}}>{a.dispMedia}%</td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:600,color:a.tendencia>0?'#2B6418':'#AC1010'}}>{a.tendencia>0?'+':''}{a.tendencia}%</td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
-          </div>
+          )}
         </div>
-
-        {/* Exportação */}
-        <div style={{display:'flex',flexDirection:'column',gap:14}}>
-          <div style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,padding:'16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.textPrimary,marginBottom:6}}>Exportar relatório</div>
-            <div style={{fontSize:11,color:C.textSecondary,marginBottom:14}}>{dados.length} API{dados.length!==1?'s':''} · {filtrosLabel()}</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <button onClick={()=>{setFormato('pdf');setTimeout(handleGerar,50);}} disabled={loading||!dados.length}
-                style={{width:'100%',height:42,borderRadius:8,background:loading||!dados.length?C.border:C.brandDark,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!dados.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
-                <span style={{fontSize:15}}>📄</span> Exportar PDF
-              </button>
-              <button onClick={()=>{setFormato('xlsx');setTimeout(handleGerar,50);}} disabled={loading||!dados.length}
-                style={{width:'100%',height:42,borderRadius:8,background:loading||!dados.length?C.border:C.brand,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:loading||!dados.length?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s'}}>
-                <span style={{fontSize:15}}>📊</span> Exportar Excel (.xlsx)
-              </button>
-            </div>
-            {loading&&<p style={{fontSize:11,color:C.textSecondary,textAlign:'center',marginTop:8,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Gerando arquivo...</p>}
-            {!dados.length&&<p style={{fontSize:11,color:C.danger,textAlign:'center',marginTop:8}}>Nenhum dado com os filtros aplicados.</p>}
-          </div>
-        </div>
-      </div>
+      )}
       <ScriptLoader/>
     </div>
   );
