@@ -461,16 +461,38 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
     <div style={{ position:'fixed', inset:0, background:'#1B3FA6', zIndex:1000,
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
 
-      {/* Logo Governo PE — usa imagem se disponível, fallback tipográfico */}
-      <div style={{ marginBottom:56, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:18 }}>
-        <img src="../assets/Brasao.png" alt="Brasão PE"
-          style={{ height:90, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
-          onError={e=>{ e.target.src='../assets/Brasao.png'; e.target.onerror=()=>e.target.style.display='none'; }}
-        />
-        <img src="../assets/Governo.png" alt="Governo de Pernambuco"
-          style={{ height:80, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
-          onError={e=>{ e.target.src='../assets/Governo.png'; e.target.onerror=()=>e.target.style.display='none'; }}
-        />
+      {/* Logo Governo PE — inline, sem dependência de arquivo externo */}
+      <div style={{ marginBottom:52, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:20 }}>
+
+        {/* Brasão simplificado em SVG */}
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="34" stroke="rgba(255,255,255,0.85)" strokeWidth="2" fill="rgba(255,255,255,0.08)"/>
+          <path d="M36 12 L56 22 L56 40 C56 52 46 60 36 64 C26 60 16 52 16 40 L16 22 Z"
+            fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinejoin="round"/>
+          <circle cx="36" cy="38" r="10" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"/>
+          <path d="M36 28 L36 48 M26 38 L46 38" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
+          <path d="M30 32 Q36 26 42 32 Q46 36 42 44 Q36 50 30 44 Q26 40 30 32Z"
+            fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
+        </svg>
+
+        {/* Tipografia PERNAMBUCO inline */}
+        <div style={{ textAlign:'left' }}>
+          <div style={{ fontSize:9, color:'rgba(255,255,255,0.75)', fontWeight:700, letterSpacing:'0.18em', marginBottom:2 }}>GOVERNO DE</div>
+          <div style={{ lineHeight:1, marginBottom:1 }}>
+            <span style={{ fontSize:32, fontWeight:900, color:'#fff', letterSpacing:'-0.5px', fontFamily:'Arial Black, Arial, sans-serif' }}>PER</span>
+          </div>
+          <div style={{ lineHeight:1, marginBottom:1 }}>
+            <span style={{ fontSize:32, fontWeight:900, letterSpacing:'-0.5px', fontFamily:'Arial Black, Arial, sans-serif' }}>
+              <span style={{ color:'#E8333A' }}>N</span><span style={{ color:'#F5A623' }}>A</span><span style={{ color:'#27AE60' }}>M</span>
+            </span>
+          </div>
+          <div style={{ lineHeight:1, marginBottom:4 }}>
+            <span style={{ fontSize:32, fontWeight:900, letterSpacing:'-0.5px', fontFamily:'Arial Black, Arial, sans-serif' }}>
+              <span style={{ color:'#F5E642' }}>B</span><span style={{ color:'#1A5276' }}>U</span><span style={{ color:'#E8333A' }}>C</span><span style={{ color:'#27AE60' }}>O</span>
+            </span>
+          </div>
+          <div style={{ fontSize:8, color:'rgba(255,255,255,0.65)', fontWeight:700, letterSpacing:'0.14em' }}>ESTADO DE MUDANÇA</div>
+        </div>
       </div>
 
       {/* Formulário */}
