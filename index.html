@@ -422,200 +422,123 @@ function QuemSomos() {
 const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
 function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
-  return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,26,122,0.5)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <div style={{ background:C.white, borderRadius:12, width:440, boxShadow:'0 16px 48px rgba(0,26,122,0.25)', overflow:'hidden' }}>
-        {/* Header azul */}
-        <div style={{ background:`linear-gradient(135deg, ${C.brandDark} 0%, ${C.brand} 100%)`, padding:'28px 32px 24px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
-            <div style={{ width:40, height:40, background:'rgba(255,255,255,0.15)', borderRadius:8, border:'1.5px solid rgba(255,255,255,0.3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-            <div>
-              <h2 style={{ fontSize:18, fontWeight:700, color:'#F8FAFC', lineHeight:1.2 }}>Área Administrativa</h2>
-              <p style={{ fontSize:12, color:'rgba(248,250,252,0.7)' }}>Acesso restrito — autenticação via SSO</p>
-            </div>
-          </div>
-        </div>
+  /* SsoModal agora É a tela de login Gov.PE — sem tela intermediária */
+  const [cpf,     setCpf]    = React.useState('');
+  const [senha,   setSenha]  = React.useState('');
+  const [loading, setLoading]= React.useState(false);
+  const [erro,    setErro]   = React.useState('');
 
-        {/* Corpo */}
-        <div style={{ padding:'28px 32px 32px' }}>
-          {/* Info SSO */}
-          <div style={{ background:C.brandLight, border:`1px solid ${C.brandBorder}`, borderRadius:8, padding:'12px 16px', marginBottom:24, display:'flex', gap:10, alignItems:'flex-start' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <p style={{ fontSize:13, color:C.brand, lineHeight:1.55 }}>O acesso ao portal utiliza exclusivamente o <strong>Login Estadual (Expresso)</strong>. Nenhuma senha precisa ser cadastrada neste sistema.</p>
-          </div>
-
-          {/* Botão SSO principal */}
-          <button onClick={()=>{ onClose(); /* será aberto pelo App */ }} style={{ width:'100%', height:48, borderRadius:8, background:C.brand, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:12, fontSize:14, fontWeight:700, color:'#fff', marginBottom:12, transition:'background 0.2s' }}
-            onMouseEnter={e=>e.currentTarget.style.background=C.brandDark}
-            onMouseLeave={e=>e.currentTarget.style.background=C.brand}
-            id="btn-sso-expresso"
-          >
-            {/* Ícone simulando o Expresso */}
-            <div style={{ width:28, height:28, background:'#fff', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <span style={{ fontSize:11, fontWeight:800, color:C.brandDark, letterSpacing:'-0.5px' }}>PE</span>
-            </div>
-            Entrar com Login Estadual (Expresso)
-          </button>
-
-          <p style={{ fontSize:11, color:C.textSec, textAlign:'center', lineHeight:1.5 }}>
-            Ao clicar, você será redirecionado para o portal de autenticação do Governo de Pernambuco. Seu CPF será verificado automaticamente na base de usuários autorizados.
-          </p>
-
-          <div style={{ borderTop:`1px solid ${C.divider}`, marginTop:20, paddingTop:16, display:'flex', justifyContent:'center' }}>
-            <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, color:C.textSec }}>← Voltar ao portal</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Tela Expresso (SSO simulado) ────────────────────────── */
-function ExpressoScreen({ onVoltar, onAutenticar }) {
-  const [cpf,    setCpf]    = React.useState('');
-  const [senha,  setSenha]  = React.useState('');
-  const [loading,setLoading]= React.useState(false);
-  const [erro,   setErro]   = React.useState('');
+  const CPF_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
   const formatCpf = v => {
     const n = v.replace(/\D/g,'').slice(0,11);
-    if(n.length<=3)  return n;
-    if(n.length<=6)  return n.slice(0,3)+'.'+n.slice(3);
-    if(n.length<=9)  return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6);
+    if(n.length<=3) return n;
+    if(n.length<=6) return n.slice(0,3)+'.'+n.slice(3);
+    if(n.length<=9) return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6);
     return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6,9)+'-'+n.slice(9);
   };
 
-  const handleLogin = () => {
+  const handleEntrar = () => {
     if(!cpf||!senha){ setErro('Preencha CPF e senha para continuar.'); return; }
     setLoading(true); setErro('');
-    setTimeout(()=>{ setLoading(false); onAutenticar(cpf); }, 1200);
+    setTimeout(()=>{
+      setLoading(false);
+      if(CPF_AUTORIZADOS.includes(cpf)) { onAcessoAutorizado(cpf); }
+      else { onAcessoNegado(); }
+    }, 1400);
   };
 
-  /* Estilo campo underline — igual ao padrão Expresso */
-  const fieldStyle = {
+  /* Estilo underline — padrão Expresso Gov.PE */
+  const fSt = {
     width:'100%', background:'transparent', border:'none',
-    borderBottom:'2px solid rgba(255,255,255,0.5)',
-    outline:'none', color:'#fff', fontSize:16, padding:'8px 0',
-    caretColor:'#fff',
+    borderBottom:'1.5px solid rgba(255,255,255,0.5)',
+    outline:'none', color:'#fff', fontSize:16,
+    padding:'8px 0', caretColor:'#fff', fontFamily:'inherit',
   };
-  const labelStyle = { display:'block', fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:4 };
+  const lSt = { display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 };
 
   return (
-    <div style={{ minHeight:'100vh', background:'#1A47B8', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
+    <div style={{ position:'fixed', inset:0, background:'#1B3FA6', zIndex:1000,
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
 
-      {/* Logo Governo PE */}
-      <div style={{ marginBottom:52, textAlign:'center' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16 }}>
-          {/* Brasão SVG placeholder — em produção usa assets/Brasao.png */}
-          <img src="assets/Brasao.png" alt="Brasão PE"
-            style={{ height:100, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
-            onError={e=>{
-              e.target.style.display='none';
-              e.target.nextSibling.style.display='flex';
-            }}
-          />
-          {/* Fallback brasão SVG caso imagem não carregue */}
-          <div style={{ display:'none', width:80, height:80, borderRadius:'50%', border:'3px solid rgba(255,255,255,0.6)', alignItems:'center', justifyContent:'center' }}>
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5">
-              <path d="M12 2L2 7v5c0 5.25 4.17 10.16 10 11.29C17.83 22.16 22 17.25 22 12V7L12 2z"/>
-            </svg>
-          </div>
-          <div style={{ textAlign:'left' }}>
-            <div style={{ fontSize:10, color:'rgba(255,255,255,0.8)', fontWeight:600, letterSpacing:'0.15em', lineHeight:1.2 }}>GOVERNO DE</div>
-            <div style={{ lineHeight:0.9 }}>
-              <span style={{ fontSize:38, fontWeight:900, color:'#fff', letterSpacing:'-1px' }}>PER</span>
-            </div>
-            <div style={{ lineHeight:0.9 }}>
-              <span style={{ fontSize:38, fontWeight:900, letterSpacing:'-1px' }}>
-                <span style={{ color:'#E63946' }}>N</span>
-                <span style={{ color:'#F4A261' }}>A</span>
-                <span style={{ color:'#2A9D8F' }}>M</span>
-              </span>
-            </div>
-            <div style={{ lineHeight:0.9 }}>
-              <span style={{ fontSize:38, fontWeight:900, letterSpacing:'-1px' }}>
-                <span style={{ color:'#E9C46A' }}>B</span>
-                <span style={{ color:'#264653' }}>U</span>
-                <span style={{ color:'#E63946' }}>C</span>
-                <span style={{ color:'#2A9D8F' }}>O</span>
-              </span>
-            </div>
-            <div style={{ fontSize:9, color:'rgba(255,255,255,0.7)', fontWeight:600, letterSpacing:'0.12em', marginTop:3 }}>ESTADO DE MUDANÇA</div>
-          </div>
-        </div>
+      {/* Logo Governo PE — usa imagem se disponível, fallback tipográfico */}
+      <div style={{ marginBottom:56, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:18 }}>
+        <img src="assets/Brasao.png" alt="Brasão PE"
+          style={{ height:90, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
+          onError={e=>e.target.style.display='none'}
+        />
+        <img src="assets/Governo.png" alt="Governo de Pernambuco"
+          style={{ height:80, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
+          onError={e=>e.target.style.display='none'}
+        />
       </div>
 
       {/* Formulário */}
-      <div style={{ width:'100%', maxWidth:460 }}>
+      <div style={{ width:'100%', maxWidth:480 }}>
 
         {/* Erro */}
         {erro && (
-          <div style={{ background:'rgba(255,255,255,0.15)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:20, textAlign:'center' }}>
+          <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px',
+            fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>
             {erro}
           </div>
         )}
 
-        {/* Campo CPF */}
+        {/* CPF */}
         <div style={{ marginBottom:28 }}>
-          <label style={labelStyle}>CPF</label>
-          <input
-            value={cpf}
-            onChange={e=>setCpf(formatCpf(e.target.value))}
-            placeholder=""
-            maxLength={14}
-            style={fieldStyle}
+          <label style={lSt}>CPF</label>
+          <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))}
+            maxLength={14} style={fSt}
             onFocus={e=>e.target.style.borderBottomColor='#fff'}
             onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
-            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+            onKeyDown={e=>e.key==='Enter'&&handleEntrar()}
           />
         </div>
 
-        {/* Campo Senha */}
+        {/* Senha */}
         <div style={{ marginBottom:40 }}>
-          <label style={labelStyle}>Senha</label>
-          <input
-            type="password"
-            value={senha}
-            onChange={e=>setSenha(e.target.value)}
-            placeholder=""
-            style={fieldStyle}
+          <label style={lSt}>Senha</label>
+          <input type="password" value={senha} onChange={e=>setSenha(e.target.value)}
+            style={fSt}
             onFocus={e=>e.target.style.borderBottomColor='#fff'}
-            onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
-            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+            onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,252,0.5)'}
+            onKeyDown={e=>e.key==='Enter'&&handleEntrar()}
           />
         </div>
 
-        {/* Botão ENTRAR */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          style={{
-            width:'100%', height:52, borderRadius:8,
-            background: loading ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.20)',
-            border:'none', color:'#fff',
-            fontSize:15, fontWeight:700, letterSpacing:'0.1em',
+        {/* Botão Entrar */}
+        <button onClick={handleEntrar} disabled={loading}
+          style={{ width:120, height:40, borderRadius:6,
+            background: loading ? 'rgba(255,255,255,0.25)' : '#fff',
+            border:'none',
+            color: loading ? '#fff' : '#1B3FA6',
+            fontSize:14, fontWeight:700,
             cursor: loading ? 'not-allowed' : 'pointer',
-            transition:'background 0.2s',
-            backdropFilter:'blur(4px)',
+            transition:'all 0.2s', display:'block', margin:'0 auto',
           }}
-          onMouseEnter={e=>{ if(!loading) e.currentTarget.style.background='rgba(255,255,255,0.30)'; }}
-          onMouseLeave={e=>{ if(!loading) e.currentTarget.style.background='rgba(255,255,255,0.20)'; }}
+          onMouseEnter={e=>{ if(!loading){ e.currentTarget.style.background='rgba(255,255,255,0.9)'; }}}
+          onMouseLeave={e=>{ if(!loading){ e.currentTarget.style.background='#fff'; }}}
         >
-          {loading ? 'AUTENTICANDO...' : 'ENTRAR'}
+          {loading ? '...' : 'Entrar'}
         </button>
 
-        {/* Link voltar — discreto */}
-        <div style={{ textAlign:'center', marginTop:28 }}>
-          <button onClick={onVoltar}
-            style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.55)' }}>
+        {/* Voltar */}
+        <div style={{ textAlign:'center', marginTop:32 }}>
+          <button onClick={onClose}
+            style={{ background:'none', border:'none', cursor:'pointer',
+              fontSize:12, color:'rgba(255,255,255,0.5)' }}>
             ← Voltar ao portal
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function ExpressoScreen({ onVoltar, onAutenticar }) {
+  /* Mantido por compatibilidade — redireciona para SsoModal */
+  React.useEffect(()=>{ onVoltar(); }, []);
+  return null;
 }
 
 
