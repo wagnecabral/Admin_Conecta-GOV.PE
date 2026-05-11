@@ -56,10 +56,10 @@ function Header({ activePage, onNav, onAdminClick }) {
   return (
     <div style={{ background:'#FFFFFF', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:72, borderBottom:'1px solid #E7E9EB' }}>
       <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-        <img src="assets/ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+        <img src="../assets/ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
         <div style={{ width:1, height:36, background:'#E7E9EB' }}/>
-        <img src="assets/Brasao.png" alt="Brasão de Pernambuco" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
-        <img src="assets/Governo.png" alt="Governo de Pernambuco" style={{ height:36, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+        <img src="../assets/Brasao.png" alt="Brasão de Pernambuco" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+        <img src="../assets/Governo.png" alt="Governo de Pernambuco" style={{ height:36, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
       </div>
       <nav style={{ display:'flex', gap:0, alignItems:'stretch', height:72 }}>
         {navItems.map(item => {
@@ -175,12 +175,12 @@ function Footer() {
         </div>
         <div style={{ borderTop:'1px solid rgba(248,250,252,0.2)', padding:'20px 0', display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
           <div style={{ display:'flex', alignItems:'center', gap:20 }}>
-            <img src="assets/ati_logo.png" alt="ATI" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../assets/ati_logo.png" alt="ATI" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
             <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
-            <img src="assets/Brasao.png" alt="Brasão" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <img src="assets/Governo.png" alt="Governo PE" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../assets/Brasao.png" alt="Brasão" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../assets/Governo.png" alt="Governo PE" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
             <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
-            <img src="assets/liga_digital.png" alt="Liga Digital" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../assets/liga_digital.png" alt="Liga Digital" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
           </div>
         </div>
         <div style={{ borderTop:'1px solid rgba(248,250,252,0.08)', padding:'14px 0 18px' }}>
@@ -463,11 +463,11 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
 
       {/* Logo Governo PE — usa imagem se disponível, fallback tipográfico */}
       <div style={{ marginBottom:56, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:18 }}>
-        <img src="assets/Brasao.png" alt="Brasão PE"
+        <img src="../assets/Brasao.png" alt="Brasão PE"
           style={{ height:90, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
           onError={e=>{ e.target.src='../assets/Brasao.png'; e.target.onerror=()=>e.target.style.display='none'; }}
         />
-        <img src="assets/Governo.png" alt="Governo de Pernambuco"
+        <img src="../assets/Governo.png" alt="Governo de Pernambuco"
           style={{ height:80, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
           onError={e=>{ e.target.src='../assets/Governo.png'; e.target.onerror=()=>e.target.style.display='none'; }}
         />
@@ -552,9 +552,9 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
       </div>
       {/* Navbar mínima */}
       <div style={{ background:'#fff', borderBottom:`1px solid ${C.divider}`, height:64, display:'flex', alignItems:'center', padding:'0 24px', gap:14 }}>
-        <img src="assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+        <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
         <div style={{ width:1, height:28, background:C.divider }}/>
-        <img src="assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+        <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
       </div>
 
       <div style={{ flex:1, background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
