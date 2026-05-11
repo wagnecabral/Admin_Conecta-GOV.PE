@@ -1915,8 +1915,8 @@ function RelCadastradas({ showToast }) {
     doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
     doc.text(`Filtros: ${filtrosLabel()}`,14,22);
     doc.autoTable({
-      head:[['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em']],
-      body:apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—']),
+      head:[['#','Nome da API','Órgão','Versão','Categoria','Status']],
+      body:apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status]),
       startY:30,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,243,255]},
     });
     doc.save(`relatorio-apis_${slug}.pdf`);
@@ -1925,10 +1925,10 @@ function RelCadastradas({ showToast }) {
   const gerarXLSX = (apis) => {
     const {utils,write}=window.XLSX; const {data,hora,slug}=now();
     const cab=[['Conecta Gov.PE — Relatório de APIs Cadastradas'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel()}`],[`Total: ${apis.length} registros`],[],
-      ['#','Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em','Atualizado em','Responsável']];
-    const linhas=apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.name||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status,a.baseSistema||'—',a.criado||'—',a.atualizado||'—',a.autor||'—']);
+      ['#','Nome da API','Órgão','Versão','Categoria','Status']];
+    const linhas=apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.name||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:38},{wch:40},{wch:8},{wch:22},{wch:10},{wch:38},{wch:12},{wch:12},{wch:18}];
+    ws['!cols']=[{wch:4},{wch:42},{wch:20},{wch:10},{wch:28},{wch:12}];
     const wb=utils.book_new();utils.book_append_sheet(wb,ws,'APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2058,7 +2058,7 @@ function RelCadastradas({ showToast }) {
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
-                  <tr>{['Nome da API','Órgão','Versão','Categoria','Status','Base/Sistema','Criado em'].map(h=>(
+                  <tr>{['Nome da API','Órgão','Versão','Categoria','Status'].map(h=>(
                     <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>
                   ))}</tr>
                 </thead>
@@ -2072,8 +2072,7 @@ function RelCadastradas({ showToast }) {
                       <td style={{padding:'9px 14px'}}><span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 7px',borderRadius:100,border:'1px solid #99C6FF'}}>{a.versao}</span></td>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td>
                       <td style={{padding:'9px 14px'}}><BadgeApi status={a.status}/></td>
-                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.baseSistema||'—'}</td>
-                      <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{a.criado||'—'}</td>
+                      
                     </tr>
                   ))}
                 </tbody>
@@ -2226,8 +2225,8 @@ function RelUso({ showToast }) {
     doc.text(`Filtros: ${filtrosLabel()}`,14,24);
     doc.text(`Total: ${dados.length} solicitação(ões)`,14,29);
     doc.autoTable({
-      head:[['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Status']],
-      body:dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.status]),
+      head:[['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação']],
+      body:dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao]),
       startY:33,
       styles:{fontSize:9,cellPadding:3},
       headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
@@ -2259,9 +2258,9 @@ function RelUso({ showToast }) {
       [`Filtros: ${filtrosLabel()}`],
       [`Total: ${dados.length} solicitação(ões)`],
       [],
-      ['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Status'],
+      ['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação'],
     ];
-    const linhas=dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.status]);
+    const linhas=dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
     ws['!cols']=[{wch:4},{wch:42},{wch:32},{wch:20},{wch:22},{wch:12}];
     const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso das APIs');
@@ -2366,7 +2365,7 @@ function RelUso({ showToast }) {
               <Icon name="filter" size={14} color="#494C57"/>
               Resultado da pesquisa
               <span style={{fontSize:12,color:'#888',fontWeight:400}}>
-                ({resultado.length} solicitação{resultado.length!==1?'ões':''})
+                ({resultado.length} solicitaç{resultado.length!==1?'ões':'ão'})
               </span>
             </div>
             <div style={{display:'flex',gap:6}}>
@@ -2395,7 +2394,7 @@ function RelUso({ showToast }) {
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr>
-                    {['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Status'].map(h=>(
+                    {['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação'].map(h=>(
                       <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
                         {h}
                       </th>
@@ -2413,7 +2412,6 @@ function RelUso({ showToast }) {
                       <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
                       <td style={{padding:'9px 14px'}}><TipoBadge tipo={d.tipo}/></td>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.dataSolicitacao}</td>
-                      <td style={{padding:'9px 14px'}}><StatusBadge status={d.status}/></td>
                     </tr>
                   ))}
                 </tbody>
