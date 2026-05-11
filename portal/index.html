@@ -173,13 +173,14 @@ function Footer() {
             </div>
           </div>
         </div>
-        <div style={{ borderTop:'1px solid rgba(248,250,252,0.2)', padding:'20px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <img src="assets/ati_logo.png" alt="ATI" style={{ height:52, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-            <img src="assets/Brasao.png" alt="Brasão" style={{ height:52, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <img src="assets/Governo.png" alt="Governo PE" style={{ height:44, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <div style={{ width:1, height:44, background:'rgba(248,250,252,0.3)' }}/>
-            <img src="assets/liga_digital.png" alt="Liga Digital" style={{ height:44, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+        <div style={{ borderTop:'1px solid rgba(248,250,252,0.2)', padding:'20px 0', display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:20 }}>
+            <img src="assets/ati_logo.png" alt="ATI" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
+            <img src="assets/Brasao.png" alt="Brasão" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="assets/Governo.png" alt="Governo PE" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
+            <img src="assets/liga_digital.png" alt="Liga Digital" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
           </div>
         </div>
         <div style={{ borderTop:'1px solid rgba(248,250,252,0.08)', padding:'14px 0 18px' }}>
@@ -473,93 +474,151 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
 
 /* ── Tela Expresso (SSO simulado) ────────────────────────── */
 function ExpressoScreen({ onVoltar, onAutenticar }) {
-  const [cpf, setCpf] = React.useState('');
-  const [senha, setSenha] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [erro, setErro] = React.useState('');
+  const [cpf,    setCpf]    = React.useState('');
+  const [senha,  setSenha]  = React.useState('');
+  const [loading,setLoading]= React.useState(false);
+  const [erro,   setErro]   = React.useState('');
 
-  const formatCpf = (v) => {
-    const nums = v.replace(/\D/g,'').slice(0,11);
-    return nums.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4').replace(/(\d{3})(\d{3})(\d{0,3})/,'$1.$2.$3').replace(/(\d{3})(\d{0,3})/,'$1.$2').replace(/\.$/, '');
+  const formatCpf = v => {
+    const n = v.replace(/\D/g,'').slice(0,11);
+    if(n.length<=3)  return n;
+    if(n.length<=6)  return n.slice(0,3)+'.'+n.slice(3);
+    if(n.length<=9)  return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6);
+    return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6,9)+'-'+n.slice(9);
   };
 
   const handleLogin = () => {
-    if (!cpf || !senha) { setErro('Preencha CPF e senha para continuar.'); return; }
+    if(!cpf||!senha){ setErro('Preencha CPF e senha para continuar.'); return; }
     setLoading(true); setErro('');
-    setTimeout(() => { setLoading(false); onAutenticar(cpf); }, 1200);
+    setTimeout(()=>{ setLoading(false); onAutenticar(cpf); }, 1200);
   };
 
+  /* Estilo campo underline — igual ao padrão Expresso */
+  const fieldStyle = {
+    width:'100%', background:'transparent', border:'none',
+    borderBottom:'2px solid rgba(255,255,255,0.5)',
+    outline:'none', color:'#fff', fontSize:16, padding:'8px 0',
+    caretColor:'#fff',
+  };
+  const labelStyle = { display:'block', fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:4 };
+
   return (
-    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
-      {/* GovBar */}
-      <div style={{ background:C.brandDark, height:32, display:'flex', alignItems:'center', padding:'0 24px', gap:8 }}>
-        <span style={{ color:'#FFCD37', fontSize:14 }}>★</span>
-        <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
+    <div style={{ minHeight:'100vh', background:'#1A47B8', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
+
+      {/* Logo Governo PE */}
+      <div style={{ marginBottom:52, textAlign:'center' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16 }}>
+          {/* Brasão SVG placeholder — em produção usa assets/Brasao.png */}
+          <img src="assets/Brasao.png" alt="Brasão PE"
+            style={{ height:100, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }}
+            onError={e=>{
+              e.target.style.display='none';
+              e.target.nextSibling.style.display='flex';
+            }}
+          />
+          {/* Fallback brasão SVG caso imagem não carregue */}
+          <div style={{ display:'none', width:80, height:80, borderRadius:'50%', border:'3px solid rgba(255,255,255,0.6)', alignItems:'center', justifyContent:'center' }}>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5">
+              <path d="M12 2L2 7v5c0 5.25 4.17 10.16 10 11.29C17.83 22.16 22 17.25 22 12V7L12 2z"/>
+            </svg>
+          </div>
+          <div style={{ textAlign:'left' }}>
+            <div style={{ fontSize:10, color:'rgba(255,255,255,0.8)', fontWeight:600, letterSpacing:'0.15em', lineHeight:1.2 }}>GOVERNO DE</div>
+            <div style={{ lineHeight:0.9 }}>
+              <span style={{ fontSize:38, fontWeight:900, color:'#fff', letterSpacing:'-1px' }}>PER</span>
+            </div>
+            <div style={{ lineHeight:0.9 }}>
+              <span style={{ fontSize:38, fontWeight:900, letterSpacing:'-1px' }}>
+                <span style={{ color:'#E63946' }}>N</span>
+                <span style={{ color:'#F4A261' }}>A</span>
+                <span style={{ color:'#2A9D8F' }}>M</span>
+              </span>
+            </div>
+            <div style={{ lineHeight:0.9 }}>
+              <span style={{ fontSize:38, fontWeight:900, letterSpacing:'-1px' }}>
+                <span style={{ color:'#E9C46A' }}>B</span>
+                <span style={{ color:'#264653' }}>U</span>
+                <span style={{ color:'#E63946' }}>C</span>
+                <span style={{ color:'#2A9D8F' }}>O</span>
+              </span>
+            </div>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,0.7)', fontWeight:600, letterSpacing:'0.12em', marginTop:3 }}>ESTADO DE MUDANÇA</div>
+          </div>
+        </div>
       </div>
 
-      {/* Fundo hero azul */}
-      <div style={{ flex:1, background:`linear-gradient(160deg, ${C.brandDark} 0%, ${C.brand} 60%, #0A3FAA 100%)`, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
-        <div style={{ background:'#fff', borderRadius:16, width:400, overflow:'hidden', boxShadow:'0 24px 64px rgba(0,26,122,0.35)' }}>
-          {/* Header card */}
-          <div style={{ background:C.brandLight, borderBottom:`1px solid ${C.brandBorder}`, padding:'24px 32px', textAlign:'center' }}>
-            <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.brand, borderRadius:8, padding:'6px 14px', marginBottom:12 }}>
-              <span style={{ color:'#FFCD37', fontSize:13 }}>★</span>
-              <span style={{ color:'#fff', fontSize:12, fontWeight:600 }}>Governo de Pernambuco</span>
-            </div>
-            <h1 style={{ fontSize:22, fontWeight:800, color:C.brandDark, marginBottom:4, letterSpacing:'-0.5px' }}>Login Estadual</h1>
-            <p style={{ fontSize:12, color:C.textSec }}>Sistema Expresso de Autenticação</p>
+      {/* Formulário */}
+      <div style={{ width:'100%', maxWidth:460 }}>
+
+        {/* Erro */}
+        {erro && (
+          <div style={{ background:'rgba(255,255,255,0.15)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:20, textAlign:'center' }}>
+            {erro}
           </div>
+        )}
 
-          {/* Formulário */}
-          <div style={{ padding:'28px 32px 32px' }}>
-            {erro && (
-              <div style={{ background:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:6, padding:'10px 14px', fontSize:13, color:C.danger, marginBottom:16, display:'flex', gap:8, alignItems:'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.danger} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {erro}
-              </div>
-            )}
+        {/* Campo CPF */}
+        <div style={{ marginBottom:28 }}>
+          <label style={labelStyle}>CPF</label>
+          <input
+            value={cpf}
+            onChange={e=>setCpf(formatCpf(e.target.value))}
+            placeholder=""
+            maxLength={14}
+            style={fieldStyle}
+            onFocus={e=>e.target.style.borderBottomColor='#fff'}
+            onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
+            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+          />
+        </div>
 
-            <div style={{ marginBottom:14 }}>
-              <label style={{ fontSize:13, fontWeight:500, color:C.text, display:'block', marginBottom:5 }}>CPF</label>
-              <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))} placeholder="000.000.000-00" maxLength={14}
-                style={{ width:'100%', height:44, border:`1px solid ${C.border}`, borderRadius:6, padding:'0 14px', fontSize:14, color:C.text, outline:'none', fontFamily:'monospace' }}
-                onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
-                onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
-                onKeyDown={e=>e.key==='Enter'&&handleLogin()}
-              />
-            </div>
-            <div style={{ marginBottom:20 }}>
-              <label style={{ fontSize:13, fontWeight:500, color:C.text, display:'block', marginBottom:5 }}>Senha</label>
-              <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"
-                style={{ width:'100%', height:44, border:`1px solid ${C.border}`, borderRadius:6, padding:'0 14px', fontSize:14, color:C.text, outline:'none' }}
-                onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }}
-                onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}
-                onKeyDown={e=>e.key==='Enter'&&handleLogin()}
-              />
-            </div>
+        {/* Campo Senha */}
+        <div style={{ marginBottom:40 }}>
+          <label style={labelStyle}>Senha</label>
+          <input
+            type="password"
+            value={senha}
+            onChange={e=>setSenha(e.target.value)}
+            placeholder=""
+            style={fieldStyle}
+            onFocus={e=>e.target.style.borderBottomColor='#fff'}
+            onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
+            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+          />
+        </div>
 
-            <button onClick={handleLogin} disabled={loading} style={{ width:'100%', height:46, borderRadius:8, background:loading?C.brandBorder:C.brand, border:'none', color:'#fff', fontSize:14, fontWeight:700, cursor:loading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'background 0.2s' }}>
-              {loading ? (<><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Autenticando...</>) : 'Entrar'}
-            </button>
+        {/* Botão ENTRAR */}
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          style={{
+            width:'100%', height:52, borderRadius:8,
+            background: loading ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.20)',
+            border:'none', color:'#fff',
+            fontSize:15, fontWeight:700, letterSpacing:'0.1em',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            transition:'background 0.2s',
+            backdropFilter:'blur(4px)',
+          }}
+          onMouseEnter={e=>{ if(!loading) e.currentTarget.style.background='rgba(255,255,255,0.30)'; }}
+          onMouseLeave={e=>{ if(!loading) e.currentTarget.style.background='rgba(255,255,255,0.20)'; }}
+        >
+          {loading ? 'AUTENTICANDO...' : 'ENTRAR'}
+        </button>
 
-            {/* Dica de simulação */}
-            <div style={{ marginTop:16, background:'#FFF6CE', border:'1px solid #FFE082', borderRadius:6, padding:'10px 12px' }}>
-              <p style={{ fontSize:11, color:'#7A5700', lineHeight:1.5 }}>
-                <strong>Simulação:</strong> Use CPF <code style={{ background:'#FFE082', padding:'1px 4px', borderRadius:3 }}>046.318.094-18</code> para acesso ADM autorizado, ou qualquer outro CPF para simular primeiro acesso (cadastro pendente).
-              </p>
-            </div>
-
-            <div style={{ marginTop:16, textAlign:'center' }}>
-              <button onClick={onVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, color:C.textSec }}>← Voltar ao portal</button>
-            </div>
-          </div>
+        {/* Link voltar — discreto */}
+        <div style={{ textAlign:'center', marginTop:28 }}>
+          <button onClick={onVoltar}
+            style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.55)' }}>
+            ← Voltar ao portal
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Tela Acesso Negado ──────────────────────────────────── */
+
 function AcessoNegadoScreen({ cpf, onVoltar }) {
   const cpfMascarado = cpf.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.XXX.XXX-$2');
   return (
