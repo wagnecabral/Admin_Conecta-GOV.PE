@@ -1884,12 +1884,7 @@ function Dashboard({ onNav }) {
       {progress!==undefined && <ProgressBar value={progress} total={progressTotal} color={cor||C.brand}/>}
 
       {/* Link de ação */}
-      {nav && (
-        <div style={{marginTop:'auto',paddingTop:8,borderTop:'1px solid #F0F0F0',
-          fontSize:11,color:C.brand,fontWeight:500}}>
-          Ver relatório →
-        </div>
-      )}
+      
     </div>
   );
 
@@ -1920,7 +1915,7 @@ function Dashboard({ onNav }) {
           <div style={{fontSize:12,color:'#888'}}>Atualizado em {new Date().toLocaleDateString('pt-BR')} às {ts} · Perfil: ADM</div>
         </div>
         <div style={{display:'flex',gap:8}}>
-          <button onClick={()=>onNav('relatorios')} style={{height:32,padding:'0 14px',borderRadius:6,border:`1px solid ${C.brand}`,background:'#fff',color:C.brand,fontSize:12,fontWeight:600,cursor:'pointer'}}>Relatórios</button>
+
         </div>
       </div>
 
