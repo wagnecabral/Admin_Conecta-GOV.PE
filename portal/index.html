@@ -461,38 +461,13 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
     <div style={{ position:'fixed', inset:0, background:'#1B3FA6', zIndex:1000,
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
 
-      {/* Logo Governo PE — inline, sem dependência de arquivo externo */}
-      <div style={{ marginBottom:52, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:20 }}>
-
-        {/* Brasão simplificado em SVG */}
-        <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="36" cy="36" r="34" stroke="rgba(255,255,255,0.85)" strokeWidth="2" fill="rgba(255,255,255,0.08)"/>
-          <path d="M36 12 L56 22 L56 40 C56 52 46 60 36 64 C26 60 16 52 16 40 L16 22 Z"
-            fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinejoin="round"/>
-          <circle cx="36" cy="38" r="10" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"/>
-          <path d="M36 28 L36 48 M26 38 L46 38" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
-          <path d="M30 32 Q36 26 42 32 Q46 36 42 44 Q36 50 30 44 Q26 40 30 32Z"
-            fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
-        </svg>
-
-        {/* Tipografia PERNAMBUCO inline */}
-        <div style={{ textAlign:'left' }}>
-          <div style={{ fontSize:9, color:'rgba(255,255,255,0.75)', fontWeight:700, letterSpacing:'0.18em', marginBottom:2 }}>GOVERNO DE</div>
-          <div style={{ lineHeight:1, marginBottom:1 }}>
-            <span style={{ fontSize:32, fontWeight:900, color:'#fff', letterSpacing:'-0.5px', fontFamily:'Arial Black, Arial, sans-serif' }}>PER</span>
-          </div>
-          <div style={{ lineHeight:1, marginBottom:1 }}>
-            <span style={{ fontSize:32, fontWeight:900, letterSpacing:'-0.5px', fontFamily:'Arial Black, Arial, sans-serif' }}>
-              <span style={{ color:'#E8333A' }}>N</span><span style={{ color:'#F5A623' }}>A</span><span style={{ color:'#27AE60' }}>M</span>
-            </span>
-          </div>
-          <div style={{ lineHeight:1, marginBottom:4 }}>
-            <span style={{ fontSize:32, fontWeight:900, letterSpacing:'-0.5px', fontFamily:'Arial Black, Arial, sans-serif' }}>
-              <span style={{ color:'#F5E642' }}>B</span><span style={{ color:'#1A5276' }}>U</span><span style={{ color:'#E8333A' }}>C</span><span style={{ color:'#27AE60' }}>O</span>
-            </span>
-          </div>
-          <div style={{ fontSize:8, color:'rgba(255,255,255,0.65)', fontWeight:700, letterSpacing:'0.14em' }}>ESTADO DE MUDANÇA</div>
-        </div>
+      {/* Logo Governo PE — imagem embutida em base64, sem dependência de arquivo */}
+      <div style={{ marginBottom:52, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <img
+          src="data:image/png;base64,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"
+          alt="Governo de Pernambuco — Estado de Mudança"
+          style={{ height:90, width:'auto', objectFit:'contain' }}
+        />
       </div>
 
       {/* Formulário */}
