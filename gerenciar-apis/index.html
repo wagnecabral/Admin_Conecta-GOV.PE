@@ -668,7 +668,7 @@ function GerenciarApis({ showToast }) {
       {modal?.type==='edit'&&<Modal title="Editar API" size="lg" onClose={()=>setModal(null)}><ApiForm initial={modal.api} onSave={d=>handleSave({...modal.api,...d},true)} onCancel={()=>setModal(null)} isEdit={true}/></Modal>}
       {modal?.type==='editConfirm'&&(<Modal title="Confirmar edição" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="primary" onClick={()=>setModal({type:'edit',api:modal.api})}>Continuar edição</Btn></>}><Alert type="warning" msg={`A API "${modal.api.nome}" está Ativa. Deseja realmente editá-la?`}/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>Alterações em APIs ativas podem impactar integrações em uso.</p></Modal>)}
       {modal?.type==='view'&&(<Modal title={`Detalhes — ${modal.api.nome}`} size="lg" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Voltar</Btn></>}><ApiForm initial={modal.api} readOnly onCancel={()=>setModal(null)}/></Modal>)}
-      {modal?.type==='toggle'&&(<Modal title={modal.api.status==='Ativo'?'Inativar API':'Ativar API'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.api.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.api)}>{modal.api.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>{modal.api.status==='Ativo'?<><Alert type="warning" msg="Esta ação irá remover a API do catálogo público."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Inativa.</p></>:<><Alert type="info" msg="A API será publicada no catálogo público após ativação."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Ativa.</p></>}<p style={{ fontSize:11, color:C.textSecondary, marginTop:8 }}>Esta ação será registrada no log de auditoria.</p></Modal>)}
+      {modal?.type==='toggle'&&(<Modal title={modal.api.status==='Ativo'?'Inativar API':'Ativar API'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.api.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.api)}>{modal.api.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>{modal.api.status==='Ativo'?<><Alert type="warning" msg="Esta ação irá remover a API do catálogo público."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Inativa.</p></>:<><Alert type="info" msg="A API será publicada no catálogo público após ativação."/><p style={{ fontSize:13, color:C.textSecondary, marginTop:12, lineHeight:1.6 }}>A API <strong>"{modal.api.nome}"</strong> será marcada como Ativa.</p></>}</Modal>)}
     </div>
   );
 }
@@ -741,7 +741,7 @@ function ControleAcesso({ showToast }) {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:pendentes>0?16:24 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:700, color:C.textPrimary, letterSpacing:'-0.15px', marginBottom:4 }}>Controle de Acesso</h1>
-          <p style={{ fontSize:14, color:C.textSecondary }}>Gerencie os usuários com permissão de acesso ao backoffice. Cadastros gerados automaticamente via Login Estadual (SSO).</p>
+
         </div>
       </div>
 
@@ -783,8 +783,7 @@ function ControleAcesso({ showToast }) {
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, background:C.infoBg, border:`1px solid ${C.infoBorder}`, borderRadius:6, padding:'5px 10px' }}>
               <Icon name="shield" size={13} color={C.brand}/>
-              <span style={{ fontSize:11, color:C.brand, fontWeight:500 }}>CPF mascarado na listagem (LGPD)</span>
-            </div>
+              </div>
           </div>
         </div>
 
@@ -864,7 +863,7 @@ function ControleAcesso({ showToast }) {
             ].map(([k,v])=>(<div key={k} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px', background:C.bg, borderRadius:5, border:`1px solid ${C.divider}` }}><span style={{ fontSize:12, color:C.textSecondary }}>{k}</span><span style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{v}</span></div>))}
             <div style={{ background:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:6, padding:'10px 14px', display:'flex', gap:8, alignItems:'center', marginTop:4 }}>
               <Icon name="shield" size={14} color={C.danger}/>
-              <span style={{ fontSize:11, color:C.danger }}>O CPF completo é visível apenas nesta tela de detalhe. Na listagem, exibe-se o formato mascarado conforme LGPD.</span>
+  
             </div>
           </div>
         </Modal>
@@ -880,7 +879,7 @@ function ControleAcesso({ showToast }) {
         <Modal title="Inativar usuário" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="danger" onClick={()=>handleInativar(modal.usuario)}>Sim, inativar</Btn></>}>
           <Alert type="warning" msg={`O usuário "${modal.usuario.nome}" será marcado como Inativo e não poderá mais acessar o sistema.`}/>
           {modal.usuario.perfil==='ADM'&&(<div style={{ marginTop:12 }}><Alert type="danger" msg="Atenção: este usuário é ADM. Verifique se há outro ADM ativo antes de prosseguir."/></div>)}
-          <p style={{ fontSize:11, color:C.textSecondary, marginTop:12 }}>Esta ação será registrada no log de auditoria.</p>
+          
         </Modal>
       )}
 
@@ -888,7 +887,7 @@ function ControleAcesso({ showToast }) {
       {modal?.type==='reativar'&&(
         <Modal title="Reativar usuário" size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant="success" onClick={()=>handleReativar(modal.usuario)}>Sim, reativar</Btn></>}>
           <Alert type="info" msg={`O usuário "${modal.usuario.nome}" voltará a ter acesso ao sistema.`}/>
-          <p style={{ fontSize:11, color:C.textSecondary, marginTop:12 }}>Esta ação será registrada no log de auditoria.</p>
+          
         </Modal>
       )}
     </div>
@@ -918,7 +917,7 @@ function ModalAtivacaoUsuario({ usuario, modo, onSave, onClose }) {
     <Modal title={isAtivar ? 'Ativar usuário' : 'Editar usuário'} size="sm" onClose={onClose}
       footer={<><Btn variant="ghost" onClick={onClose}>Cancelar</Btn><Btn variant="primary" icon="check" onClick={()=>{ if(validate()) onSave({perfil,orgaoId}); }}>{isAtivar?'Ativar acesso':'Salvar alterações'}</Btn></>}>
       <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-        {isAtivar&&<Alert type="info" msg="O CPF e nome foram extraídos automaticamente do token SSO. Defina o perfil e órgão para liberar o acesso."/>}
+        
 
         {/* Campos somente leitura: nome e CPF do SSO */}
         <div style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:6, padding:'10px 14px', display:'flex', flexDirection:'column', gap:6 }}>
@@ -944,9 +943,7 @@ function ModalAtivacaoUsuario({ usuario, modo, onSave, onClose }) {
           </Field>
         )}
 
-        <div style={{ background:C.infoBg, border:`1px solid ${C.infoBorder}`, borderRadius:6, padding:'10px 14px', fontSize:12, color:C.brand, lineHeight:1.55 }}>
-          <strong>Auditoria automática:</strong> Os campos <code>updated_by</code> e <code>updated_at</code> serão preenchidos pelo servidor com base no token SSO do ADM logado.
-        </div>
+        
       </div>
     </Modal>
   );
@@ -1107,7 +1104,7 @@ function GerenciarCategorias({ showToast }) {
       {modal?.type==='add'&&(<Modal title="Incluir Categoria" size="sm" onClose={()=>setModal(null)}><CatForm onSave={d=>handleSave(d,false)} onCancel={()=>setModal(null)} isEdit={false}/></Modal>)}
       {modal?.type==='edit'&&(<Modal title="Editar Categoria" size="sm" onClose={()=>setModal(null)}><CatForm initial={modal.cat} onSave={d=>handleSave(d,true,modal.cat.id)} onCancel={()=>setModal(null)} isEdit={true}/></Modal>)}
       {modal?.type==='view'&&(<Modal title={`Detalhes — ${modal.cat.nome}`} size="sm" onClose={()=>setModal(null)} footer={<Btn variant="ghost" onClick={()=>setModal(null)} icon="arrowLeft">Fechar</Btn>}><CatForm initial={modal.cat} readOnly onCancel={()=>setModal(null)}/></Modal>)}
-      {modal?.type==='toggle'&&(<Modal title={modal.cat.status==='Ativo'?'Inativar Categoria':'Ativar Categoria'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.cat.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.cat)}>{modal.cat.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>{modal.cat.status==='Ativo'?(<><Alert type="warning" msg={modal.cat.qtdApis>0?`Não é possível inativar: existem ${modal.cat.qtdApis} API(s) ativa(s) vinculadas a esta categoria.`:`A categoria "${modal.cat.nome}" será removida do catálogo público.`}/>{modal.cat.qtdApis>0&&<p style={{ fontSize:13, color:C.textSecondary, marginTop:12 }}>Inative ou desvincule as APIs antes de inativar esta categoria.</p>}</>):(<Alert type="info" msg={`A categoria "${modal.cat.nome}" voltará a aparecer no catálogo e nos dropdowns de cadastro de APIs.`}/>)}<p style={{ fontSize:11, color:C.textSecondary, marginTop:12 }}>Esta ação será registrada no log de auditoria.</p></Modal>)}
+      {modal?.type==='toggle'&&(<Modal title={modal.cat.status==='Ativo'?'Inativar Categoria':'Ativar Categoria'} size="sm" onClose={()=>setModal(null)} footer={<><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn variant={modal.cat.status==='Ativo'?'danger':'primary'} onClick={()=>handleToggle(modal.cat)}>{modal.cat.status==='Ativo'?'Sim, inativar':'Sim, ativar'}</Btn></>}>{modal.cat.status==='Ativo'?(<><Alert type="warning" msg={modal.cat.qtdApis>0?`Não é possível inativar: existem ${modal.cat.qtdApis} API(s) ativa(s) vinculadas a esta categoria.`:`A categoria "${modal.cat.nome}" será removida do catálogo público.`}/>{modal.cat.qtdApis>0&&<p style={{ fontSize:13, color:C.textSecondary, marginTop:12 }}>Inative ou desvincule as APIs antes de inativar esta categoria.</p>}</>):(<Alert type="info" msg={`A categoria "${modal.cat.nome}" voltará a aparecer no catálogo e nos dropdowns de cadastro de APIs.`}/>)}</Modal>)}
     </div>
   );
 }
