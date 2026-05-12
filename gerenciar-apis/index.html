@@ -1920,19 +1920,7 @@ function Dashboard({ onNav }) {
       </div>
 
       {/* ── Alerta pendentes ── */}
-      {pendentes>0 && (
-        <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
-          padding:'8px 14px',marginBottom:14,display:'flex',gap:8,alignItems:'center'}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span style={{fontSize:13,color:'#B77706',flex:1}}>
-            <strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso ao sistema.
-          </span>
-          <button onClick={()=>onNav('usuarios')} style={{background:'#B77706',border:'none',
-            borderRadius:5,padding:'4px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-            Revisar →
-          </button>
-        </div>
-      )}
+      
 
       {/* ── Linha 1: KPIs principais com sparkline ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:10}}>
@@ -1961,13 +1949,813 @@ function Dashboard({ onNav }) {
         <KCard
           label="Usuários com acesso"
           valor={usrsAtivos}
-          sub={`${pendentes} aguardam aprovação`}
-          cor={pendentes>0?"#B77706":"#2B6418"}
+          sub="com acesso liberado" cor="#2B6418" bg="#EAFBD7" border="#86D562"/>
+          <SeiCard label="Em análise"  valor={seiAnalise}   pct={Math.round(seiAnalise/seiTotal*100)}   cor="#B77706" bg="#FFF6CE" border="#FFE082"/>
+          <SeiCard label="Pendentes"   valor={seiPendSEI}   pct={Math.round(seiPendSEI/seiTotal*100)}   cor="#0034B7" bg="#E6F3FF" border="#99C6FF"/>
+          <SeiCard label="Reprovadas"  valor={seiReprov}    pct={Math.round(seiReprov/seiTotal*100)}     cor="#AC1010" bg="#FFE4E4" border="#E45F5F"/>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.03 + HU.03.04 — RELATÓRIOS
+   Aba 1: Relatório de APIs Cadastradas (HU.03.03)
+   Aba 2: Relatório de Uso / Consumo das APIs (HU.03.04)
+   - Exportação PDF e Excel com dados gerenciais reais
+   - Cabeçalho com data, usuário e filtros aplicados
+══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.03 — Relatório de APIs Cadastradas
+══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.03 — Relatório de APIs Cadastradas
+══════════════════════════════════════════════════════════════ */
+function RelCadastradas({ showToast }) {
+  const [loading, setLoading] = React.useState(false);
+  const [buscado, setBuscado] = React.useState(false);
+  const [f, setF] = React.useState({ orgaoId:'', status:'', categoriaId:'', dataInicio:'', dataFim:'' });
+  const [resultado, setResultado] = React.useState([]);
+
+  const setFil = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const getApis = () => INITIAL_APIS.filter(a=>{
+    if(f.orgaoId     && a.orgaoId     !== f.orgaoId)    return false;
+    if(f.status      && a.status      !== f.status)      return false;
+    if(f.categoriaId && a.categoriaId !== f.categoriaId) return false;
+    return true;
+  });
+
+  const filtrosLabel = () => {
+    const p=[];
+    if(f.orgaoId)     p.push('Órgão: '+(ORGAOS.find(o=>o.id===f.orgaoId)?.shortName||''));
+    if(f.status)      p.push('Status: '+f.status);
+    if(f.categoriaId) p.push('Categoria: '+(CATEGORIAS.find(c=>c.id===f.categoriaId)?.nome||''));
+    if(f.dataInicio)  p.push('De: '+f.dataInicio);
+    if(f.dataFim)     p.push('Até: '+f.dataFim);
+    return p.length?p.join(' | '):'Sem filtros';
+  };
+
+  const now = () => {
+    const d=new Date();
+    return {data:d.toLocaleDateString('pt-BR'),hora:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),slug:d.toISOString().slice(0,16).replace('T','_').replace(':','h')};
+  };
+
+  const handleBuscar = () => { setResultado(getApis()); setBuscado(true); };
+  const handleLimpar = () => { setF({orgaoId:'',status:'',categoriaId:'',dataInicio:'',dataFim:''}); setResultado([]); setBuscado(false); };
+
+  const gerarPDF = async (apis) => {
+    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W=doc.internal.pageSize.getWidth();
+    doc.setFillColor(0,26,122);doc.rect(0,0,W,26,'F');
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text('Conecta Gov.PE — Relatório de APIs Cadastradas',14,11);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,17);
+    doc.text(`Filtros: ${filtrosLabel()}`,14,22);
+    doc.autoTable({
+      head:[['#','Nome da API','Órgão','Versão','Categoria','Status']],
+      body:apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status]),
+      startY:30,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,243,255]},
+    });
+    doc.save(`relatorio-apis_${slug}.pdf`);
+  };
+
+  const gerarXLSX = (apis) => {
+    const {utils,write}=window.XLSX; const {data,hora,slug}=now();
+    const cab=[['Conecta Gov.PE — Relatório de APIs Cadastradas'],[`Gerado em: ${data} às ${hora}`],[`Usuário: João Silva (ADM)`],[`Filtros: ${filtrosLabel()}`],[`Total: ${apis.length} registros`],[],
+      ['#','Nome da API','Órgão','Versão','Categoria','Status']];
+    const linhas=apis.map((a,i)=>[i+1,a.nome,ORGAOS.find(o=>o.id===a.orgaoId)?.name||'—',a.versao,CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—',a.status]);
+    const ws=utils.aoa_to_sheet([...cab,...linhas]);
+    ws['!cols']=[{wch:4},{wch:42},{wch:20},{wch:10},{wch:28},{wch:12}];
+    const wb=utils.book_new();utils.book_append_sheet(wb,ws,'APIs');
+    const buf=write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`relatorio-apis_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async (fmt) => {
+    if(!resultado.length){showToast('Clique em Buscar antes de exportar.','warning');return;}
+    setLoading(true);
+    try{
+      await new Promise(r=>setTimeout(r,900));
+      fmt==='pdf'?await gerarPDF(resultado):gerarXLSX(resultado);
+      showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
+    }catch(e){showToast('Erro ao gerar o arquivo.','warning');}
+    finally{setLoading(false);}
+  };
+
+  const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
+  const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
+  const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
+
+      {/* Título */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Relatórios</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>APIs Cadastradas</h1>
+      </div>
+
+      {/* Card de filtros */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+
+        {/* Linha 1: Órgão + Status + Categoria */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:14}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão cedente</label>
+            <div style={{position:'relative'}}>
+              <select value={f.orgaoId} onChange={e=>setFil('orgaoId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todos</option>
+                {ORGAOS.map(o=><option key={o.id} value={o.id}>{o.shortName} — {o.name}</option>)}
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
+            </div>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Status</label>
+            <div style={{position:'relative'}}>
+              <select value={f.status} onChange={e=>setFil('status',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option>
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
+            </div>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Categoria</label>
+            <div style={{position:'relative'}}>
+              <select value={f.categoriaId} onChange={e=>setFil('categoriaId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
+                <option value="">Todas</option>
+                {CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}><Icon name="chevDown" size={13} color="#888"/></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Linha 2: Data Inicial + Data Final + botões alinhados à direita */}
+        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Inicial</label>
+            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Final</label>
+            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          {/* Botões alinhados à direita */}
+          <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'flex-end'}}>
+            <button onClick={handleLimpar}
+              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#E6F3FF';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+              Limpar
+            </button>
+            <button onClick={handleBuscar}
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Resultado da pesquisa */}
+      {buscado && (
+        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          {/* Cabeçalho resultado */}
+          <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'#28272C',fontWeight:500}}>
+              <Icon name="filter" size={14} color="#494C57"/>
+              Resultado da pesquisa
+              <span style={{fontSize:12,color:'#888',fontWeight:400}}>({resultado.length} registro{resultado.length!==1?'s':''})</span>
+            </div>
+            {/* Botões de exportação */}
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#E6F3FF';}}}
+                onMouseLeave={e=>{e.currentTarget.style.background='#fff';}}>
+                Excel
+              </button>
+              <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#001A7A'}`,background:loading||!resultado.length?'#CED2D7':'#001A7A',color:'#fff',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}}
+                onMouseLeave={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}}>
+                PDF
+              </button>
+              {loading&&<span style={{fontSize:11,color:'#888',alignSelf:'center',marginLeft:4}}>Gerando...</span>}
+            </div>
+          </div>
+
+          {/* Tabela */}
+          {resultado.length===0?(
+            <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>Nenhum registro encontrado com os filtros aplicados.</div>
+          ):(
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse'}}>
+                <thead>
+                  <tr>{['Nome da API','Órgão','Versão','Categoria','Status'].map(h=>(
+                    <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {resultado.map((a,i)=>(
+                    <tr key={i} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                      onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
+                      onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{a.nome}</td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{ORGAOS.find(o=>o.id===a.orgaoId)?.shortName||'—'}</td>
+                      <td style={{padding:'9px 14px'}}><span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',padding:'2px 7px',borderRadius:100,border:'1px solid #99C6FF'}}>{a.versao}</span></td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{CATEGORIAS.find(c=>c.id===a.categoriaId)?.nome||'—'}</td>
+                      <td style={{padding:'9px 14px'}}><BadgeApi status={a.status}/></td>
+                      
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+      <ScriptLoader/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.04 — Relatório de Uso e Consumo das APIs
+══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   HU.03.04 — Relatório de Uso das APIs
+   Responde: quais órgãos estão consumindo quais APIs?
+   Colunas: API | Órgão responsável | Qtd. chamadas | Período | Órgão consumidor
+   ADM vê todas as APIs. Cedente vê apenas APIs do seu órgão.
+══════════════════════════════════════════════════════════════ */
+
+/* Dados simulados — solicitações de acesso às APIs
+   Cada linha = um órgão/empresa que solicitou acesso a uma API
+   Em produção: consumido via GET /v1/reports/usage */
+const DADOS_USO_APIS = [
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'03/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'10/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'15/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'22/01/2025', status:'Ativo'    },
+  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'08/01/2025', status:'Ativo'    },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'14/01/2025', status:'Ativo'    },
+  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'20/02/2025', status:'Pendente' },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'12/02/2025', status:'Ativo'    },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'SERES',            tipo:'Órgão público',   dataSolicitacao:'18/02/2025', status:'Ativo'    },
+  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'DataPE Soluções',  tipo:'Empresa privada', dataSolicitacao:'01/03/2025', status:'Ativo'    },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'10/02/2025', status:'Ativo'    },
+  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'Univ. Federal PE', tipo:'Empresa privada', dataSolicitacao:'28/02/2025', status:'Pendente' },
+  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'15/03/2025', status:'Ativo'    },
+  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'22/03/2025', status:'Ativo'    },
+  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'01/04/2025', status:'Ativo'    },
+  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'HealthPE Tech',    tipo:'Empresa privada', dataSolicitacao:'08/04/2025', status:'Pendente' },
+  { api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', status:'Ativo'    },
+  { api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', status:'Ativo'    },
+];
+
+function RelUso({ showToast }) {
+  const [loading,   setLoading]   = React.useState(false);
+  const [buscado,   setBuscado]   = React.useState(false);
+  const [resultado, setResultado] = React.useState([]);
+  const [f, setF] = React.useState({
+    apiNome:    '',
+    tipo:       '',   /* 'Órgão público' | 'Empresa privada' | '' */
+    dataInicio: '',
+    dataFim:    '',
+  });
+
+  const setFil = (k,v) => setF(p=>({...p,[k]:v}));
+
+  /* Listas para dropdown de API */
+  const apisUnicas = [...new Set(DADOS_USO_APIS.map(d=>d.api))].sort();
+
+  /* Converte dd/mm/aaaa → Date */
+  const parseDate = str => {
+    if(!str) return null;
+    const [d,m,y] = str.split('/');
+    return new Date(+y, +m-1, +d);
+  };
+
+  const getDados = () => DADOS_USO_APIS.filter(d=>{
+    if(f.apiNome && d.api  !== f.apiNome) return false;
+    if(f.tipo    && d.tipo !== f.tipo)    return false;
+    if(f.dataInicio){
+      const ini = new Date(f.dataInicio);
+      const rec = parseDate(d.dataSolicitacao);
+      if(rec && rec < ini) return false;
+    }
+    if(f.dataFim){
+      const fim = new Date(f.dataFim);
+      const rec = parseDate(d.dataSolicitacao);
+      if(rec && rec > fim) return false;
+    }
+    return true;
+  });
+
+  const filtrosLabel = () => {
+    const p=[];
+    if(f.apiNome)    p.push('API: '+f.apiNome);
+    if(f.tipo)       p.push('Tipo: '+f.tipo);
+    if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
+    if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
+    return p.length ? p.join(' | ') : 'Sem filtros — todos os registros';
+  };
+
+  const now = () => {
+    const d=new Date();
+    return {
+      data: d.toLocaleDateString('pt-BR'),
+      hora: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+      slug: d.toISOString().slice(0,16).replace('T','_').replace(':','h'),
+    };
+  };
+
+  const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
+  const handleLimpar = () => {
+    setF({apiNome:'',tipo:'',dataInicio:'',dataFim:''});
+    setResultado([]); setBuscado(false);
+  };
+
+  /* Badge tipo */
+  const TipoBadge = ({tipo}) => {
+    const isOrgao = tipo === 'Órgão público';
+    return (
+      <span style={{fontSize:11,fontWeight:600,
+        background: isOrgao ? '#E6F3FF' : '#EAFBD7',
+        color:      isOrgao ? '#0034B7' : '#2B6418',
+        border:     `1px solid ${isOrgao?'#99C6FF':'#86D562'}`,
+        padding:'2px 8px',borderRadius:100,whiteSpace:'nowrap'}}>
+        {tipo}
+      </span>
+    );
+  };
+
+  /* Badge status */
+  const StatusBadge = ({status}) => {
+    const cfg = status==='Ativo'
+      ? {bg:'#EAFBD7',color:'#2B6418',border:'#86D562'}
+      : {bg:'#FFF6CE',color:'#B77706',border:'#FFE082'};
+    return (
+      <span style={{fontSize:11,fontWeight:600,background:cfg.bg,color:cfg.color,
+        padding:'2px 8px',borderRadius:100,border:`1px solid ${cfg.border}`}}>
+        {status}
+      </span>
+    );
+  };
+
+  /* ── PDF ── */
+  const gerarPDF = async (dados) => {
+    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W=doc.internal.pageSize.getWidth();
+    doc.setFillColor(0,26,122); doc.rect(0,0,W,30,'F');
+    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text('Conecta Gov.PE — Relatório de Uso das APIs',14,12);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,19);
+    doc.text(`Filtros: ${filtrosLabel()}`,14,24);
+    doc.text(`Total: ${dados.length} solicitação(ões)`,14,29);
+    doc.autoTable({
+      head:[['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação']],
+      body:dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao]),
+      startY:33,
+      styles:{fontSize:9,cellPadding:3},
+      headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[230,243,255]},
+      columnStyles:{
+        0:{cellWidth:10},
+        1:{cellWidth:58},
+        2:{cellWidth:42},
+        3:{cellWidth:32},
+        4:{cellWidth:30},
+        5:{cellWidth:20},
+      },
+      didDrawPage:()=>{
+        doc.setFontSize(7); doc.setTextColor(120);
+        doc.text(`Pág. ${doc.internal.getCurrentPageInfo().pageNumber}  |  ${dados.length} solicitações`,
+          14, doc.internal.pageSize.getHeight()-5);
+      },
+    });
+    doc.save(`relatorio-uso-apis_${slug}.pdf`);
+  };
+
+  /* ── Excel ── */
+  const gerarXLSX = (dados) => {
+    const {utils,write}=window.XLSX; const {data,hora,slug}=now();
+    const cab=[
+      ['Conecta Gov.PE — Relatório de Uso das APIs'],
+      [`Gerado em: ${data} às ${hora}`],
+      [`Usuário: João Silva (ADM)`],
+      [`Filtros: ${filtrosLabel()}`],
+      [`Total: ${dados.length} solicitação(ões)`],
+      [],
+      ['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação'],
+    ];
+    const linhas=dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao]);
+    const ws=utils.aoa_to_sheet([...cab,...linhas]);
+    ws['!cols']=[{wch:4},{wch:42},{wch:32},{wch:20},{wch:22},{wch:12}];
+    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso das APIs');
+    const buf=write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async (fmt) => {
+    if(!resultado.length){showToast('Clique em Aplicar antes de exportar.','warning');return;}
+    setLoading(true);
+    try{
+      await new Promise(r=>setTimeout(r,900));
+      fmt==='pdf' ? await gerarPDF(resultado) : gerarXLSX(resultado);
+      showToast(`Relatório exportado! ${resultado.length} solicitação(ões).`,'success');
+    }catch(e){ showToast('Erro ao gerar o arquivo.','warning'); }
+    finally{ setLoading(false); }
+  };
+
+  const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
+  const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
+  const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
+
+  const Sel = ({value, onChange, children}) => (
+    <div style={{position:'relative'}}>
+      <select value={value} onChange={e=>onChange(e.target.value)}
+        style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}
+        onFocus={onFocus} onBlur={onBlur}>
+        {children}
+      </select>
+      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+        <Icon name="chevDown" size={13} color="#888"/>
+      </span>
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
+
+      {/* Título */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Relatórios</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>Uso das APIs</h1>
+      </div>
+
+      {/* Card filtros */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+
+        {/* Linha 1: API + Tipo */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:16,marginBottom:14}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>API</label>
+            <Sel value={f.apiNome} onChange={v=>setFil('apiNome',v)}>
+              <option value="">Todas as APIs</option>
+              {apisUnicas.map(a=><option key={a} value={a}>{a}</option>)}
+            </Sel>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Tipo de Solicitante</label>
+            <Sel value={f.tipo} onChange={v=>setFil('tipo',v)}>
+              <option value="">Todos</option>
+              <option value="Órgão público">Órgão público</option>
+              <option value="Empresa privada">Empresa privada</option>
+            </Sel>
+          </div>
+        </div>
+
+        {/* Linha 2: Data Início + Data Fim + botões */}
+        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
+            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{flex:'0 0 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
+            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+            <button onClick={handleLimpar}
+              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
+              onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+              Limpar
+            </button>
+            <button onClick={handleBuscar}
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Resultado */}
+      {buscado && (
+        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'#28272C',fontWeight:500}}>
+              <Icon name="filter" size={14} color="#494C57"/>
+              Resultado da pesquisa
+              <span style={{fontSize:12,color:'#888',fontWeight:400}}>
+                ({resultado.length} solicitaç{resultado.length!==1?'ões':'ão'})
+              </span>
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length)e.currentTarget.style.background='#E6F3FF';}}
+                onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                Excel
+              </button>
+              <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#001A7A'}`,background:loading||!resultado.length?'#CED2D7':'#001A7A',color:'#fff',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}}
+                onMouseLeave={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}}>
+                PDF
+              </button>
+              {loading&&<span style={{fontSize:11,color:'#888',alignSelf:'center',marginLeft:4}}>Gerando...</span>}
+            </div>
+          </div>
+
+          {resultado.length===0 ? (
+            <div style={{padding:'40px',textAlign:'center',color:'#888',fontSize:13}}>
+              Nenhuma solicitação encontrada com os filtros aplicados.
+            </div>
+          ) : (
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse'}}>
+                <thead>
+                  <tr>
+                    {['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação'].map(h=>(
+                      <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {resultado.map((d,i)=>(
+                    <tr key={i}
+                      style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                      onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
+                      onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{i+1}</td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{d.api}</td>
+                      <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
+                      <td style={{padding:'9px 14px'}}><TipoBadge tipo={d.tipo}/></td>
+                      <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.dataSolicitacao}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+      <ScriptLoader/>
+    </div>
+  );
+}
+
+
+/* Carrega jsPDF + autoTable + SheetJS sob demanda */
+function ScriptLoader() {
+  React.useEffect(()=>{
+    const load=(src)=>new Promise((res,rej)=>{
+      if(document.querySelector(`script[src="${src}"]`)){res();return;}
+      const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+    (async()=>{
+      try{
+        await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+        await load('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      }catch(e){console.warn('Libs de relatório:',e);}
+    })();
+  },[]);
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APP PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+function App() {
+  const [section, setSection]   = React.useState('dashboard');
+  const [collapsed, setCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
+  const [toast, setToast]       = React.useState(null);
+
+  const showToast=(msg,type='success')=>{ setToast({msg,type}); setTimeout(()=>setToast(null),4000); };
+  const toggleSidebar=()=>{ const next=!collapsed; setCollapsed(next); localStorage.setItem('pe_sidebar',next?'1':'0'); };
+
+  const breadcrumbMap = {
+    'apis':      ['Início','Catálogo de APIs','Gerenciar APIs'],
+    'categorias':['Início','Catálogo de APIs','Gerenciar Categorias'],
+    'usuarios':  ['Início','Controle de Acesso'],
+    'relatorios':['Início','Relatórios'],
+    'auditoria': ['Início','Auditoria'],
+    'dashboard': ['Início'],
+    'config':    ['Início','Configurações'],
+  };
+
+  const Placeholder = ({ titulo, descricao, icon }) => (
+    <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
+      <div style={{ textAlign:'center', maxWidth:400 }}>
+        <div style={{ fontSize:48, marginBottom:16 }}>{icon}</div>
+        <h2 style={{ fontSize:20, fontWeight:700, color:C.textPrimary, marginBottom:8 }}>{titulo}</h2>
+        <p style={{ fontSize:14, color:C.textSecondary, lineHeight:1.6 }}>{descricao}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display:'flex', height:'100vh', overflow:'hidden' }}>
+      <Sidebar collapsed={collapsed} onToggle={toggleSidebar} activeSection={section} onNav={setSection}/>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden' }}>
+        <div style={{ background:C.brandDark, height:28, display:'flex', alignItems:'center', padding:'0 20px', gap:8, flexShrink:0 }}>
+          <span style={{ color:'#FFCD37', fontSize:11 }}>★</span>
+          <span style={{ color:'rgba(248,250,252,0.7)', fontSize:11 }}>Governo de Pernambuco</span>
+        </div>
+        <Topbar breadcrumbs={breadcrumbMap[section]||['Início']}/>
+
+        {section==='dashboard'  && <Dashboard onNav={setSection}/>}
+        {section==='apis'       && <GerenciarApis showToast={showToast}/>}
+        {section==='categorias' && <GerenciarCategorias showToast={showToast}/>}
+        {section==='usuarios'   && <ControleAcesso showToast={showToast}/>}
+        {section==='rel_cadastradas' && <RelCadastradas showToast={showToast}/>}
+        {section==='rel_uso'         && <RelUso showToast={showToast}/>}
+        {section==='auditoria'  && <Placeholder titulo="Auditoria" descricao="Log de ações realizadas no backoffice: criação, edição, ativação e inativação de registros. Disponível na próxima sprint." icon="📋"/>}
+        {section==='config'     && <Placeholder titulo="Configurações" descricao="Configurações gerais, de segurança e integrações do portal. Disponível na próxima sprint." icon="⚙️"/>}
+      </div>
+ Dashboard({ onNav }) {
+  /* ── Dados ── */
+  const totalApis     = INITIAL_APIS.length;
+  const apisAtivas    = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
+  const apisInativas  = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
+  const totalOps      = INITIAL_APIS.reduce((s,a)=>s+(a.operacoes||[]).length,0);
+  const totalCats     = INITIAL_CATS.length;
+  const catAtivas     = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
+  const totalOrgaos   = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
+  const usrsAtivos    = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
+  const pendentes     = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
+  const totalUsuarios = INITIAL_USUARIOS.length;
+
+  const seiTotal      = SEI_STATUS.reduce((s,i)=>s+i.qtd,0);
+  const seiAprovadas  = SEI_STATUS.find(s=>s.key==='aprovadas')?.qtd||0;
+  const seiAnalise    = SEI_STATUS.find(s=>s.key==='analise')?.qtd||0;
+  const seiPendSEI    = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
+  const seiReprov     = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
+
+  const [ts] = React.useState(new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+
+  /* ── Mini sparkline SVG (linha simples) ── */
+  const Spark = ({vals, color}) => {
+    const W=80, H=32, max=Math.max(...vals), min=Math.min(...vals);
+    const range = max-min||1;
+    const pts = vals.map((v,i)=>({
+      x: (i/(vals.length-1))*(W-4)+2,
+      y: H-4 - ((v-min)/range)*(H-8)
+    }));
+    const d = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    return (
+      <svg width={W} height={H} style={{display:'block'}}>
+        <path d={d} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" opacity="0.6"/>
+        <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r="2.5" fill={color}/>
+      </svg>
+    );
+  };
+
+  /* ── Mini barra de progresso ── */
+  const ProgressBar = ({value, total, color}) => {
+    const pct = total>0 ? Math.round((value/total)*100) : 0;
+    return (
+      <div style={{marginTop:6}}>
+        <div style={{height:4,background:'#E7E9EB',borderRadius:100,overflow:'hidden'}}>
+          <div style={{height:'100%',width:`${pct}%`,background:color,borderRadius:100,transition:'width 0.5s'}}/>
+        </div>
+        <div style={{fontSize:10,color:'#888',marginTop:3}}>{pct}% do total</div>
+      </div>
+    );
+  };
+
+  /* ── Card tipo Salesforce ──
+     label cinza pequeno no topo, número grande colorido, sub/link embaixo */
+  const KCard = ({label, valor, sub, cor, bg, border, nav, spark, sparkColor, progress, progressTotal}) => (
+    <div style={{
+      background: bg||'#fff',
+      border: `1px solid ${border||'#E7E9EB'}`,
+      borderRadius: 8,
+      padding: '14px 16px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+      minHeight: 110,
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'box-shadow 0.15s',
+      cursor: nav?'pointer':'default',
+    }}
+      onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
+      onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}
+      onClick={nav?()=>onNav(nav):undefined}
+    >
+      {/* Label topo */}
+      <div style={{fontSize:11,color:'#888',fontWeight:500,lineHeight:1.2}}>{label}</div>
+
+      {/* Número + sparkline lado a lado */}
+      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:2}}>
+        <div style={{fontSize:32,fontWeight:700,color:cor||'#28272C',lineHeight:1}}>{valor}</div>
+        {spark && <Spark vals={spark} color={sparkColor||cor||C.brand}/>}
+      </div>
+
+      {/* Sub */}
+      {sub && <div style={{fontSize:11,color:'#aaa',marginTop:2}}>{sub}</div>}
+
+      {/* Barra de progresso opcional */}
+      {progress!==undefined && <ProgressBar value={progress} total={progressTotal} color={cor||C.brand}/>}
+
+      {/* Link de ação */}
+      
+    </div>
+  );
+
+  /* ── Card SEI estilo status ── */
+  const SeiCard = ({label, valor, pct, cor, bg, border}) => (
+    <div style={{background:bg,border:`1.5px solid ${border}`,borderRadius:8,padding:'12px 14px',
+      display:'flex',flexDirection:'column',gap:3,minHeight:88}}>
+      <div style={{fontSize:11,fontWeight:600,color:cor}}>{label}</div>
+      <div style={{fontSize:28,fontWeight:700,color:cor,lineHeight:1}}>{valor}</div>
+      <div style={{fontSize:11,color:cor,opacity:0.75}}>{pct}% do total</div>
+    </div>
+  );
+
+  /* Sparklines simulados — tendência de uso dos últimos 6 meses */
+  const sparkApis    = [3,3,5,6,7,8,apisAtivas];
+  const sparkOps     = [5,7,8,9,9,10,totalOps];
+  const sparkUsrs    = [2,3,3,4,5,6,usrsAtivos];
+  const sparkSolicit = [14,16,17,19,21,23,seiTotal];
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'20px 22px',background:'#F8FAFC'}}>
+
+      {/* ── Cabeçalho ── */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div>
+          <div style={{fontSize:11,color:'#888',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>BACKOFFICE</div>
+          <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',letterSpacing:'-0.3px',marginBottom:1}}>Dashboard — Conecta Gov.PE</h1>
+          <div style={{fontSize:12,color:'#888'}}>Atualizado em {new Date().toLocaleDateString('pt-BR')} às {ts} · Perfil: ADM</div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+
+        </div>
+      </div>
+
+      {/* ── Alerta pendentes ── */}
+      
+
+      {/* ── Linha 1: KPIs principais com sparkline ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:10}}>
+        <KCard
+          label="APIs Disponíveis"
+          valor={apisAtivas}
+          sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
+          cor="#2B6418"
+          bg="#fff"
+          border="#E7E9EB"
+          nav="apis"
+          spark={sparkApis}
+          sparkColor="#2B6418"
+        />
+        <KCard
+          label="Operações publicadas"
+          valor={totalOps}
+          sub={`em ${apisAtivas} APIs ativas`}
+          cor={C.brand}
+          bg="#fff"
+          border="#E7E9EB"
+          nav="apis"
+          spark={sparkOps}
+          sparkColor={C.brand}
+        />
+        <KCard
+          label="Usuários com acesso"
+          valor={usrsAtivos}
+          sub="com acesso liberado"
+          cor="#2B6418"
           bg="#fff"
           border="#E7E9EB"
           nav="usuarios"
           spark={sparkUsrs}
-          sparkColor={pendentes>0?"#B77706":"#2B6418"}
+          sparkColor="#2B6418"
         />
         <KCard
           label="Solicitações SEI-PE"
