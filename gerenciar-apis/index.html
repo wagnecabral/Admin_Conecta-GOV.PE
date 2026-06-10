@@ -2119,6 +2119,11 @@ function Dashboard({ onNav }) {
    - Exportação PDF e Excel com dados gerenciais reais
    - Cabeçalho com data, usuário e filtros aplicados
 ══════════════════════════════════════════════════════════════ */
+</script>
+
+<script type="text/babel">
+/* === PART 2b: Relatórios + App === */
+
 /* ═══════════════════════════════════════════════════════════════
    HU.03.03 — Relatório de APIs Cadastradas
 ══════════════════════════════════════════════════════════════ */
@@ -2701,582 +2706,6 @@ function ScriptLoader() {
 /* ═══════════════════════════════════════════════════════════════
    APP PRINCIPAL
 ══════════════════════════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════════════════════════
-   HU.02.05.01 — RELATÓRIO DE AUDITORIA
-   Campos de filtro, grid paginado, exportação PDF e Excel
-   Padrão idêntico ao RelCadastradas / RelUso
-══════════════════════════════════════════════════════════════ */
-
-/* Dados simulados — log de auditoria (20 eventos) */
-const AUDIT_LOG = [
-  { id:'a001', timestamp:'09/06/2026 14:32', acao:'API_ATIVADA',      modulo:'Gerenciar APIs',      registro:'Catálogo de Serviços', executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' },  detalhe:"API 'Catálogo de Serviços' ativada." },
-  { id:'a002', timestamp:'09/06/2026 13:58', acao:'USUARIO_ATIVADO',  modulo:'Controle de Acesso',  registro:'Mariana Lima',         executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Pendente' }, after:{ status:'Ativo', perfil:'Cedente', orgao:'SEPLAG' }, detalhe:"Usuário 'Mariana Lima' ativado com perfil Cedente." },
-  { id:'a003', timestamp:'09/06/2026 11:20', acao:'API_EDITADA',      modulo:'Gerenciar APIs',      registro:'Consulta de CPF',      executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ versao:'v1.0', descricao:'Consulta de dados.' }, after:{ versao:'v1.1', descricao:'Consulta de dados cadastrais via CPF.' }, detalhe:"Versão e descrição da API 'Consulta de CPF' atualizados." },
-  { id:'a004', timestamp:'09/06/2026 09:05', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
-  { id:'a005', timestamp:'08/06/2026 17:44', acao:'USUARIO_INATIVADO',modulo:'Controle de Acesso',  registro:'Roberto Nunes',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"Usuário 'Roberto Nunes' inativado." },
-  { id:'a006', timestamp:'08/06/2026 16:30', acao:'CATEGORIA_CRIADA', modulo:'Gerenciar Categorias',registro:'Meio Ambiente',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:{ nome:'Meio Ambiente', status:'Inativo' }, detalhe:"Categoria 'Meio Ambiente' criada." },
-  { id:'a007', timestamp:'08/06/2026 15:12', acao:'API_INATIVADA',    modulo:'Gerenciar APIs',      registro:'Licença Ambiental',    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"API 'Licença Ambiental' inativada." },
-  { id:'a008', timestamp:'08/06/2026 14:01', acao:'USUARIO_EDITADO',  modulo:'Controle de Acesso',  registro:'Ana Costa',            executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ perfil:'ADM', orgao:'—' }, after:{ perfil:'Cedente', orgao:'SEFAZ' }, detalhe:"Perfil de 'Ana Costa' alterado de ADM para Cedente." },
-  { id:'a009', timestamp:'08/06/2026 10:50', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Cedente', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
-  { id:'a010', timestamp:'07/06/2026 16:22', acao:'API_CRIADA',       modulo:'Gerenciar APIs',      registro:'Programas Habitacionais', executor:'João Silva', perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:{ nome:'Programas Habitacionais', status:'Inativo', versao:'v1.1' }, detalhe:"API 'Programas Habitacionais' criada." },
-  { id:'a011', timestamp:'07/06/2026 15:40', acao:'CATEGORIA_EDITADA',modulo:'Gerenciar Categorias',registro:'Saúde',                executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ descricao:'APIs da saúde.' }, after:{ descricao:'APIs do sistema de saúde pública, regulação e agendamentos.' }, detalhe:"Descrição da categoria 'Saúde' atualizada." },
-  { id:'a012', timestamp:'07/06/2026 11:08', acao:'USUARIO_REGISTRADO',modulo:'Controle de Acesso', registro:'Carlos Mendes',        executor:'SYSTEM',       perfil:'SYSTEM', orgao:'—',   ip:'189.40.11.33', before:null, after:{ status:'Pendente', origemCadastro:'SSO' }, detalhe:"Usuário 'Carlos Mendes' registrado automaticamente via SSO." },
-  { id:'a013', timestamp:'06/06/2026 17:55', acao:'LOGIN_NEGADO',     modulo:'Autenticação',        registro:'—',                    executor:'Carlos Mendes',perfil:'Pendente', orgao:'—', ip:'189.40.11.33', before:null, after:null, detalhe:"Tentativa de login negada — CPF com status Pendente." },
-  { id:'a014', timestamp:'06/06/2026 14:20', acao:'API_ATIVADA',      modulo:'Gerenciar APIs',      registro:'Boletim de Ocorrência',executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' }, detalhe:"API 'Boletim de Ocorrência' ativada." },
-  { id:'a015', timestamp:'06/06/2026 10:33', acao:'SESSAO_EXPIRADA',  modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Cedente', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Sessão encerrada automaticamente por inatividade (30 min)." },
-  { id:'a016', timestamp:'05/06/2026 16:47', acao:'CATEGORIA_INATIVADA',modulo:'Gerenciar Categorias',registro:'Educação',           executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"Categoria 'Educação' inativada." },
-  { id:'a017', timestamp:'05/06/2026 14:05', acao:'API_EDITADA',      modulo:'Gerenciar APIs',      registro:'Emissão de Certidões', executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ versao:'v1.4' }, after:{ versao:'v1.5' }, detalhe:"Versão da API 'Emissão de Certidões' atualizada para v1.5." },
-  { id:'a018', timestamp:'05/06/2026 09:15', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Fernanda Souza',perfil:'Cedente', orgao:'SES', ip:'201.22.77.99', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
-  { id:'a019', timestamp:'04/06/2026 15:30', acao:'USUARIO_REATIVADO',modulo:'Controle de Acesso',  registro:'Roberto Nunes',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' }, detalhe:"Usuário 'Roberto Nunes' reativado." },
-  { id:'a020', timestamp:'04/06/2026 11:00', acao:'LOGOUT',           modulo:'Autenticação',        registro:'—',                    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:null, detalhe:"Sessão encerrada pelo usuário." },
-];
-
-/* Configuração visual das ações */
-const ACAO_CFG = {
-  'API_CRIADA':         { label:'API — Criação',      bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
-  'API_EDITADA':        { label:'API — Edição',       bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF'  },
-  'API_ATIVADA':        { label:'API — Ativação',     bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
-  'API_INATIVADA':      { label:'API — Inativação',   bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F'  },
-  'CATEGORIA_CRIADA':   { label:'Categoria — Criação',bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
-  'CATEGORIA_EDITADA':  { label:'Categoria — Edição', bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF'  },
-  'CATEGORIA_ATIVADA':  { label:'Categoria — Ativação',bg:'#EAFBD7',color:'#2B6418', border:'#86D562'  },
-  'CATEGORIA_INATIVADA':{ label:'Categoria — Inativação',bg:'#FFE4E4',color:'#AC1010',border:'#E45F5F' },
-  'USUARIO_REGISTRADO': { label:'Usuário — Registro', bg:'#FFF6CE', color:'#B77706', border:'#FFE082'  },
-  'USUARIO_ATIVADO':    { label:'Usuário — Ativação', bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
-  'USUARIO_EDITADO':    { label:'Usuário — Edição',   bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF'  },
-  'USUARIO_INATIVADO':  { label:'Usuário — Inativação',bg:'#FFE4E4',color:'#AC1010', border:'#E45F5F'  },
-  'USUARIO_REATIVADO':  { label:'Usuário — Reativação',bg:'#EAFBD7',color:'#2B6418', border:'#86D562'  },
-  'LOGIN_SUCESSO':      { label:'Login — Sucesso',    bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7'  },
-  'LOGIN_NEGADO':       { label:'Login — Negado',     bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F'  },
-  'LOGOUT':             { label:'Logout',             bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7'  },
-  'SESSAO_EXPIRADA':    { label:'Sessão — Expirada',  bg:'#FFF6CE', color:'#B77706', border:'#FFE082'  },
-};
-
-const MODULO_CFG = {
-  'Gerenciar APIs':      { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF' },
-  'Gerenciar Categorias':{ bg:'#EEF0FF', color:'#001A7A', border:'#B0B8FF' },
-  'Controle de Acesso':  { bg:'#EAFBD7', color:'#2B6418', border:'#86D562' },
-  'Autenticação':        { bg:'#FFF6CE', color:'#B77706', border:'#FFE082' },
-};
-
-function RelAuditoria({ showToast }) {
-  const [loading,   setLoading]   = React.useState(false);
-  const [buscado,   setBuscado]   = React.useState(false);
-  const [resultado, setResultado] = React.useState([]);
-  const [modalItem, setModalItem] = React.useState(null);
-  const [page,      setPage]      = React.useState(1);
-  const PAGE_SIZE = 10;
-
-  const [f, setF] = React.useState({
-    dataInicio:'', dataFim:'',
-    modulo:'', acao:'', executor:'', registro:'',
-  });
-  const setFil = (k,v) => setF(p=>({...p,[k]:v}));
-
-  /* Parse dd/mm/aaaa hh:mm */
-  const parseTs = str => {
-    const [datePart, timePart='00:00'] = (str||'').split(' ');
-    const [d,m,y] = datePart.split('/');
-    const [h,mi]  = timePart.split(':');
-    return new Date(+y,+m-1,+d,+h,+mi);
-  };
-
-  const getDados = () => AUDIT_LOG.filter(r => {
-    if(f.modulo   && r.modulo   !== f.modulo)  return false;
-    if(f.acao     && r.acao     !== f.acao)    return false;
-    if(f.executor && !r.executor.toLowerCase().includes(f.executor.toLowerCase())) return false;
-    if(f.registro && !r.registro.toLowerCase().includes(f.registro.toLowerCase())) return false;
-    if(f.dataInicio){
-      const ini = new Date(f.dataInicio);
-      if(parseTs(r.timestamp) < ini) return false;
-    }
-    if(f.dataFim){
-      const fim = new Date(f.dataFim);
-      fim.setHours(23,59,59);
-      if(parseTs(r.timestamp) > fim) return false;
-    }
-    return true;
-  });
-
-  const filtrosLabel = () => {
-    const p=[];
-    if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
-    if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
-    if(f.modulo)     p.push('Módulo: '+f.modulo);
-    if(f.acao)       p.push('Ação: '+(ACAO_CFG[f.acao]?.label||f.acao));
-    if(f.executor)   p.push('Executor: '+f.executor);
-    if(f.registro)   p.push('Registro: '+f.registro);
-    return p.length ? p.join(' | ') : 'Sem filtros — todos os registros';
-  };
-
-  const now = () => {
-    const d=new Date();
-    return {
-      data: d.toLocaleDateString('pt-BR'),
-      hora: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
-      slug: d.toISOString().slice(0,16).replace('T','_').replace(':','h'),
-    };
-  };
-
-  const handleBuscar = () => { setResultado(getDados()); setBuscado(true); setPage(1); };
-  const handleLimpar = () => { setF({dataInicio:'',dataFim:'',modulo:'',acao:'',executor:'',registro:''}); setResultado([]); setBuscado(false); setPage(1); };
-
-  /* ── Badge de ação ── */
-  const AcaoBadge = ({acao}) => {
-    const c = ACAO_CFG[acao] || {label:acao, bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7'};
-    return (
-      <span style={{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:100,
-        fontSize:11,fontWeight:600,background:c.bg,color:c.color,border:`1px solid ${c.border}`,
-        whiteSpace:'nowrap'}}>
-        {c.label}
-      </span>
-    );
-  };
-
-  /* ── Badge de módulo ── */
-  const ModuloBadge = ({modulo}) => {
-    const c = MODULO_CFG[modulo] || {bg:C.infoBg,color:C.info,border:C.infoBorder};
-    return (
-      <span style={{display:'inline-flex',padding:'2px 8px',borderRadius:100,
-        fontSize:11,fontWeight:600,background:c.bg,color:c.color,border:`1px solid ${c.border}`,
-        whiteSpace:'nowrap'}}>
-        {modulo}
-      </span>
-    );
-  };
-
-  /* ── Exportação PDF ── */
-  const gerarPDF = async (dados) => {
-    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
-    const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-    const W = doc.internal.pageSize.getWidth();
-
-    /* Cabeçalho institucional */
-    doc.setFillColor(0,26,122); doc.rect(0,0,W,32,'F');
-    doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-    doc.text('Conecta Gov.PE — Relatório de Auditoria',14,12);
-    doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,20);
-    doc.text(`Filtros: ${filtrosLabel()}`,14,26);
-    doc.text(`Total: ${dados.length} registro(s)`,14,31);
-
-    doc.autoTable({
-      head:[['Data/Hora','Módulo','Ação','Registro','Executor','Perfil','IP de origem']],
-      body: dados.map(r=>[
-        r.timestamp,
-        r.modulo,
-        ACAO_CFG[r.acao]?.label || r.acao,
-        r.registro,
-        r.executor,
-        r.perfil,
-        r.ip,
-      ]),
-      startY: 35,
-      styles:{ fontSize:8, cellPadding:2.5 },
-      headStyles:{ fillColor:[0,26,122], textColor:255, fontStyle:'bold' },
-      alternateRowStyles:{ fillColor:[230,243,255] },
-      columnStyles:{
-        0:{cellWidth:28},
-        1:{cellWidth:38},
-        2:{cellWidth:42},
-        3:{cellWidth:40},
-        4:{cellWidth:28},
-        5:{cellWidth:18},
-        6:{cellWidth:26},
-      },
-      didDrawPage: (data) => {
-        const pg = doc.internal.getCurrentPageInfo().pageNumber;
-        const tot = doc.internal.getNumberOfPages ? doc.internal.getNumberOfPages() : '?';
-        doc.setFontSize(7); doc.setTextColor(120);
-        doc.text(
-          `Pág. ${pg}  |  Conecta Gov.PE — Log de Auditoria — ${dados.length} registros`,
-          14, doc.internal.pageSize.getHeight()-5
-        );
-      },
-    });
-    doc.save(`auditoria_${slug}.pdf`);
-  };
-
-  /* ── Exportação Excel ── */
-  const gerarXLSX = (dados) => {
-    const {utils,write} = window.XLSX; const {data,hora,slug}=now();
-    const cab = [
-      ['Conecta Gov.PE — Relatório de Auditoria'],
-      [`Gerado em: ${data} às ${hora}`],
-      ['Usuário: João Silva (ADM)'],
-      [`Filtros: ${filtrosLabel()}`],
-      [`Total: ${dados.length} registro(s)`],
-      [],
-      ['ID','Data/Hora','Módulo','Ação','Registro afetado','Executor','Perfil','Órgão','IP de origem','Detalhe'],
-    ];
-    const linhas = dados.map(r=>[
-      r.id, r.timestamp, r.modulo,
-      ACAO_CFG[r.acao]?.label || r.acao,
-      r.registro, r.executor, r.perfil, r.orgao, r.ip, r.detalhe,
-    ]);
-    const ws = utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:6},{wch:18},{wch:22},{wch:28},{wch:28},{wch:18},{wch:10},{wch:10},{wch:18},{wch:60}];
-    const wb = utils.book_new(); utils.book_append_sheet(wb,ws,'Auditoria');
-    const buf = write(wb,{bookType:'xlsx',type:'array'});
-    const blob = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download=`auditoria_${slug}.xlsx`; a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleExport = async (fmt) => {
-    if(!resultado.length){ showToast('Clique em Aplicar antes de exportar.','warning'); return; }
-    setLoading(true);
-    try{
-      await new Promise(r=>setTimeout(r,900));
-      fmt==='pdf' ? await gerarPDF(resultado) : gerarXLSX(resultado);
-      showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
-    }catch(e){ showToast('Erro ao gerar o arquivo.','warning'); }
-    finally{ setLoading(false); }
-  };
-
-  /* Módulos e ações únicos para dropdowns */
-  const modulos = [...new Set(AUDIT_LOG.map(r=>r.modulo))];
-  const acoes   = [...new Set(AUDIT_LOG.map(r=>r.acao))];
-
-  /* Paginação */
-  const totalPages = Math.max(1, Math.ceil(resultado.length / PAGE_SIZE));
-  const paged      = resultado.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
-
-  /* Estilos de input — idênticos aos outros relatórios */
-  const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
-  const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
-  const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
-
-  const Sel = ({value,onChange,children}) => (
-    <div style={{position:'relative'}}>
-      <select value={value} onChange={e=>onChange(e.target.value)}
-        style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}
-        onFocus={onFocus} onBlur={onBlur}>
-        {children}
-      </select>
-      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
-        <Icon name="chevDown" size={13} color="#888"/>
-      </span>
-    </div>
-  );
-
-  return (
-    <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
-
-      {/* Título */}
-      <div style={{marginBottom:16}}>
-        <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Auditoria</div>
-        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:2}}>Log de Auditoria</h1>
-        <p style={{fontSize:13,color:C.textSecondary}}>Registros imutáveis de todas as ações realizadas no backoffice.</p>
-      </div>
-
-      {/* ── Card de filtros ── */}
-      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-
-        {/* Linha 1: Período + Módulo + Tipo de ação */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:14,marginBottom:14}}>
-          <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
-            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
-            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Módulo</label>
-            <Sel value={f.modulo} onChange={v=>setFil('modulo',v)}>
-              <option value="">Todos os módulos</option>
-              {modulos.map(m=><option key={m} value={m}>{m}</option>)}
-            </Sel>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Tipo de ação</label>
-            <Sel value={f.acao} onChange={v=>setFil('acao',v)}>
-              <option value="">Todos</option>
-              {acoes.map(a=><option key={a} value={a}>{ACAO_CFG[a]?.label||a}</option>)}
-            </Sel>
-          </div>
-        </div>
-
-        {/* Linha 2: Executor + Registro + Botões */}
-        <div style={{display:'flex',gap:14,alignItems:'flex-end'}}>
-          <div style={{flex:'1 1 200px'}}>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Executor (usuário)</label>
-            <div style={{position:'relative'}}>
-              <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
-                <Icon name="search" size={13} color="#CED2D7"/>
-              </span>
-              <input value={f.executor} onChange={e=>setFil('executor',e.target.value)}
-                placeholder="Busca parcial por nome..."
-                style={{...iSt,paddingLeft:32}} onFocus={onFocus} onBlur={onBlur}/>
-            </div>
-          </div>
-          <div style={{flex:'1 1 200px'}}>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Registro afetado</label>
-            <div style={{position:'relative'}}>
-              <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
-                <Icon name="search" size={13} color="#CED2D7"/>
-              </span>
-              <input value={f.registro} onChange={e=>setFil('registro',e.target.value)}
-                placeholder="Nome da API, usuário, categoria..."
-                style={{...iSt,paddingLeft:32}} onFocus={onFocus} onBlur={onBlur}/>
-            </div>
-          </div>
-          <div style={{display:'flex',gap:8,flexShrink:0}}>
-            <button onClick={handleLimpar}
-              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
-              onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
-              onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-              Limpar
-            </button>
-            <button onClick={handleBuscar}
-              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
-              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
-              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
-              Aplicar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Resultado ── */}
-      {buscado && (
-        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-
-          {/* Cabeçalho resultado */}
-          <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'#28272C',fontWeight:500}}>
-              <Icon name="audit" size={14} color="#494C57"/>
-              Resultado da pesquisa
-              <span style={{fontSize:12,color:'#888',fontWeight:400}}>
-                ({resultado.length} registro{resultado.length!==1?'s':''})
-              </span>
-              {resultado.length > 0 && (
-                <span style={{fontSize:11,color:'#888',marginLeft:4}}>
-                  · Pág. {page}/{totalPages}
-                </span>
-              )}
-            </div>
-            <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
-                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
-                onMouseEnter={e=>{if(!loading&&resultado.length)e.currentTarget.style.background='#E6F3FF';}}
-                onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                Excel
-              </button>
-              <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
-                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#001A7A'}`,background:loading||!resultado.length?'#CED2D7':'#001A7A',color:'#fff',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
-                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}}
-                onMouseLeave={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}}>
-                PDF
-              </button>
-              {loading&&<span style={{fontSize:11,color:'#888',marginLeft:4}}>Gerando...</span>}
-            </div>
-          </div>
-
-          {resultado.length === 0 ? (
-            <div style={{padding:'48px',textAlign:'center',color:'#888',fontSize:13}}>
-              Nenhum registro encontrado com os filtros aplicados.
-            </div>
-          ) : (
-            <>
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr>
-                      {['Data/Hora','Módulo','Ação','Registro afetado','Executor','IP de origem',''].map(h=>(
-                        <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,
-                          color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paged.map((r)=>(
-                      <tr key={r.id} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
-                        onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
-                        onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                        <td style={{padding:'10px 14px',whiteSpace:'nowrap'}}>
-                          <div style={{fontSize:12,fontWeight:600,color:'#28272C'}}>{r.timestamp.split(' ')[0]}</div>
-                          <div style={{fontSize:11,color:'#888'}}>{r.timestamp.split(' ')[1]}</div>
-                        </td>
-                        <td style={{padding:'10px 14px'}}><ModuloBadge modulo={r.modulo}/></td>
-                        <td style={{padding:'10px 14px'}}><AcaoBadge acao={r.acao}/></td>
-                        <td style={{padding:'10px 14px',fontSize:13,color:'#28272C',fontWeight:500}}>
-                          {r.registro !== '—' ? r.registro : <span style={{color:'#CED2D7'}}>—</span>}
-                        </td>
-                        <td style={{padding:'10px 14px'}}>
-                          <div style={{fontSize:13,fontWeight:500,color:'#28272C'}}>{r.executor}</div>
-                          <div style={{display:'flex',alignItems:'center',gap:5,marginTop:2}}>
-                            <span style={{fontSize:10,fontWeight:600,background:C.infoBg,color:C.brand,
-                              padding:'1px 6px',borderRadius:100,border:`1px solid ${C.infoBorder}`}}>
-                              {r.perfil}
-                            </span>
-                            {r.orgao!=='—'&&<span style={{fontSize:10,color:'#888'}}>{r.orgao}</span>}
-                          </div>
-                        </td>
-                        <td style={{padding:'10px 14px'}}>
-                          <code style={{fontSize:11,fontFamily:'monospace',background:'#F4F5F7',
-                            padding:'2px 6px',borderRadius:3,color:'#494C57'}}>{r.ip}</code>
-                        </td>
-                        <td style={{padding:'10px 14px',textAlign:'right'}}>
-                          <button onClick={()=>setModalItem(r)}
-                            style={{height:28,padding:'0 10px',borderRadius:4,border:'1px solid #99C6FF',
-                              background:'#E6F3FF',color:'#0034B7',fontSize:11,fontWeight:600,
-                              cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap',
-                              transition:'all 0.15s'}}
-                            onMouseEnter={e=>e.currentTarget.style.background='#C7DFFF'}
-                            onMouseLeave={e=>e.currentTarget.style.background='#E6F3FF'}>
-                            <Icon name="eye" size={12} color="#0034B7"/>
-                            Detalhes
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Paginação */}
-              <div style={{padding:'10px 16px',borderTop:'1px solid #E7E9EB',display:'flex',
-                justifyContent:'space-between',alignItems:'center',fontSize:13,color:'#494C57',background:'#F8FAFC'}}>
-                <span style={{fontSize:12,color:'#888'}}>
-                  Exibindo {Math.min((page-1)*PAGE_SIZE+1,resultado.length)}–{Math.min(page*PAGE_SIZE,resultado.length)} de {resultado.length}
-                </span>
-                <div style={{display:'flex',gap:4}}>
-                  <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                    style={{padding:'4px 10px',border:'1px solid #CED2D7',borderRadius:4,background:'#fff',
-                      cursor:page===1?'default':'pointer',color:page===1?C.border:C.textPrimary,fontSize:12}}>
-                    ← Anterior
-                  </button>
-                  {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
-                    <button key={p} onClick={()=>setPage(p)}
-                      style={{padding:'4px 10px',border:`1px solid ${p===page?C.brand:C.divider}`,borderRadius:4,
-                        background:p===page?C.brand:'#fff',color:p===page?'#fff':C.textPrimary,
-                        fontSize:12,cursor:'pointer',fontWeight:p===page?600:400}}>
-                      {p}
-                    </button>
-                  ))}
-                  <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                    style={{padding:'4px 10px',border:'1px solid #CED2D7',borderRadius:4,background:'#fff',
-                      cursor:page===totalPages?'default':'pointer',color:page===totalPages?C.border:C.textPrimary,fontSize:12}}>
-                    Próxima →
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Nota imutabilidade */}
-          <div style={{padding:'8px 16px',borderTop:'1px solid #E7E9EB',background:'#F8FAFC',
-            display:'flex',alignItems:'center',gap:8}}>
-            <Icon name="lock" size={12} color="#888"/>
-            <span style={{fontSize:11,color:'#888'}}>
-              Registros imutáveis — nenhuma edição ou exclusão é permitida no log de auditoria.
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Modal de detalhes do registro ── */}
-      {modalItem && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:1000,
-          display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
-          <div style={{background:'#fff',borderRadius:8,width:'100%',maxWidth:560,
-            maxHeight:'90vh',overflow:'hidden',display:'flex',flexDirection:'column',
-            boxShadow:'0 8px 40px rgba(0,0,0,0.25)'}}>
-            {/* Header */}
-            <div style={{background:`linear-gradient(135deg,#001A7A 0%,#0034B7 100%)`,
-              padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-              <div>
-                <div style={{fontSize:11,color:'rgba(248,250,252,0.6)',textTransform:'uppercase',
-                  letterSpacing:'0.5px',marginBottom:3}}>Detalhes do Registro</div>
-                <div style={{fontSize:14,fontWeight:700,color:'#fff'}}>
-                  {ACAO_CFG[modalItem.acao]?.label || modalItem.acao}
-                </div>
-              </div>
-              <button onClick={()=>setModalItem(null)}
-                style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:5,
-                  width:28,height:28,cursor:'pointer',color:'#fff',fontSize:16,
-                  display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-            </div>
-            {/* Conteúdo */}
-            <div style={{padding:'20px',overflowY:'auto',flex:1}}>
-              {/* Campos básicos */}
-              <div style={{display:'flex',flexDirection:'column',gap:7,marginBottom:16}}>
-                {[
-                  ['ID do registro',    modalItem.id,        true ],
-                  ['Data/Hora',         modalItem.timestamp, false],
-                  ['Módulo',            modalItem.modulo,    false],
-                  ['Ação',              ACAO_CFG[modalItem.acao]?.label||modalItem.acao, false],
-                  ['Registro afetado',  modalItem.registro,  false],
-                  ['Executor',          modalItem.executor,  false],
-                  ['Perfil',            modalItem.perfil,    false],
-                  ['Órgão',             modalItem.orgao,     false],
-                  ['IP de origem',      modalItem.ip,        true ],
-                ].map(([k,v,mono])=>(
-                  <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-                    padding:'8px 12px',background:'#F8FAFC',border:'1px solid #E7E9EB',borderRadius:5}}>
-                    <span style={{fontSize:12,color:'#494C57'}}>{k}</span>
-                    <span style={{fontSize:12,fontWeight:500,color:'#28272C',
-                      fontFamily:mono?'monospace':'inherit'}}>{v}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Estado anterior */}
-              <div style={{marginBottom:10}}>
-                <div style={{fontSize:11,fontWeight:700,color:'#494C57',textTransform:'uppercase',
-                  letterSpacing:'0.5px',marginBottom:6}}>Estado anterior</div>
-                <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:5,
-                  padding:'10px 12px',fontFamily:'monospace',fontSize:12,color:'#7A5700'}}>
-                  {modalItem.before
-                    ? JSON.stringify(modalItem.before, null, 2)
-                    : '— Registro criado (sem estado anterior)'}
-                </div>
-              </div>
-
-              {/* Estado novo */}
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:11,fontWeight:700,color:'#494C57',textTransform:'uppercase',
-                  letterSpacing:'0.5px',marginBottom:6}}>Estado novo</div>
-                <div style={{background:'#EAFBD7',border:'1px solid #86D562',borderRadius:5,
-                  padding:'10px 12px',fontFamily:'monospace',fontSize:12,color:'#2B5010'}}>
-                  {modalItem.after
-                    ? JSON.stringify(modalItem.after, null, 2)
-                    : '— Registro removido'}
-                </div>
-              </div>
-
-              {/* Descrição */}
-              <div style={{background:'#E6F3FF',border:'1px solid #99C6FF',borderRadius:5,
-                padding:'10px 12px',display:'flex',gap:8}}>
-                <Icon name="info" size={14} color={C.brand} style={{flexShrink:0,marginTop:1}}/>
-                <span style={{fontSize:12,color:C.brand,lineHeight:1.5}}>{modalItem.detalhe}</span>
-              </div>
-            </div>
-            {/* Rodapé */}
-            <div style={{padding:'12px 20px',borderTop:'1px solid #E7E9EB',flexShrink:0,
-              display:'flex',justifyContent:'flex-end'}}>
-              <button onClick={()=>setModalItem(null)}
-                style={{height:36,padding:'0 16px',borderRadius:5,border:'1px solid #CED2D7',
-                  background:'#fff',color:'#494C57',fontSize:13,fontWeight:600,cursor:'pointer',
-                  display:'flex',alignItems:'center',gap:6}}>
-                <Icon name="arrowLeft" size={13} color="#494C57"/> Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ScriptLoader/>
-    </div>
-  );
-}
 
 function App() {
   const [section, setSection]   = React.useState('dashboard');
@@ -4206,5 +3635,585 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 
 </script>
+
+<script type="text/babel">
+/* === PART 3: Relatório de Auditoria === */
+/* ═══════════════════════════════════════════════════════════════
+   HU.02.05.01 — RELATÓRIO DE AUDITORIA
+   Campos de filtro, grid paginado, exportação PDF e Excel
+   Padrão idêntico ao RelCadastradas / RelUso
+══════════════════════════════════════════════════════════════ */
+
+/* Dados simulados — log de auditoria (20 eventos) */
+const AUDIT_LOG = [
+  { id:'a001', timestamp:'09/06/2026 14:32', acao:'API_ATIVADA',      modulo:'Gerenciar APIs',      registro:'Catálogo de Serviços', executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' },  detalhe:"API 'Catálogo de Serviços' ativada." },
+  { id:'a002', timestamp:'09/06/2026 13:58', acao:'USUARIO_ATIVADO',  modulo:'Controle de Acesso',  registro:'Mariana Lima',         executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Pendente' }, after:{ status:'Ativo', perfil:'Cedente', orgao:'SEPLAG' }, detalhe:"Usuário 'Mariana Lima' ativado com perfil Cedente." },
+  { id:'a003', timestamp:'09/06/2026 11:20', acao:'API_EDITADA',      modulo:'Gerenciar APIs',      registro:'Consulta de CPF',      executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ versao:'v1.0', descricao:'Consulta de dados.' }, after:{ versao:'v1.1', descricao:'Consulta de dados cadastrais via CPF.' }, detalhe:"Versão e descrição da API 'Consulta de CPF' atualizados." },
+  { id:'a004', timestamp:'09/06/2026 09:05', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
+  { id:'a005', timestamp:'08/06/2026 17:44', acao:'USUARIO_INATIVADO',modulo:'Controle de Acesso',  registro:'Roberto Nunes',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"Usuário 'Roberto Nunes' inativado." },
+  { id:'a006', timestamp:'08/06/2026 16:30', acao:'CATEGORIA_CRIADA', modulo:'Gerenciar Categorias',registro:'Meio Ambiente',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:{ nome:'Meio Ambiente', status:'Inativo' }, detalhe:"Categoria 'Meio Ambiente' criada." },
+  { id:'a007', timestamp:'08/06/2026 15:12', acao:'API_INATIVADA',    modulo:'Gerenciar APIs',      registro:'Licença Ambiental',    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"API 'Licença Ambiental' inativada." },
+  { id:'a008', timestamp:'08/06/2026 14:01', acao:'USUARIO_EDITADO',  modulo:'Controle de Acesso',  registro:'Ana Costa',            executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ perfil:'ADM', orgao:'—' }, after:{ perfil:'Cedente', orgao:'SEFAZ' }, detalhe:"Perfil de 'Ana Costa' alterado de ADM para Cedente." },
+  { id:'a009', timestamp:'08/06/2026 10:50', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Cedente', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
+  { id:'a010', timestamp:'07/06/2026 16:22', acao:'API_CRIADA',       modulo:'Gerenciar APIs',      registro:'Programas Habitacionais', executor:'João Silva', perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:{ nome:'Programas Habitacionais', status:'Inativo', versao:'v1.1' }, detalhe:"API 'Programas Habitacionais' criada." },
+  { id:'a011', timestamp:'07/06/2026 15:40', acao:'CATEGORIA_EDITADA',modulo:'Gerenciar Categorias',registro:'Saúde',                executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ descricao:'APIs da saúde.' }, after:{ descricao:'APIs do sistema de saúde pública, regulação e agendamentos.' }, detalhe:"Descrição da categoria 'Saúde' atualizada." },
+  { id:'a012', timestamp:'07/06/2026 11:08', acao:'USUARIO_REGISTRADO',modulo:'Controle de Acesso', registro:'Carlos Mendes',        executor:'SYSTEM',       perfil:'SYSTEM', orgao:'—',   ip:'189.40.11.33', before:null, after:{ status:'Pendente', origemCadastro:'SSO' }, detalhe:"Usuário 'Carlos Mendes' registrado automaticamente via SSO." },
+  { id:'a013', timestamp:'06/06/2026 17:55', acao:'LOGIN_NEGADO',     modulo:'Autenticação',        registro:'—',                    executor:'Carlos Mendes',perfil:'Pendente', orgao:'—', ip:'189.40.11.33', before:null, after:null, detalhe:"Tentativa de login negada — CPF com status Pendente." },
+  { id:'a014', timestamp:'06/06/2026 14:20', acao:'API_ATIVADA',      modulo:'Gerenciar APIs',      registro:'Boletim de Ocorrência',executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' }, detalhe:"API 'Boletim de Ocorrência' ativada." },
+  { id:'a015', timestamp:'06/06/2026 10:33', acao:'SESSAO_EXPIRADA',  modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Cedente', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Sessão encerrada automaticamente por inatividade (30 min)." },
+  { id:'a016', timestamp:'05/06/2026 16:47', acao:'CATEGORIA_INATIVADA',modulo:'Gerenciar Categorias',registro:'Educação',           executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"Categoria 'Educação' inativada." },
+  { id:'a017', timestamp:'05/06/2026 14:05', acao:'API_EDITADA',      modulo:'Gerenciar APIs',      registro:'Emissão de Certidões', executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ versao:'v1.4' }, after:{ versao:'v1.5' }, detalhe:"Versão da API 'Emissão de Certidões' atualizada para v1.5." },
+  { id:'a018', timestamp:'05/06/2026 09:15', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Fernanda Souza',perfil:'Cedente', orgao:'SES', ip:'201.22.77.99', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
+  { id:'a019', timestamp:'04/06/2026 15:30', acao:'USUARIO_REATIVADO',modulo:'Controle de Acesso',  registro:'Roberto Nunes',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' }, detalhe:"Usuário 'Roberto Nunes' reativado." },
+  { id:'a020', timestamp:'04/06/2026 11:00', acao:'LOGOUT',           modulo:'Autenticação',        registro:'—',                    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:null, detalhe:"Sessão encerrada pelo usuário." },
+];
+
+/* Configuração visual das ações */
+const ACAO_CFG = {
+  'API_CRIADA':         { label:'API — Criação',      bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
+  'API_EDITADA':        { label:'API — Edição',       bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF'  },
+  'API_ATIVADA':        { label:'API — Ativação',     bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
+  'API_INATIVADA':      { label:'API — Inativação',   bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F'  },
+  'CATEGORIA_CRIADA':   { label:'Categoria — Criação',bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
+  'CATEGORIA_EDITADA':  { label:'Categoria — Edição', bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF'  },
+  'CATEGORIA_ATIVADA':  { label:'Categoria — Ativação',bg:'#EAFBD7',color:'#2B6418', border:'#86D562'  },
+  'CATEGORIA_INATIVADA':{ label:'Categoria — Inativação',bg:'#FFE4E4',color:'#AC1010',border:'#E45F5F' },
+  'USUARIO_REGISTRADO': { label:'Usuário — Registro', bg:'#FFF6CE', color:'#B77706', border:'#FFE082'  },
+  'USUARIO_ATIVADO':    { label:'Usuário — Ativação', bg:'#EAFBD7', color:'#2B6418', border:'#86D562'  },
+  'USUARIO_EDITADO':    { label:'Usuário — Edição',   bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF'  },
+  'USUARIO_INATIVADO':  { label:'Usuário — Inativação',bg:'#FFE4E4',color:'#AC1010', border:'#E45F5F'  },
+  'USUARIO_REATIVADO':  { label:'Usuário — Reativação',bg:'#EAFBD7',color:'#2B6418', border:'#86D562'  },
+  'LOGIN_SUCESSO':      { label:'Login — Sucesso',    bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7'  },
+  'LOGIN_NEGADO':       { label:'Login — Negado',     bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F'  },
+  'LOGOUT':             { label:'Logout',             bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7'  },
+  'SESSAO_EXPIRADA':    { label:'Sessão — Expirada',  bg:'#FFF6CE', color:'#B77706', border:'#FFE082'  },
+};
+
+const MODULO_CFG = {
+  'Gerenciar APIs':      { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF' },
+  'Gerenciar Categorias':{ bg:'#EEF0FF', color:'#001A7A', border:'#B0B8FF' },
+  'Controle de Acesso':  { bg:'#EAFBD7', color:'#2B6418', border:'#86D562' },
+  'Autenticação':        { bg:'#FFF6CE', color:'#B77706', border:'#FFE082' },
+};
+
+function RelAuditoria({ showToast }) {
+  const [loading,   setLoading]   = React.useState(false);
+  const [buscado,   setBuscado]   = React.useState(false);
+  const [resultado, setResultado] = React.useState([]);
+  const [modalItem, setModalItem] = React.useState(null);
+  const [page,      setPage]      = React.useState(1);
+  const PAGE_SIZE = 10;
+
+  const [f, setF] = React.useState({
+    dataInicio:'', dataFim:'',
+    modulo:'', acao:'', executor:'', registro:'',
+  });
+  const setFil = (k,v) => setF(p=>({...p,[k]:v}));
+
+  /* Parse dd/mm/aaaa hh:mm */
+  const parseTs = str => {
+    const [datePart, timePart='00:00'] = (str||'').split(' ');
+    const [d,m,y] = datePart.split('/');
+    const [h,mi]  = timePart.split(':');
+    return new Date(+y,+m-1,+d,+h,+mi);
+  };
+
+  const getDados = () => AUDIT_LOG.filter(r => {
+    if(f.modulo   && r.modulo   !== f.modulo)  return false;
+    if(f.acao     && r.acao     !== f.acao)    return false;
+    if(f.executor && !r.executor.toLowerCase().includes(f.executor.toLowerCase())) return false;
+    if(f.registro && !r.registro.toLowerCase().includes(f.registro.toLowerCase())) return false;
+    if(f.dataInicio){
+      const ini = new Date(f.dataInicio);
+      if(parseTs(r.timestamp) < ini) return false;
+    }
+    if(f.dataFim){
+      const fim = new Date(f.dataFim);
+      fim.setHours(23,59,59);
+      if(parseTs(r.timestamp) > fim) return false;
+    }
+    return true;
+  });
+
+  const filtrosLabel = () => {
+    const p=[];
+    if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
+    if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
+    if(f.modulo)     p.push('Módulo: '+f.modulo);
+    if(f.acao)       p.push('Ação: '+(ACAO_CFG[f.acao]?.label||f.acao));
+    if(f.executor)   p.push('Executor: '+f.executor);
+    if(f.registro)   p.push('Registro: '+f.registro);
+    return p.length ? p.join(' | ') : 'Sem filtros — todos os registros';
+  };
+
+  const now = () => {
+    const d=new Date();
+    return {
+      data: d.toLocaleDateString('pt-BR'),
+      hora: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+      slug: d.toISOString().slice(0,16).replace('T','_').replace(':','h'),
+    };
+  };
+
+  const handleBuscar = () => { setResultado(getDados()); setBuscado(true); setPage(1); };
+  const handleLimpar = () => { setF({dataInicio:'',dataFim:'',modulo:'',acao:'',executor:'',registro:''}); setResultado([]); setBuscado(false); setPage(1); };
+
+  /* ── Badge de ação ── */
+  const AcaoBadge = ({acao}) => {
+    const c = ACAO_CFG[acao] || {label:acao, bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7'};
+    return (
+      <span style={{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:100,
+        fontSize:11,fontWeight:600,background:c.bg,color:c.color,border:`1px solid ${c.border}`,
+        whiteSpace:'nowrap'}}>
+        {c.label}
+      </span>
+    );
+  };
+
+  /* ── Badge de módulo ── */
+  const ModuloBadge = ({modulo}) => {
+    const c = MODULO_CFG[modulo] || {bg:C.infoBg,color:C.info,border:C.infoBorder};
+    return (
+      <span style={{display:'inline-flex',padding:'2px 8px',borderRadius:100,
+        fontSize:11,fontWeight:600,background:c.bg,color:c.color,border:`1px solid ${c.border}`,
+        whiteSpace:'nowrap'}}>
+        {modulo}
+      </span>
+    );
+  };
+
+  /* ── Exportação PDF ── */
+  const gerarPDF = async (dados) => {
+    const {jsPDF}=window.jspdf; const {data,hora,slug}=now();
+    const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const W = doc.internal.pageSize.getWidth();
+
+    /* Cabeçalho institucional */
+    doc.setFillColor(0,26,122); doc.rect(0,0,W,32,'F');
+    doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text('Conecta Gov.PE — Relatório de Auditoria',14,12);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,20);
+    doc.text(`Filtros: ${filtrosLabel()}`,14,26);
+    doc.text(`Total: ${dados.length} registro(s)`,14,31);
+
+    doc.autoTable({
+      head:[['Data/Hora','Módulo','Ação','Registro','Executor','Perfil','IP de origem']],
+      body: dados.map(r=>[
+        r.timestamp,
+        r.modulo,
+        ACAO_CFG[r.acao]?.label || r.acao,
+        r.registro,
+        r.executor,
+        r.perfil,
+        r.ip,
+      ]),
+      startY: 35,
+      styles:{ fontSize:8, cellPadding:2.5 },
+      headStyles:{ fillColor:[0,26,122], textColor:255, fontStyle:'bold' },
+      alternateRowStyles:{ fillColor:[230,243,255] },
+      columnStyles:{
+        0:{cellWidth:28},
+        1:{cellWidth:38},
+        2:{cellWidth:42},
+        3:{cellWidth:40},
+        4:{cellWidth:28},
+        5:{cellWidth:18},
+        6:{cellWidth:26},
+      },
+      didDrawPage: (data) => {
+        const pg = doc.internal.getCurrentPageInfo().pageNumber;
+        const tot = doc.internal.getNumberOfPages ? doc.internal.getNumberOfPages() : '?';
+        doc.setFontSize(7); doc.setTextColor(120);
+        doc.text(
+          `Pág. ${pg}  |  Conecta Gov.PE — Log de Auditoria — ${dados.length} registros`,
+          14, doc.internal.pageSize.getHeight()-5
+        );
+      },
+    });
+    doc.save(`auditoria_${slug}.pdf`);
+  };
+
+  /* ── Exportação Excel ── */
+  const gerarXLSX = (dados) => {
+    const {utils,write} = window.XLSX; const {data,hora,slug}=now();
+    const cab = [
+      ['Conecta Gov.PE — Relatório de Auditoria'],
+      [`Gerado em: ${data} às ${hora}`],
+      ['Usuário: João Silva (ADM)'],
+      [`Filtros: ${filtrosLabel()}`],
+      [`Total: ${dados.length} registro(s)`],
+      [],
+      ['ID','Data/Hora','Módulo','Ação','Registro afetado','Executor','Perfil','Órgão','IP de origem','Detalhe'],
+    ];
+    const linhas = dados.map(r=>[
+      r.id, r.timestamp, r.modulo,
+      ACAO_CFG[r.acao]?.label || r.acao,
+      r.registro, r.executor, r.perfil, r.orgao, r.ip, r.detalhe,
+    ]);
+    const ws = utils.aoa_to_sheet([...cab,...linhas]);
+    ws['!cols']=[{wch:6},{wch:18},{wch:22},{wch:28},{wch:28},{wch:18},{wch:10},{wch:10},{wch:18},{wch:60}];
+    const wb = utils.book_new(); utils.book_append_sheet(wb,ws,'Auditoria');
+    const buf = write(wb,{bookType:'xlsx',type:'array'});
+    const blob = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=`auditoria_${slug}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async (fmt) => {
+    if(!resultado.length){ showToast('Clique em Aplicar antes de exportar.','warning'); return; }
+    setLoading(true);
+    try{
+      await new Promise(r=>setTimeout(r,900));
+      fmt==='pdf' ? await gerarPDF(resultado) : gerarXLSX(resultado);
+      showToast(`Relatório exportado! ${resultado.length} registro(s).`,'success');
+    }catch(e){ showToast('Erro ao gerar o arquivo.','warning'); }
+    finally{ setLoading(false); }
+  };
+
+  /* Módulos e ações únicos para dropdowns */
+  const modulos = [...new Set(AUDIT_LOG.map(r=>r.modulo))];
+  const acoes   = [...new Set(AUDIT_LOG.map(r=>r.acao))];
+
+  /* Paginação */
+  const totalPages = Math.max(1, Math.ceil(resultado.length / PAGE_SIZE));
+  const paged      = resultado.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
+  /* Estilos de input — idênticos aos outros relatórios */
+  const iSt = {height:38,borderRadius:4,border:'1px solid #CED2D7',padding:'0 10px',fontSize:13,color:'#28272C',background:'#fff',outline:'none',width:'100%'};
+  const onFocus = e=>{ e.target.style.borderColor='#0034B7'; e.target.style.boxShadow='0 0 0 2px rgba(0,52,183,0.15)'; };
+  const onBlur  = e=>{ e.target.style.borderColor='#CED2D7'; e.target.style.boxShadow='none'; };
+
+  const Sel = ({value,onChange,children}) => (
+    <div style={{position:'relative'}}>
+      <select value={value} onChange={e=>onChange(e.target.value)}
+        style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}}
+        onFocus={onFocus} onBlur={onBlur}>
+        {children}
+      </select>
+      <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+        <Icon name="chevDown" size={13} color="#888"/>
+      </span>
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#F8FAFC'}}>
+
+      {/* Título */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Auditoria</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:2}}>Log de Auditoria</h1>
+        <p style={{fontSize:13,color:C.textSecondary}}>Registros imutáveis de todas as ações realizadas no backoffice.</p>
+      </div>
+
+      {/* ── Card de filtros ── */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+
+        {/* Linha 1: Período + Módulo + Tipo de ação */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:14,marginBottom:14}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
+            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
+            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Módulo</label>
+            <Sel value={f.modulo} onChange={v=>setFil('modulo',v)}>
+              <option value="">Todos os módulos</option>
+              {modulos.map(m=><option key={m} value={m}>{m}</option>)}
+            </Sel>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Tipo de ação</label>
+            <Sel value={f.acao} onChange={v=>setFil('acao',v)}>
+              <option value="">Todos</option>
+              {acoes.map(a=><option key={a} value={a}>{ACAO_CFG[a]?.label||a}</option>)}
+            </Sel>
+          </div>
+        </div>
+
+        {/* Linha 2: Executor + Registro + Botões */}
+        <div style={{display:'flex',gap:14,alignItems:'flex-end'}}>
+          <div style={{flex:'1 1 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Executor (usuário)</label>
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+                <Icon name="search" size={13} color="#CED2D7"/>
+              </span>
+              <input value={f.executor} onChange={e=>setFil('executor',e.target.value)}
+                placeholder="Busca parcial por nome..."
+                style={{...iSt,paddingLeft:32}} onFocus={onFocus} onBlur={onBlur}/>
+            </div>
+          </div>
+          <div style={{flex:'1 1 200px'}}>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Registro afetado</label>
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+                <Icon name="search" size={13} color="#CED2D7"/>
+              </span>
+              <input value={f.registro} onChange={e=>setFil('registro',e.target.value)}
+                placeholder="Nome da API, usuário, categoria..."
+                style={{...iSt,paddingLeft:32}} onFocus={onFocus} onBlur={onBlur}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,flexShrink:0}}>
+            <button onClick={handleLimpar}
+              style={{height:38,padding:'0 18px',borderRadius:4,border:'1.5px solid #0034B7',background:'#fff',color:'#0034B7',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
+              onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+              Limpar
+            </button>
+            <button onClick={handleBuscar}
+              style={{height:38,padding:'0 20px',borderRadius:4,border:'1.5px solid #0034B7',background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}>
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Resultado ── */}
+      {buscado && (
+        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+
+          {/* Cabeçalho resultado */}
+          <div style={{padding:'10px 16px',borderBottom:'1px solid #E7E9EB',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#F8FAFC'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'#28272C',fontWeight:500}}>
+              <Icon name="audit" size={14} color="#494C57"/>
+              Resultado da pesquisa
+              <span style={{fontSize:12,color:'#888',fontWeight:400}}>
+                ({resultado.length} registro{resultado.length!==1?'s':''})
+              </span>
+              {resultado.length > 0 && (
+                <span style={{fontSize:11,color:'#888',marginLeft:4}}>
+                  · Pág. {page}/{totalPages}
+                </span>
+              )}
+            </div>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              <button onClick={()=>handleExport('xlsx')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#0034B7'}`,background:'#fff',color:loading||!resultado.length?'#CED2D7':'#0034B7',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length)e.currentTarget.style.background='#E6F3FF';}}
+                onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                Excel
+              </button>
+              <button onClick={()=>handleExport('pdf')} disabled={loading||!resultado.length}
+                style={{height:32,padding:'0 16px',borderRadius:4,border:`1.5px solid ${loading||!resultado.length?'#CED2D7':'#001A7A'}`,background:loading||!resultado.length?'#CED2D7':'#001A7A',color:'#fff',fontSize:12,fontWeight:600,cursor:loading||!resultado.length?'not-allowed':'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#0034B7';e.currentTarget.style.borderColor='#0034B7';}}}
+                onMouseLeave={e=>{if(!loading&&resultado.length){e.currentTarget.style.background='#001A7A';e.currentTarget.style.borderColor='#001A7A';}}}>
+                PDF
+              </button>
+              {loading&&<span style={{fontSize:11,color:'#888',marginLeft:4}}>Gerando...</span>}
+            </div>
+          </div>
+
+          {resultado.length === 0 ? (
+            <div style={{padding:'48px',textAlign:'center',color:'#888',fontSize:13}}>
+              Nenhum registro encontrado com os filtros aplicados.
+            </div>
+          ) : (
+            <>
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead>
+                    <tr>
+                      {['Data/Hora','Módulo','Ação','Registro afetado','Executor','IP de origem',''].map(h=>(
+                        <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,
+                          color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paged.map((r)=>(
+                      <tr key={r.id} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                        onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
+                        onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                        <td style={{padding:'10px 14px',whiteSpace:'nowrap'}}>
+                          <div style={{fontSize:12,fontWeight:600,color:'#28272C'}}>{r.timestamp.split(' ')[0]}</div>
+                          <div style={{fontSize:11,color:'#888'}}>{r.timestamp.split(' ')[1]}</div>
+                        </td>
+                        <td style={{padding:'10px 14px'}}><ModuloBadge modulo={r.modulo}/></td>
+                        <td style={{padding:'10px 14px'}}><AcaoBadge acao={r.acao}/></td>
+                        <td style={{padding:'10px 14px',fontSize:13,color:'#28272C',fontWeight:500}}>
+                          {r.registro !== '—' ? r.registro : <span style={{color:'#CED2D7'}}>—</span>}
+                        </td>
+                        <td style={{padding:'10px 14px'}}>
+                          <div style={{fontSize:13,fontWeight:500,color:'#28272C'}}>{r.executor}</div>
+                          <div style={{display:'flex',alignItems:'center',gap:5,marginTop:2}}>
+                            <span style={{fontSize:10,fontWeight:600,background:C.infoBg,color:C.brand,
+                              padding:'1px 6px',borderRadius:100,border:`1px solid ${C.infoBorder}`}}>
+                              {r.perfil}
+                            </span>
+                            {r.orgao!=='—'&&<span style={{fontSize:10,color:'#888'}}>{r.orgao}</span>}
+                          </div>
+                        </td>
+                        <td style={{padding:'10px 14px'}}>
+                          <code style={{fontSize:11,fontFamily:'monospace',background:'#F4F5F7',
+                            padding:'2px 6px',borderRadius:3,color:'#494C57'}}>{r.ip}</code>
+                        </td>
+                        <td style={{padding:'10px 14px',textAlign:'right'}}>
+                          <button onClick={()=>setModalItem(r)}
+                            style={{height:28,padding:'0 10px',borderRadius:4,border:'1px solid #99C6FF',
+                              background:'#E6F3FF',color:'#0034B7',fontSize:11,fontWeight:600,
+                              cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap',
+                              transition:'all 0.15s'}}
+                            onMouseEnter={e=>e.currentTarget.style.background='#C7DFFF'}
+                            onMouseLeave={e=>e.currentTarget.style.background='#E6F3FF'}>
+                            <Icon name="eye" size={12} color="#0034B7"/>
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Paginação */}
+              <div style={{padding:'10px 16px',borderTop:'1px solid #E7E9EB',display:'flex',
+                justifyContent:'space-between',alignItems:'center',fontSize:13,color:'#494C57',background:'#F8FAFC'}}>
+                <span style={{fontSize:12,color:'#888'}}>
+                  Exibindo {Math.min((page-1)*PAGE_SIZE+1,resultado.length)}–{Math.min(page*PAGE_SIZE,resultado.length)} de {resultado.length}
+                </span>
+                <div style={{display:'flex',gap:4}}>
+                  <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                    style={{padding:'4px 10px',border:'1px solid #CED2D7',borderRadius:4,background:'#fff',
+                      cursor:page===1?'default':'pointer',color:page===1?C.border:C.textPrimary,fontSize:12}}>
+                    ← Anterior
+                  </button>
+                  {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
+                    <button key={p} onClick={()=>setPage(p)}
+                      style={{padding:'4px 10px',border:`1px solid ${p===page?C.brand:C.divider}`,borderRadius:4,
+                        background:p===page?C.brand:'#fff',color:p===page?'#fff':C.textPrimary,
+                        fontSize:12,cursor:'pointer',fontWeight:p===page?600:400}}>
+                      {p}
+                    </button>
+                  ))}
+                  <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                    style={{padding:'4px 10px',border:'1px solid #CED2D7',borderRadius:4,background:'#fff',
+                      cursor:page===totalPages?'default':'pointer',color:page===totalPages?C.border:C.textPrimary,fontSize:12}}>
+                    Próxima →
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Nota imutabilidade */}
+          <div style={{padding:'8px 16px',borderTop:'1px solid #E7E9EB',background:'#F8FAFC',
+            display:'flex',alignItems:'center',gap:8}}>
+            <Icon name="lock" size={12} color="#888"/>
+            <span style={{fontSize:11,color:'#888'}}>
+              Registros imutáveis — nenhuma edição ou exclusão é permitida no log de auditoria.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de detalhes do registro ── */}
+      {modalItem && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:1000,
+          display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
+          <div style={{background:'#fff',borderRadius:8,width:'100%',maxWidth:560,
+            maxHeight:'90vh',overflow:'hidden',display:'flex',flexDirection:'column',
+            boxShadow:'0 8px 40px rgba(0,0,0,0.25)'}}>
+            {/* Header */}
+            <div style={{background:`linear-gradient(135deg,#001A7A 0%,#0034B7 100%)`,
+              padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+              <div>
+                <div style={{fontSize:11,color:'rgba(248,250,252,0.6)',textTransform:'uppercase',
+                  letterSpacing:'0.5px',marginBottom:3}}>Detalhes do Registro</div>
+                <div style={{fontSize:14,fontWeight:700,color:'#fff'}}>
+                  {ACAO_CFG[modalItem.acao]?.label || modalItem.acao}
+                </div>
+              </div>
+              <button onClick={()=>setModalItem(null)}
+                style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:5,
+                  width:28,height:28,cursor:'pointer',color:'#fff',fontSize:16,
+                  display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            </div>
+            {/* Conteúdo */}
+            <div style={{padding:'20px',overflowY:'auto',flex:1}}>
+              {/* Campos básicos */}
+              <div style={{display:'flex',flexDirection:'column',gap:7,marginBottom:16}}>
+                {[
+                  ['ID do registro',    modalItem.id,        true ],
+                  ['Data/Hora',         modalItem.timestamp, false],
+                  ['Módulo',            modalItem.modulo,    false],
+                  ['Ação',              ACAO_CFG[modalItem.acao]?.label||modalItem.acao, false],
+                  ['Registro afetado',  modalItem.registro,  false],
+                  ['Executor',          modalItem.executor,  false],
+                  ['Perfil',            modalItem.perfil,    false],
+                  ['Órgão',             modalItem.orgao,     false],
+                  ['IP de origem',      modalItem.ip,        true ],
+                ].map(([k,v,mono])=>(
+                  <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                    padding:'8px 12px',background:'#F8FAFC',border:'1px solid #E7E9EB',borderRadius:5}}>
+                    <span style={{fontSize:12,color:'#494C57'}}>{k}</span>
+                    <span style={{fontSize:12,fontWeight:500,color:'#28272C',
+                      fontFamily:mono?'monospace':'inherit'}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Estado anterior */}
+              <div style={{marginBottom:10}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#494C57',textTransform:'uppercase',
+                  letterSpacing:'0.5px',marginBottom:6}}>Estado anterior</div>
+                <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:5,
+                  padding:'10px 12px',fontFamily:'monospace',fontSize:12,color:'#7A5700'}}>
+                  {modalItem.before
+                    ? JSON.stringify(modalItem.before, null, 2)
+                    : '— Registro criado (sem estado anterior)'}
+                </div>
+              </div>
+
+              {/* Estado novo */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#494C57',textTransform:'uppercase',
+                  letterSpacing:'0.5px',marginBottom:6}}>Estado novo</div>
+                <div style={{background:'#EAFBD7',border:'1px solid #86D562',borderRadius:5,
+                  padding:'10px 12px',fontFamily:'monospace',fontSize:12,color:'#2B5010'}}>
+                  {modalItem.after
+                    ? JSON.stringify(modalItem.after, null, 2)
+                    : '— Registro removido'}
+                </div>
+              </div>
+
+              {/* Descrição */}
+              <div style={{background:'#E6F3FF',border:'1px solid #99C6FF',borderRadius:5,
+                padding:'10px 12px',display:'flex',gap:8}}>
+                <Icon name="info" size={14} color={C.brand} style={{flexShrink:0,marginTop:1}}/>
+                <span style={{fontSize:12,color:C.brand,lineHeight:1.5}}>{modalItem.detalhe}</span>
+              </div>
+            </div>
+            {/* Rodapé */}
+            <div style={{padding:'12px 20px',borderTop:'1px solid #E7E9EB',flexShrink:0,
+              display:'flex',justifyContent:'flex-end'}}>
+              <button onClick={()=>setModalItem(null)}
+                style={{height:36,padding:'0 16px',borderRadius:5,border:'1px solid #CED2D7',
+                  background:'#fff',color:'#494C57',fontSize:13,fontWeight:600,cursor:'pointer',
+                  display:'flex',alignItems:'center',gap:6}}>
+                <Icon name="arrowLeft" size={13} color="#494C57"/> Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ScriptLoader/>
+    </div>
+  );
+}
+</script>
+
 </body>
 </html>
