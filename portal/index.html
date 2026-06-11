@@ -421,7 +421,7 @@ function QuemSomos() {
 /* Dados simulados de usuários pré-cadastrados (CPFs autorizados) */
 const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
-function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
+function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado }) {
   /* Fluxo: selecionar provedor → formulário do provedor escolhido */
   const [tela, setTela] = React.useState('selecao'); /* 'selecao' | 'expresso' | 'govbr' */
   const [cpf,     setCpf]    = React.useState('');
@@ -448,8 +448,14 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado }) {
     setLoading(true); setErro('');
     setTimeout(()=>{
       setLoading(false);
-      if(CPF_AUTORIZADOS.includes(cpf)) { onAcessoAutorizado(cpf); }
-      else { onAcessoNegado(); }
+      if (tela === 'govbr') {
+        /* GOV.BR → área do solicitante (qualquer CPF válido) */
+        if (onGovBrAutenticado) onGovBrAutenticado(cpf);
+      } else {
+        /* Expresso → backoffice (CPF deve estar na lista) */
+        if(CPF_AUTORIZADOS.includes(cpf)) { onAcessoAutorizado(cpf); }
+        else { onAcessoNegado(); }
+      }
     }, 1400);
   };
 
@@ -727,36 +733,533 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
 }
 
 /* ── App ─────────────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════════
+   DADOS SIMULADOS — Solicitações do cidadão (perfil GOV.BR)
+   Em produção: GET /v1/sei/solicitacoes?cpf={cpf}
+══════════════════════════════════════════════════════════════ */
+
+/* CPFs simulados com perfil GOV.BR (solicitantes) */
+const GOVBR_USUARIOS = {
+  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', cpfMask:'111.XXX.XXX-44', email:'maria.gracas@email.com.br' },
+  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', cpfMask:'555.XXX.XXX-88', email:'roberto.neto@empresa.pe.gov.br' },
+  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', cpfMask:'999.XXX.XXX-22', email:'juliana.costa@email.com.br' },
+};
+
+/* Solicitações por CPF */
+const GOVBR_SOLICITACOES = {
+  '111.222.333-44': [
+    { id:1, protocolo:'SEI-PE 2025.00000010-3', api:'Catálogo de Serviços', orgaoCedente:'ATI', dataSolicitacao:'05/03/2025', dataAtualizacao:'12/03/2025', status:'Aprovada',  responsavel:'Ana Costa',      detalhe:'Credenciais enviadas por e-mail. Validade: 12 meses.' },
+    { id:2, protocolo:'SEI-PE 2025.00000018-7', api:'Consulta de CPF',      orgaoCedente:'SEFAZ', dataSolicitacao:'18/04/2025', dataAtualizacao:'22/04/2025', status:'Em análise', responsavel:'Pedro Oliveira', detalhe:'Processo em avaliação pelo órgão cedente.' },
+    { id:3, protocolo:'SEI-PE 2025.00000023-1', api:'Emissão de Certidões', orgaoCedente:'SEFAZ', dataSolicitacao:'02/05/2025', dataAtualizacao:'02/05/2025', status:'Pendente',   responsavel:'Fernanda Souza', detalhe:'Aguardando envio de documentação complementar.' },
+  ],
+  '555.666.777-88': [
+    { id:4, protocolo:'SEI-PE 2025.00000007-6', api:'Boletim de Ocorrência',   orgaoCedente:'SEPLAG', dataSolicitacao:'01/02/2025', dataAtualizacao:'15/02/2025', status:'Aprovada',   responsavel:'Leandro Melo',   detalhe:'Acesso liberado. Chave API disponível no portal.' },
+    { id:5, protocolo:'SEI-PE 2025.00000009-2', api:'Programas Habitacionais', orgaoCedente:'SEDS',   dataSolicitacao:'10/02/2025', dataAtualizacao:'28/02/2025', status:'Aprovada',   responsavel:'Roberta Mendes', detalhe:'Integração homologada com sucesso.' },
+    { id:6, protocolo:'SEI-PE 2025.00000031-4', api:'Catálogo de Serviços',    orgaoCedente:'ATI',    dataSolicitacao:'10/05/2025', dataAtualizacao:'10/05/2025', status:'Reprovada',  responsavel:'Carlos Mendes',  detalhe:'Solicitação não atende aos critérios de habilitação.' },
+    { id:7, protocolo:'SEI-PE 2025.00000035-6', api:'Agendamento de Saúde',    orgaoCedente:'SES',    dataSolicitacao:'14/05/2025', dataAtualizacao:'14/05/2025', status:'Pendente',   responsavel:'Maria Santos',   detalhe:'Aguardando assinatura do Termo de Responsabilidade.' },
+  ],
+  '999.000.111-22': [
+    { id:8, protocolo:'SEI-PE 2025.00000015-9', api:'Matrícula Escolar',        orgaoCedente:'SEE',    dataSolicitacao:'20/03/2025', dataAtualizacao:'05/04/2025', status:'Aprovada',   responsavel:'João Silva',     detalhe:'API disponível. Documentação técnica enviada.' },
+    { id:9, protocolo:'SEI-PE 2025.00000022-3', api:'Licença Ambiental',        orgaoCedente:'SEPLAG', dataSolicitacao:'28/04/2025', dataAtualizacao:'05/05/2025', status:'Em análise', responsavel:'Lucas Alves',    detalhe:'Em avaliação técnica.' },
+  ],
+};
+
+/* ─────────────────────────────────────────────────────────────
+   TELA PRINCIPAL: MINHAS SOLICITAÇÕES (perfil GOV.BR)
+───────────────────────────────────────────────────────────── */
+function MinhasSolicitacoes({ usuario, onSair }) {
+  const solicitacoes = GOVBR_SOLICITACOES[usuario.cpf] || [];
+  const [filtroStatus, setFiltroStatus] = React.useState('');
+  const [filtroApi,    setFiltroApi]    = React.useState('');
+  const [modalDetalhe, setModalDetalhe] = React.useState(null);
+  const [abaAtiva,     setAbaAtiva]     = React.useState('solicitacoes');
+  const [sync] = React.useState(
+    new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  );
+
+  /* KPIs */
+  const total     = solicitacoes.length;
+  const aprovadas = solicitacoes.filter(s=>s.status==='Aprovada').length;
+  const analise   = solicitacoes.filter(s=>s.status==='Em análise').length;
+  const pendentes = solicitacoes.filter(s=>s.status==='Pendente').length;
+  const reprovadas= solicitacoes.filter(s=>s.status==='Reprovada').length;
+
+  /* APIs com acesso aprovado */
+  const apisAprovadas = solicitacoes.filter(s=>s.status==='Aprovada');
+
+  /* APIs únicas para dropdown */
+  const apisUnicas = [...new Set(solicitacoes.map(s=>s.api))];
+
+  /* Filtro */
+  const filtradas = solicitacoes.filter(s=>{
+    if(filtroStatus && s.status !== filtroStatus) return false;
+    if(filtroApi    && s.api    !== filtroApi)    return false;
+    return true;
+  });
+
+  /* Cores de status */
+  const statusCfg = {
+    'Aprovada':   { bg:'#EAFBD7', color:'#2B6418', border:'#86D562',  dot:'#2B6418'  },
+    'Em análise': { bg:'#FFF6CE', color:'#B77706', border:'#FFE082',  dot:'#B77706'  },
+    'Pendente':   { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF',  dot:'#0034B7'  },
+    'Reprovada':  { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F',  dot:'#AC1010'  },
+  };
+
+  const StatusBadge = ({status}) => {
+    const c = statusCfg[status] || {bg:'#F1EFE8',color:'#5F5E5A',border:'#D3D1C7',dot:'#888'};
+    return (
+      <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',
+        borderRadius:100,fontSize:12,fontWeight:600,background:c.bg,color:c.color,
+        border:`1px solid ${c.border}`}}>
+        <span style={{width:6,height:6,borderRadius:'50%',background:c.dot,flexShrink:0}}/>
+        {status}
+      </span>
+    );
+  };
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',background:'#F4F5F7'}}>
+
+      {/* Barra gov.pe */}
+      <div style={{background:'#001A7A',height:32,display:'flex',alignItems:'center',
+        justifyContent:'space-between',padding:'0 24px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:7}}>
+          <span style={{color:'#FFCD37',fontSize:14}}>★</span>
+          <span style={{color:'#F8FAFC',fontSize:12,fontWeight:500}}>Governo de Pernambuco</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          {['A-','A','A+'].map(t=><span key={t} style={{color:'#F8FAFC',fontSize:12,fontWeight:700,cursor:'pointer',padding:'0 2px'}}>{t}</span>)}
+        </div>
+      </div>
+
+      {/* Header */}
+      <div style={{background:'#fff',borderBottom:'1px solid #E7E9EB',padding:'0 24px',
+        display:'flex',alignItems:'center',justifyContent:'space-between',height:64}}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <img src="../assets/ati_logo.png" alt="ATI" style={{height:40,width:'auto',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
+          <div style={{width:1,height:32,background:'#E7E9EB'}}/>
+          <img src="../assets/Brasao.png" alt="Brasão" style={{height:40,width:'auto',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
+          <img src="../assets/Governo.png" alt="Gov PE" style={{height:32,width:'auto',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
+          <div style={{width:1,height:32,background:'#E7E9EB'}}/>
+          <span style={{fontSize:14,fontWeight:700,color:'#001A7A'}}>Conecta Gov.PE</span>
+        </div>
+        {/* Usuário logado */}
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          {/* Badge GOV.BR */}
+          <div style={{display:'flex',alignItems:'center',gap:6,background:'#F0F4FF',
+            border:'1px solid #C7D6FF',borderRadius:100,padding:'4px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:0,
+              background:'#1351B4',borderRadius:4,padding:'2px 6px'}}>
+              <span style={{fontSize:10,fontWeight:900,color:'#fff',letterSpacing:'-0.5px'}}>gov</span>
+              <span style={{fontSize:10,fontWeight:900,color:'#FFCD07',letterSpacing:'-0.5px'}}>.br</span>
+            </div>
+            <span style={{fontSize:12,fontWeight:600,color:'#001A7A'}}>{usuario.nome.split(' ')[0]}</span>
+          </div>
+          <button onClick={onSair}
+            style={{height:34,padding:'0 14px',borderRadius:6,border:'1px solid #E45F5F',
+              background:'#fff',color:'#AC1010',fontSize:12,fontWeight:600,cursor:'pointer',
+              display:'flex',alignItems:'center',gap:6,transition:'all 0.15s'}}
+            onMouseEnter={e=>e.currentTarget.style.background='#FFE4E4'}
+            onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AC1010" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair
+          </button>
+        </div>
+      </div>
+
+      {/* Conteúdo */}
+      <div style={{flex:1,padding:'28px 24px',maxWidth:1100,width:'100%',margin:'0 auto'}}>
+
+        {/* Saudação */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
+          <div>
+            <h1 style={{fontSize:22,fontWeight:700,color:'#001A7A',marginBottom:3}}>
+              Olá, {usuario.nome.split(' ')[0]} 👋
+            </h1>
+            <p style={{fontSize:13,color:'#494C57'}}>
+              Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE
+            </p>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{display:'flex',alignItems:'center',gap:5,justifyContent:'flex-end',marginBottom:3}}>
+              <div style={{width:7,height:7,borderRadius:'50%',background:'#2B6418'}}/>
+              <span style={{fontSize:11,color:'#2B6418',fontWeight:500}}>SEI-PE disponível</span>
+            </div>
+            <span style={{fontSize:11,color:'#888'}}>Sincronizado hoje às {sync}</span>
+          </div>
+        </div>
+
+        {/* Cards KPI */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:20}}>
+          {[
+            {label:'Total',       valor:total,     cor:'#001A7A', bg:'#fff',     border:'#E7E9EB'},
+            {label:'Aprovadas',   valor:aprovadas, cor:'#2B6418', bg:'#EAFBD7',  border:'#86D562'},
+            {label:'Em análise',  valor:analise,   cor:'#B77706', bg:'#FFF6CE',  border:'#FFE082'},
+            {label:'Pendentes',   valor:pendentes, cor:'#0034B7', bg:'#E6F3FF',  border:'#99C6FF'},
+            {label:'Reprovadas',  valor:reprovadas,cor:'#AC1010', bg:'#FFE4E4',  border:'#E45F5F'},
+          ].map(k=>(
+            <div key={k.label} onClick={()=>{ setFiltroStatus(k.label==='Total'?'':k.label); setAbaAtiva('solicitacoes'); }}
+              style={{background:k.bg,border:`1.5px solid ${k.border}`,borderRadius:8,
+                padding:'14px 16px',cursor:'pointer',transition:'box-shadow 0.15s'}}
+              onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 14px rgba(0,26,122,0.12)'}
+              onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
+              <div style={{fontSize:11,color:k.cor,fontWeight:500,opacity:0.8,marginBottom:4}}>{k.label}</div>
+              <div style={{fontSize:30,fontWeight:700,color:k.cor,lineHeight:1}}>{k.valor}</div>
+              {k.label!=='Total'&&total>0&&<div style={{fontSize:10,color:k.cor,opacity:0.65,marginTop:4}}>{Math.round((k.valor/total)*100)}% do total</div>}
+            </div>
+          ))}
+        </div>
+
+        {/* Aviso pendente */}
+        {(pendentes > 0 || analise > 0) && (
+          <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
+            padding:'10px 14px',marginBottom:16,display:'flex',gap:10,alignItems:'center'}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style={{fontSize:13,color:'#B77706'}}>
+              Você tem <strong>{analise + pendentes} solicitaç{(analise+pendentes)!==1?'ões':'ão'}</strong> que requerem atenção ou aguardam análise.
+            </span>
+          </div>
+        )}
+
+        {/* Abas */}
+        <div style={{display:'flex',gap:0,borderBottom:'2px solid #E7E9EB',marginBottom:16}}>
+          {[
+            {key:'solicitacoes', label:`Todas as solicitações (${total})`},
+            {key:'aprovadas',    label:`APIs com acesso autorizado (${aprovadas})`},
+          ].map(aba=>(
+            <button key={aba.key} onClick={()=>setAbaAtiva(aba.key)}
+              style={{padding:'10px 20px',border:'none',background:'none',
+                fontSize:13,fontWeight:abaAtiva===aba.key?700:400,
+                color:abaAtiva===aba.key?'#0034B7':'#494C57',cursor:'pointer',
+                borderBottom:abaAtiva===aba.key?'2px solid #0034B7':'2px solid transparent',
+                marginBottom:'-2px',transition:'all 0.15s'}}>
+              {aba.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── ABA: TODAS AS SOLICITAÇÕES ── */}
+        {abaAtiva === 'solicitacoes' && (
+          <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+
+            {/* Filtros */}
+            <div style={{padding:'12px 16px',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',
+              display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+              <span style={{fontSize:12,fontWeight:600,color:'#494C57'}}>Filtrar:</span>
+              {/* Status */}
+              <div style={{position:'relative'}}>
+                <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)}
+                  style={{height:32,border:'1px solid #CED2D7',borderRadius:5,padding:'0 24px 0 10px',
+                    fontSize:12,color:'#28272C',background:'#fff',outline:'none',appearance:'none',cursor:'pointer'}}>
+                  <option value="">Todos os status</option>
+                  {['Aprovada','Em análise','Pendente','Reprovada'].map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+                <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>▾</span>
+              </div>
+              {/* API */}
+              <div style={{position:'relative'}}>
+                <select value={filtroApi} onChange={e=>setFiltroApi(e.target.value)}
+                  style={{height:32,border:'1px solid #CED2D7',borderRadius:5,padding:'0 24px 0 10px',
+                    fontSize:12,color:'#28272C',background:'#fff',outline:'none',appearance:'none',cursor:'pointer'}}>
+                  <option value="">Todas as APIs</option>
+                  {apisUnicas.map(a=><option key={a} value={a}>{a}</option>)}
+                </select>
+                <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>▾</span>
+              </div>
+              {(filtroStatus||filtroApi)&&(
+                <button onClick={()=>{setFiltroStatus('');setFiltroApi('');}}
+                  style={{height:32,padding:'0 12px',borderRadius:5,border:'1px solid #CED2D7',
+                    background:'#fff',color:'#494C57',fontSize:12,cursor:'pointer'}}>
+                  Limpar
+                </button>
+              )}
+              <span style={{fontSize:11,color:'#888',marginLeft:'auto'}}>
+                {filtradas.length} de {total} registro{total!==1?'s':''}
+              </span>
+            </div>
+
+            {filtradas.length === 0 ? (
+              <div style={{padding:'48px',textAlign:'center',color:'#888',fontSize:13}}>
+                Nenhuma solicitação encontrada com os filtros aplicados.
+              </div>
+            ) : (
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead>
+                    <tr>
+                      {['Protocolo SEI','API solicitada','Órgão cedente','Data da solicitação','Última atualização','Status',''].map(h=>(
+                        <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,
+                          color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtradas.map((s)=>(
+                      <tr key={s.id} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
+                        onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
+                        onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                        <td style={{padding:'11px 14px'}}>
+                          <code style={{fontSize:11,fontFamily:'monospace',background:'#F4F5F7',
+                            padding:'2px 7px',borderRadius:3,color:'#28272C'}}>{s.protocolo}</code>
+                        </td>
+                        <td style={{padding:'11px 14px',fontSize:13,fontWeight:600,color:'#001A7A'}}>{s.api}</td>
+                        <td style={{padding:'11px 14px'}}>
+                          <span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',
+                            padding:'2px 8px',borderRadius:100,border:'1px solid #99C6FF'}}>
+                            {s.orgaoCedente}
+                          </span>
+                        </td>
+                        <td style={{padding:'11px 14px',fontSize:12,color:'#494C57'}}>{s.dataSolicitacao}</td>
+                        <td style={{padding:'11px 14px',fontSize:12,color:'#494C57'}}>{s.dataAtualizacao}</td>
+                        <td style={{padding:'11px 14px'}}><StatusBadge status={s.status}/></td>
+                        <td style={{padding:'11px 14px',textAlign:'right'}}>
+                          <button onClick={()=>setModalDetalhe(s)}
+                            style={{height:30,padding:'0 12px',borderRadius:5,border:'1px solid #99C6FF',
+                              background:'#E6F3FF',color:'#0034B7',fontSize:11,fontWeight:600,
+                              cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s'}}
+                            onMouseEnter={e=>e.currentTarget.style.background='#C7DFFF'}
+                            onMouseLeave={e=>e.currentTarget.style.background='#E6F3FF'}>
+                            Ver detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Rodapé informativo */}
+            <div style={{padding:'10px 16px',borderTop:'1px solid #E7E9EB',background:'#F8FAFC',
+              display:'flex',alignItems:'center',gap:8}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span style={{fontSize:11,color:'#888'}}>
+                Dados somente leitura · Sincronizados com o SEI-PE · As solicitações são gerenciadas exclusivamente no SEI-PE
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ── ABA: APIs COM ACESSO APROVADO ── */}
+        {abaAtiva === 'aprovadas' && (
+          <div>
+            {apisAprovadas.length === 0 ? (
+              <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,
+                padding:'48px',textAlign:'center'}}>
+                <div style={{fontSize:40,marginBottom:12}}>🔒</div>
+                <div style={{fontSize:16,fontWeight:600,color:'#28272C',marginBottom:6}}>Nenhuma API aprovada ainda</div>
+                <div style={{fontSize:13,color:'#888',maxWidth:400,margin:'0 auto'}}>
+                  Suas solicitações serão exibidas aqui após aprovação pelo órgão cedente.
+                </div>
+              </div>
+            ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:14}}>
+                {apisAprovadas.map(s=>(
+                  <div key={s.id}
+                    style={{background:'#fff',border:'1.5px solid #86D562',borderRadius:10,
+                      padding:'20px',boxShadow:'0 2px 12px rgba(43,100,24,0.08)',
+                      transition:'box-shadow 0.15s'}}
+                    onMouseEnter={e=>e.currentTarget.style.boxShadow='0 6px 24px rgba(43,100,24,0.15)'}
+                    onMouseLeave={e=>e.currentTarget.style.boxShadow='0 2px 12px rgba(43,100,24,0.08)'}>
+                    {/* Topo do card */}
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:700,color:'#001A7A',marginBottom:3}}>{s.api}</div>
+                        <span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',
+                          padding:'2px 8px',borderRadius:100,border:'1px solid #99C6FF'}}>
+                          {s.orgaoCedente}
+                        </span>
+                      </div>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',
+                        borderRadius:100,fontSize:11,fontWeight:700,background:'#EAFBD7',
+                        color:'#2B6418',border:'1px solid #86D562',flexShrink:0}}>
+                        <span style={{width:6,height:6,borderRadius:'50%',background:'#2B6418'}}/>
+                        Acesso ativo
+                      </span>
+                    </div>
+                    {/* Detalhe */}
+                    <div style={{background:'#F4FAF0',border:'1px solid #C2EEAC',borderRadius:6,
+                      padding:'8px 12px',marginBottom:12,fontSize:12,color:'#2B6418',lineHeight:1.5}}>
+                      {s.detalhe}
+                    </div>
+                    {/* Infos */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:12}}>
+                      {[
+                        ['Protocolo SEI', s.protocolo.replace('SEI-PE ','')],
+                        ['Data da aprovação', s.dataAtualizacao],
+                        ['Responsável', s.responsavel],
+                      ].map(([k,v])=>(
+                        <div key={k} style={{background:'#F8FAFC',border:'1px solid #E7E9EB',
+                          borderRadius:5,padding:'7px 10px'}}>
+                          <div style={{fontSize:10,color:'#888',marginBottom:2}}>{k}</div>
+                          <div style={{fontSize:12,fontWeight:500,color:'#28272C',
+                            fontFamily:k==='Protocolo SEI'?'monospace':'inherit'}}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Ação */}
+                    <button
+                      onClick={()=>setModalDetalhe(s)}
+                      style={{width:'100%',height:34,borderRadius:6,
+                        border:'1.5px solid #0034B7',background:'#fff',
+                        color:'#0034B7',fontSize:12,fontWeight:600,cursor:'pointer',
+                        transition:'all 0.15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
+                      onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                      Ver detalhes da solicitação
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Modal Detalhe */}
+      {modalDetalhe && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,26,122,0.4)',zIndex:1000,
+          display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
+          <div style={{background:'#fff',borderRadius:10,width:'100%',maxWidth:520,
+            boxShadow:'0 8px 40px rgba(0,26,122,0.2)',overflow:'hidden'}}>
+            {/* Header */}
+            <div style={{background:`linear-gradient(135deg,#001A7A 0%,#0034B7 100%)`,
+              padding:'18px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <div style={{fontSize:11,color:'rgba(248,250,252,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:3}}>Detalhes da solicitação</div>
+                <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>{modalDetalhe.api}</div>
+              </div>
+              <button onClick={()=>setModalDetalhe(null)}
+                style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:5,
+                  width:28,height:28,cursor:'pointer',color:'#fff',fontSize:16,
+                  display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            </div>
+            {/* Conteúdo */}
+            <div style={{padding:'20px'}}>
+              {/* Status */}
+              <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
+                {(() => {
+                  const c = statusCfg[modalDetalhe.status]||{bg:'#F1EFE8',color:'#5F5E5A',border:'#D3D1C7',dot:'#888'};
+                  return (
+                    <span style={{display:'inline-flex',alignItems:'center',gap:6,padding:'6px 16px',
+                      borderRadius:100,fontSize:14,fontWeight:700,background:c.bg,color:c.color,
+                      border:`1.5px solid ${c.border}`}}>
+                      <span style={{width:8,height:8,borderRadius:'50%',background:c.dot}}/>
+                      {modalDetalhe.status}
+                    </span>
+                  );
+                })()}
+              </div>
+              {/* Campos */}
+              <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
+                {[
+                  ['Protocolo SEI',       modalDetalhe.protocolo, true],
+                  ['API solicitada',      modalDetalhe.api,        false],
+                  ['Órgão cedente',       modalDetalhe.orgaoCedente, false],
+                  ['Responsável no SEI',  modalDetalhe.responsavel,  false],
+                  ['Data da solicitação', modalDetalhe.dataSolicitacao, false],
+                  ['Última atualização',  modalDetalhe.dataAtualizacao, false],
+                ].map(([k,v,mono])=>(
+                  <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                    padding:'8px 12px',background:'#F8FAFC',border:'1px solid #E7E9EB',borderRadius:6}}>
+                    <span style={{fontSize:12,color:'#494C57'}}>{k}</span>
+                    <span style={{fontSize:13,fontWeight:500,color:'#28272C',
+                      fontFamily:mono?'monospace':'inherit'}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Observação */}
+              <div style={{background:'#E6F3FF',border:'1px solid #99C6FF',borderRadius:6,
+                padding:'10px 12px',display:'flex',gap:8,marginBottom:16}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0034B7" strokeWidth="2" style={{flexShrink:0,marginTop:1}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span style={{fontSize:12,color:'#0034B7',lineHeight:1.5}}>{modalDetalhe.detalhe}</span>
+              </div>
+              {/* Acompanhar no SEI */}
+              <div style={{display:'flex',gap:8}}>
+                <button
+                  onClick={()=>window.open('https://sei.pe.gov.br','_blank','noopener,noreferrer')}
+                  style={{flex:1,height:38,borderRadius:6,border:'1.5px solid #0034B7',
+                    background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',
+                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                    transition:'background 0.15s'}}
+                  onMouseEnter={e=>e.currentTarget.style.background='#001A7A'}
+                  onMouseLeave={e=>e.currentTarget.style.background='#0034B7'}>
+                  Acompanhar no SEI-PE →
+                </button>
+                <button onClick={()=>setModalDetalhe(null)}
+                  style={{height:38,padding:'0 16px',borderRadius:6,border:'1px solid #CED2D7',
+                    background:'#fff',color:'#494C57',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                  ← Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{background:'#0034B7',padding:'20px 24px',marginTop:'auto'}}>
+        <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:20}}>
+          <img src="../assets/ati_logo.png" alt="ATI" style={{height:36,objectFit:'contain',filter:'brightness(0) invert(1)'}} onError={e=>e.target.style.display='none'}/>
+          <div style={{width:1,height:32,background:'rgba(255,255,255,0.25)'}}/>
+          <img src="../assets/Governo.png" alt="Gov PE" style={{height:28,objectFit:'contain',filter:'brightness(0) invert(1)'}} onError={e=>e.target.style.display='none'}/>
+        </div>
+        <div style={{maxWidth:1100,margin:'8px auto 0',borderTop:'1px solid rgba(255,255,255,0.15)',paddingTop:12}}>
+          <span style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [page, setPage]           = React.useState('Início');
   const [showSsoModal, setShowSsoModal] = React.useState(false);
   const [telaExpresso, setTelaExpresso] = React.useState(false);
-  const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null); // cpf
+  const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null);
   const [detailApi, setDetailApi] = React.useState(null);
+  const [govbrUsuario, setGovbrUsuario] = React.useState(null); /* usuário autenticado via GOV.BR */
 
-  /* Usuários cadastrados simulados (em memória — se expandir a sprint, viriam do backend) */
   const [usuariosCadastrados, setUsuariosCadastrados] = React.useState([...USUARIOS_AUTORIZADOS]);
 
   const handleAdminClick = () => { setShowSsoModal(true); };
 
-  /* Fluxo de autenticação SSO */
+  /* Autenticação via Expresso (ADM/Cedente → backoffice) */
   const handleAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
     setTelaExpresso(false);
-
     if (usuariosCadastrados.includes(cpfLimpo)) {
-      /* Usuário pré-cadastrado e ativo → redireciona ao backoffice */
-      try {
-        window.location.href = '../gerenciar-apis/index.html';
-      } catch(e) {
-        alert('Acesso autorizado! Redirecionando para o backoffice...');
-      }
+      try { window.location.href = '../gerenciar-apis/index.html'; }
+      catch(e) { alert('Acesso autorizado! Redirecionando para o backoffice...'); }
     } else {
-      /* Usuário não cadastrado → registra como Pendente (simulado em memória) e exibe tela de negado */
       setUsuariosCadastrados(prev => prev.includes(cpfLimpo) ? prev : [...prev, cpfLimpo]);
       setTelaAcessoNegado(cpfLimpo);
     }
   };
+
+  /* Autenticação via GOV.BR (Solicitante → Minhas Solicitações) */
+  const handleGovBrAutenticar = (cpf) => {
+    const cpfLimpo = cpf.trim();
+    const usuario = GOVBR_USUARIOS[cpfLimpo];
+    if (usuario) {
+      setGovbrUsuario(usuario);
+    } else {
+      /* CPF não tem solicitações cadastradas — cria perfil genérico */
+      setGovbrUsuario({
+        nome: 'Cidadão', cpf: cpfLimpo,
+        cpfMask: cpfLimpo.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.XXX.XXX-$2'),
+        email: '',
+      });
+    }
+  };
+
+  /* Tela Minhas Solicitações (GOV.BR) */
+  if (govbrUsuario) {
+    return <MinhasSolicitacoes usuario={govbrUsuario} onSair={()=>setGovbrUsuario(null)}/>;
+  }
 
   /* Tela do Expresso */
   if (telaExpresso) {
@@ -806,6 +1309,7 @@ function App() {
           onClose={()=>{ setShowSsoModal(false); setTelaExpresso(true); }}
           onAcessoNegado={()=>{}}
           onAcessoAutorizado={handleAutenticar}
+          onGovBrAutenticado={handleGovBrAutenticar}
         />
       )}
     </div>
