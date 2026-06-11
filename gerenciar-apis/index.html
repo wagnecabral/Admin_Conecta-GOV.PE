@@ -84,7 +84,7 @@ const INITIAL_USUARIOS = [
   },
   {
     id:2, nome:'Ana Costa', cpfMascarado:'123.XXX.XXX-90', cpfCompleto:'123.456.789-90',
-    perfil:'Cedente', orgao:'SEFAZ', orgaoId:'2', status:'Ativo',
+    perfil:'Consumidor', orgao:'SEFAZ', orgaoId:'2', status:'Ativo',
     criadoEm:'10/03/2026', criadoPor:'SYSTEM', atualizadoEm:'12/03/2026', atualizadoPor:'João Silva',
     origemCadastro:'SSO', ultimoAcesso:'06/05/2026 14:15',
   },
@@ -108,7 +108,7 @@ const INITIAL_USUARIOS = [
   },
   {
     id:6, nome:'Fernanda Souza', cpfMascarado:'456.XXX.XXX-33', cpfCompleto:'456.789.012-33',
-    perfil:'Cedente', orgao:'SES', orgaoId:'4', status:'Ativo',
+    perfil:'Consumidor', orgao:'SES', orgaoId:'4', status:'Ativo',
     criadoEm:'20/03/2026', criadoPor:'SYSTEM', atualizadoEm:'21/03/2026', atualizadoPor:'João Silva',
     origemCadastro:'SSO', ultimoAcesso:'07/05/2026 07:55',
   },
@@ -970,7 +970,7 @@ function ControleAcesso({ showToast }) {
         <div style={{ display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap' }}>
           <div style={{ flex:'1 1 180px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Buscar por nome</div><div style={{ position:'relative' }}><span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }}><Icon name="search" size={14} color={C.border}/></span><input value={filters.nome||''} onChange={e=>setFilter('nome',e.target.value)} placeholder="Digite para buscar..." style={{ ...inputStyle(false), paddingLeft:32 }}/></div></div>
           <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>CPF</div><input value={filters.cpf||''} onChange={e=>setFilter('cpf',e.target.value)} placeholder="Busca parcial" style={{ ...inputStyle(false), fontFamily:'monospace' }}/></div>
-          <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Perfil</div><SelectInput value={filters.perfil||''} onChange={v=>setFilter('perfil',v)} options={[{value:'ADM',label:'ADM'},{value:'Cedente',label:'Cedente'},{value:'Consumidor',label:'Consumidor'}]} placeholder="Todos os perfis"/></div>
+          <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Perfil</div><SelectInput value={filters.perfil||''} onChange={v=>setFilter('perfil',v)} options={[{value:'ADM',label:'ADM'},{value:'Consumidor',label:'Consumidor'}]} placeholder="Todos os perfis"/></div>
           <div style={{ flex:'0 0 150px' }}><div style={{ fontSize:12, fontWeight:500, color:C.textSecondary, marginBottom:5 }}>Status</div><SelectInput value={filters.status||''} onChange={v=>setFilter('status',v)} options={[{value:'Ativo',label:'Ativo'},{value:'Pendente',label:'Pendente'},{value:'Inativo',label:'Inativo'}]} placeholder="Todos os status"/></div>
           <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:1 }}><Btn variant="secondary" size="sm" onClick={clearFilters} disabled={!hasFilters}>Limpar</Btn></div>
         </div>
@@ -1091,7 +1091,7 @@ function ControleAcesso({ showToast }) {
 }
 
 /* ── Modal de Ativação / Edição de usuário ─────────────────── */
-const PERFIL_OPTS = [{value:'ADM',label:'ADM'},{value:'Cedente',label:'Cedente'},{value:'Consumidor',label:'Consumidor'}];
+const PERFIL_OPTS = [{value:'ADM',label:'ADM'},{value:'Consumidor',label:'Consumidor'}];
 const ORGAO_OPTS_USR = ORGAOS.map(o=>({ value:o.id, label:`${o.shortName} — ${o.name}` }));
 
 function ModalAtivacaoUsuario({ usuario, modo, onSave, onClose }) {
@@ -1104,7 +1104,7 @@ function ModalAtivacaoUsuario({ usuario, modo, onSave, onClose }) {
   const validate = () => {
     const e = {};
     if (!perfil) e.perfil = 'Selecione um perfil de acesso';
-    if (perfil === 'Cedente' && !orgaoId) e.orgaoId = 'Órgão é obrigatório para perfil Cedente';
+    
     setErros(e);
     return Object.keys(e).length === 0;
   };
@@ -1129,15 +1129,13 @@ function ModalAtivacaoUsuario({ usuario, modo, onSave, onClose }) {
 
         {/* Perfil */}
         <Field label="Perfil de acesso" required error={erros.perfil}>
-          <SelectInput value={perfil} onChange={v=>{ setPerfil(v); if(v!=='Cedente') setOrgaoId(''); setErros(e=>({...e,perfil:'',orgaoId:''})); }} options={PERFIL_OPTS} error={erros.perfil}/>
+          <SelectInput value={perfil} onChange={v=>{ setPerfil(v); setErros(e=>({...e,perfil:'',orgaoId:''})); }} options={PERFIL_OPTS} error={erros.perfil}/>
         </Field>
 
-        {/* Órgão — obrigatório apenas para Cedente */}
-        {perfil==='Cedente'&&(
-          <Field label="Órgão" required error={erros.orgaoId} hint="Obrigatório para perfil Cedente. Populado via API de departamentos.">
-            <SelectInput value={orgaoId} onChange={v=>{ setOrgaoId(v); setErros(e=>({...e,orgaoId:''})); }} options={ORGAO_OPTS_USR} placeholder="Selecione o órgão..." error={erros.orgaoId}/>
-          </Field>
-        )}
+        {/* Órgão — opcional para vincular o usuário a uma instituição */}
+        <Field label="Órgão" error={erros.orgaoId} hint="Opcional. Pode ser utilizado para identificar a instituição do usuário consumidor.">
+          <SelectInput value={orgaoId} onChange={v=>{ setOrgaoId(v); setErros(e=>({...e,orgaoId:''})); }} options={ORGAO_OPTS_USR} placeholder="Selecione o órgão..." error={erros.orgaoId}/>
+        </Field>
 
         
       </div>
@@ -1549,7 +1547,7 @@ function DonutChart({ ativo, inativo }) {
 
 /* ═══════════════════════════════════════════════════════════════
    HU.03.06 — SEÇÃO SEI-PE (componente separado para reutilização
-   no Dashboard do ADM e, futuramente, no Dashboard do Cedente)
+   no Dashboard do ADM e, futuramente, no Dashboard do Consumidor)
    - Dados somente leitura (sem ações de aprovação/rejeição)
    - Alerta de indisponibilidade com data do último sincronismo
    - Cards de totais, gráficos e tabela de solicitações recentes
@@ -1808,7 +1806,6 @@ function Dashboard({ onNav }) {
   const totalApis    = INITIAL_APIS.length;
   const apisAtivas   = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
   const apisInativas = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
-  const totalOps     = INITIAL_APIS.reduce((s,a)=>s+(a.operacoes||[]).length,0);
   const totalCats    = INITIAL_CATS.length;
   const catAtivas    = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
   const totalOrgaos  = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
@@ -1821,18 +1818,9 @@ function Dashboard({ onNav }) {
   const seiPendSEI   = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
   const seiReprov    = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
 
-  /* ── KPIs calculados (novos) ── */
-  const taxaAprovacao   = seiTotal>0 ? Math.round((seiAprovadas/seiTotal)*100) : 0;
-  const taxaAdocao      = apisAtivas>0 ? Math.round((SEI_POR_API.filter(a=>a.qtd>0).length/apisAtivas)*100) : 0;
-  const tempoMedioAnalise = 8; /* dias — em prod: calculado no backend */
-  const metaAnalise     = 5;   /* dias */
-  /* Delta mês anterior (simulado) */
-  const deltaApis       = +2;
-  const deltaUsrs       = +1;
-  const deltaSei        = +4;
-  const deltaTaxaAprov  = +4; /* pp vs mês anterior */
-
   const [ts] = React.useState(new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+
+  const pct = (v) => seiTotal>0 ? Math.round((v/seiTotal)*100) : 0;
 
   /* ── Mini sparkline SVG ── */
   const Spark = ({vals, color}) => {
@@ -1853,24 +1841,31 @@ function Dashboard({ onNav }) {
 
   /* ── Barra de progresso ── */
   const ProgressBar = ({value, total, color}) => {
-    const pct = total>0 ? Math.round((value/total)*100) : 0;
+    const percentual = total>0 ? Math.round((value/total)*100) : 0;
     return (
       <div style={{marginTop:6}}>
         <div style={{height:4,background:'#E7E9EB',borderRadius:100,overflow:'hidden'}}>
-          <div style={{height:'100%',width:`${pct}%`,background:color,borderRadius:100,transition:'width 0.5s'}}/>
+          <div style={{height:'100%',width:`${percentual}%`,background:color,borderRadius:100,transition:'width 0.5s'}}/>
         </div>
-        <div style={{fontSize:10,color:'#888',marginTop:3}}>{pct}% do total</div>
+        <div style={{fontSize:10,color:'#888',marginTop:3}}>{percentual}% do total</div>
       </div>
     );
   };
 
-  /* ── KPI Card padrão (sparkline) ── */
   const KCard = ({label, valor, sub, cor, bg, border, nav, spark, sparkColor, progress, progressTotal}) => (
     <div style={{
-      background:bg||'#fff', border:`1px solid ${border||'#E7E9EB'}`, borderRadius:8,
-      padding:'14px 16px', display:'flex', flexDirection:'column', gap:2,
-      minHeight:110, position:'relative', overflow:'hidden',
-      transition:'box-shadow 0.15s', cursor:nav?'pointer':'default',
+      background:bg||'#fff',
+      border:`1px solid ${border||'#E7E9EB'}`,
+      borderRadius:8,
+      padding:'14px 16px',
+      display:'flex',
+      flexDirection:'column',
+      gap:2,
+      minHeight:110,
+      position:'relative',
+      overflow:'hidden',
+      transition:'box-shadow 0.15s',
+      cursor:nav?'pointer':'default',
     }}
       onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
       onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}
@@ -1886,77 +1881,67 @@ function Dashboard({ onNav }) {
     </div>
   );
 
-  /* ── Card KPI com delta e meta (novo padrão) ── */
-  const DeltaCard = ({label, valor, unidade, delta, deltaLabel, metaLabel, cor, bg, border, nav, alerta}) => (
-    <div style={{
-      background:bg||'#fff', border:`1px solid ${border||'#E7E9EB'}`, borderRadius:8,
-      padding:'14px 16px', display:'flex', flexDirection:'column', gap:3,
-      minHeight:110, transition:'box-shadow 0.15s', cursor:nav?'pointer':'default',
-    }}
-      onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
-      onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}
-      onClick={nav?()=>onNav(nav):undefined}
-    >
-      <div style={{fontSize:11,color:'#888',fontWeight:500}}>{label}</div>
-      <div style={{display:'flex',alignItems:'baseline',gap:6,marginTop:2}}>
-        <span style={{fontSize:30,fontWeight:700,color:cor||'#28272C',lineHeight:1}}>{valor}</span>
-        {unidade&&<span style={{fontSize:13,color:cor,fontWeight:500}}>{unidade}</span>}
-        {delta!==undefined&&(
-          <span style={{fontSize:11,fontWeight:600,marginLeft:4,
-            color:delta>0?'#2B6418':delta<0?'#AC1010':'#888'}}>
-            {delta>0?'▲':delta<0?'▼':'→'} {Math.abs(delta)}{typeof delta==='number'&&!unidade?'':''} vs mês ant.
-          </span>
-        )}
-      </div>
-      {metaLabel && (
-        <div style={{fontSize:11,color:alerta?'#B77706':'#888',marginTop:2,display:'flex',alignItems:'center',gap:4}}>
-          {alerta&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
-          {metaLabel}
-        </div>
-      )}
-      {deltaLabel&&!metaLabel && <div style={{fontSize:10,color:'#aaa',marginTop:2}}>{deltaLabel}</div>}
-    </div>
-  );
+  const PieChartSei = () => {
+    const aprovPct = pct(seiAprovadas);
+    const analisePct = pct(seiAnalise);
+    const pendPct = pct(seiPendSEI);
+    const reproPct = pct(seiReprov);
 
-  /* ── Mini barras horizontais (ranking) ── */
-  const MiniRanking = ({data, keyNome, keyQtd, cor}) => {
-    const max = Math.max(...data.map(d=>d[keyQtd]));
+    const itens = [
+      {label:'Aprovadas',  valor:seiAprovadas, pct:aprovPct,  cor:'#6BBF45'},
+      {label:'Em análise', valor:seiAnalise,   pct:analisePct, cor:'#FFCD37'},
+      {label:'Pendentes',  valor:seiPendSEI,   pct:pendPct,    cor:'#4B8BFF'},
+      {label:'Reprovadas', valor:seiReprov,    pct:reproPct,   cor:'#E45F5F'},
+    ];
+
     return (
-      <div style={{display:'flex',flexDirection:'column',gap:7}}>
-        {data.map((d,i)=>(
-          <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
-            <div style={{fontSize:11,color:'#888',width:14,textAlign:'right',flexShrink:0}}>{i+1}</div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:11,color:C.textPrimary,fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginBottom:3}}>{d[keyNome]}</div>
-              <div style={{height:5,background:'#E7E9EB',borderRadius:100,overflow:'hidden'}}>
-                <div style={{height:'100%',width:`${Math.round((d[keyQtd]/max)*100)}%`,background:cor,borderRadius:100,transition:'width 0.5s'}}/>
-              </div>
-            </div>
-            <div style={{fontSize:12,fontWeight:700,color:cor,width:24,textAlign:'right',flexShrink:0}}>{d[keyQtd]}</div>
+      <div style={{display:'flex',alignItems:'center',gap:34,marginTop:8,flexWrap:'wrap'}}>
+        <div style={{
+          width:190,
+          height:190,
+          borderRadius:'50%',
+          background:`conic-gradient(
+            #6BBF45 0% ${aprovPct}%,
+            #FFCD37 ${aprovPct}% ${aprovPct+analisePct}%,
+            #4B8BFF ${aprovPct+analisePct}% ${aprovPct+analisePct+pendPct}%,
+            #E45F5F ${aprovPct+analisePct+pendPct}% 100%
+          )`,
+          position:'relative',
+          flexShrink:0
+        }}>
+          <div style={{
+            position:'absolute',
+            inset:48,
+            background:'#fff',
+            borderRadius:'50%',
+            display:'flex',
+            flexDirection:'column',
+            alignItems:'center',
+            justifyContent:'center',
+            boxShadow:'0 0 0 1px #E7E9EB inset'
+          }}>
+            <div style={{fontSize:26,fontWeight:700,color:'#28272C',lineHeight:1}}>{seiTotal}</div>
+            <div style={{fontSize:12,color:'#888',marginTop:4}}>total</div>
           </div>
-        ))}
+        </div>
+
+        <div style={{display:'grid',gap:14,minWidth:360}}>
+          {itens.map(item=>(
+            <div key={item.label} style={{display:'grid',gridTemplateColumns:'18px 110px 130px 50px',alignItems:'center',gap:10}}>
+              <span style={{width:14,height:14,borderRadius:'50%',background:item.cor}}/>
+              <strong style={{fontSize:13,color:'#28272C'}}>{item.label}</strong>
+              <span style={{fontSize:12,color:'#888'}}>{item.valor} solicitações</span>
+              <strong style={{fontSize:12,color:'#28272C'}}>{item.pct}%</strong>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
 
-  /* Card SEI status */
-  const SeiCard = ({label, valor, pct, cor, bg, border}) => (
-    <div style={{background:bg,border:`1.5px solid ${border}`,borderRadius:8,padding:'12px 14px',
-      display:'flex',flexDirection:'column',gap:3,minHeight:88}}>
-      <div style={{fontSize:11,fontWeight:600,color:cor}}>{label}</div>
-      <div style={{fontSize:28,fontWeight:700,color:cor,lineHeight:1}}>{valor}</div>
-      <div style={{fontSize:11,color:cor,opacity:0.75}}>{pct}% do total</div>
-    </div>
-  );
-
-  /* Sparklines */
   const sparkApis    = [3,3,5,6,7,8,apisAtivas];
-  const sparkOps     = [5,7,8,9,9,10,totalOps];
   const sparkUsrs    = [2,3,3,4,5,6,usrsAtivos];
   const sparkSolicit = [14,16,17,19,21,23,seiTotal];
-
-  /* Top 5 APIs por solicitações */
-  const topApis = [...SEI_POR_API].sort((a,b)=>b.qtd-a.qtd).slice(0,5);
 
   return (
     <div style={{flex:1,overflowY:'auto',padding:'20px 22px',background:'#F8FAFC'}}>
@@ -1970,7 +1955,6 @@ function Dashboard({ onNav }) {
         </div>
       </div>
 
-      {/* ── Alerta pendentes ── */}
       {pendentes>0 && (
         <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
           padding:'8px 14px',marginBottom:14,display:'flex',gap:8,alignItems:'center'}}>
@@ -1985,133 +1969,41 @@ function Dashboard({ onNav }) {
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════
-          LINHA 1 — KPIs principais com sparkline
-      ══════════════════════════════════════════════ */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:10}}>
-        <KCard label="APIs Disponíveis"       valor={apisAtivas}
+      {/* ── Linha 1: KPIs principais sem "Operações publicadas" ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+        <KCard label="APIs Disponíveis" valor={apisAtivas}
           sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
           cor="#2B6418" nav="apis" spark={sparkApis} sparkColor="#2B6418"/>
-        <KCard label="Operações publicadas"   valor={totalOps}
-          sub={`em ${apisAtivas} APIs ativas`}
-          cor={C.brand} nav="apis" spark={sparkOps} sparkColor={C.brand}/>
-        <KCard label="Usuários com acesso"    valor={usrsAtivos}
-          sub={`${pendentes} aguardam aprovação`}
-          cor={pendentes>0?"#B77706":"#2B6418"} nav="usuarios"
-          spark={sparkUsrs} sparkColor={pendentes>0?"#B77706":"#2B6418"}/>
-        <KCard label="Solicitações SEI-PE"    valor={seiTotal}
+        <KCard label="Usuários com acesso" valor={usrsAtivos}
+          sub="com acesso liberado"
+          cor="#2B6418" nav="usuarios" spark={sparkUsrs} sparkColor="#2B6418"/>
+        <KCard label="Solicitações SEI-PE" valor={seiTotal}
           sub="no período"
           cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
       </div>
 
-      {/* ══════════════════════════════════════════════
-          LINHA 2 — KPIs de detalhamento catálogo
-      ══════════════════════════════════════════════ */}
+      {/* ── Linha 2: Cards de detalhe ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
         <KCard label="APIs Ativas no catálogo" valor={apisAtivas}
           cor="#2B6418" nav="apis" progress={apisAtivas} progressTotal={totalApis}/>
-        <KCard label="Categorias Ativas"       valor={catAtivas}
+        <KCard label="Categorias Ativas" valor={catAtivas}
           sub={`de ${totalCats} categorias cadastradas`}
           cor={C.brand} nav="categorias" progress={catAtivas} progressTotal={totalCats}/>
-        <KCard label="Órgãos cedentes"         valor={totalOrgaos}
+        <KCard label="Órgãos com APIs" valor={totalOrgaos}
           sub="com ao menos 1 API cadastrada" cor={C.brand} nav="apis"/>
       </div>
 
-      {/* ══════════════════════════════════════════════
-          LINHA 3 — Novos KPIs de governança
-      ══════════════════════════════════════════════ */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:10}}>
-
-        {/* Taxa de aprovação SEI — destaque */}
-        <DeltaCard
-          label="Taxa de aprovação SEI"
-          valor={`${taxaAprovacao}%`}
-          delta={deltaTaxaAprov}
-          deltaLabel={`${seiAprovadas} de ${seiTotal} aprovadas`}
-          cor="#2B6418"
-          bg="#EAFBD7"
-          border="#86D562"
-          nav="relatorios"
-        />
-
-        {/* Taxa de adoção de APIs */}
-        <DeltaCard
-          label="Taxa de adoção"
-          valor={`${taxaAdocao}%`}
-          delta={undefined}
-          deltaLabel={`${SEI_POR_API.filter(a=>a.qtd>0).length} de ${apisAtivas} APIs com solicitações`}
-          cor={C.brand}
-          bg={C.infoBg}
-          border={C.infoBorder}
-          nav="apis"
-        />
-
-        {/* Tempo médio de análise */}
-        <DeltaCard
-          label="Tempo médio de análise"
-          valor={tempoMedioAnalise}
-          unidade="dias"
-          delta={undefined}
-          metaLabel={`Meta: ≤ ${metaAnalise} dias — acima do esperado`}
-          cor="#B77706"
-          bg="#FFF6CE"
-          border="#FFE082"
-          alerta={tempoMedioAnalise > metaAnalise}
-        />
-
-        {/* Crescimento de APIs no mês */}
-        <DeltaCard
-          label="Crescimento de APIs"
-          valor={deltaApis>0?`+${deltaApis}`:String(deltaApis)}
-          unidade="este mês"
-          delta={undefined}
-          deltaLabel={`Total acumulado: ${totalApis} APIs cadastradas`}
-          cor={deltaApis>0?"#2B6418":"#AC1010"}
-          bg={deltaApis>0?"#EAFBD7":"#FFE4E4"}
-          border={deltaApis>0?"#86D562":"#E45F5F"}
-          nav="apis"
-        />
-      </div>
-
-      {/* ══════════════════════════════════════════════
-          LINHA 4 — Ranking + Órgãos + SEI-PE
-      ══════════════════════════════════════════════ */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 2fr',gap:10,marginBottom:10}}>
-
-        {/* Top APIs mais solicitadas */}
-        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-          <div style={{fontSize:11,color:'#888',fontWeight:500,marginBottom:12}}>APIs mais solicitadas</div>
-          <MiniRanking data={topApis} keyNome="api" keyQtd="qtd" cor={C.brand}/>
-        </div>
-
-        {/* Top órgãos por solicitações */}
-        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-          <div style={{fontSize:11,color:'#888',fontWeight:500,marginBottom:12}}>Órgãos solicitantes</div>
-          <MiniRanking data={[...SEI_POR_ORGAO].sort((a,b)=>b.qtd-a.qtd).slice(0,5)} keyNome="orgao" keyQtd="qtd" cor="#337FFF"/>
-        </div>
-
-        {/* SEI-PE cards */}
-        <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-            <div>
-              <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Solicitações de Acesso — SEI-PE</div>
-              <div style={{fontSize:10,color:'#aaa',marginTop:1}}>Dados somente leitura · sync a cada 15 min</div>
-            </div>
-            <span style={{fontSize:10,background:'#EAFBD7',color:'#2B6418',padding:'2px 8px',borderRadius:100,fontWeight:600,border:'1px solid #86D562',flexShrink:0}}>● Online</span>
+      {/* ── Linha 3: Solicitações de Acesso em formato de pizza ── */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div>
+            <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Solicitações de Acesso — SEI-PE</div>
+            <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Dados somente leitura · sync a cada 15 min</div>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr repeat(4,1fr)',gap:8}}>
-            <div style={{background:'#F8FAFC',border:'1px solid #E7E9EB',borderRadius:7,padding:'10px 12px',display:'flex',flexDirection:'column',gap:2,justifyContent:'center'}}>
-              <div style={{fontSize:10,color:'#888'}}>Total</div>
-              <div style={{fontSize:24,fontWeight:700,color:'#28272C',lineHeight:1}}>{seiTotal}</div>
-              <div style={{fontSize:10,color:'#aaa'}}>solicitações</div>
-            </div>
-            <SeiCard label="Aprovadas"  valor={seiAprovadas} pct={Math.round(seiAprovadas/seiTotal*100)} cor="#2B6418" bg="#EAFBD7" border="#86D562"/>
-            <SeiCard label="Em análise" valor={seiAnalise}   pct={Math.round(seiAnalise/seiTotal*100)}   cor="#B77706" bg="#FFF6CE" border="#FFE082"/>
-            <SeiCard label="Pendentes"  valor={seiPendSEI}   pct={Math.round(seiPendSEI/seiTotal*100)}   cor="#0034B7" bg="#E6F3FF" border="#99C6FF"/>
-            <SeiCard label="Reprovadas" valor={seiReprov}    pct={Math.round(seiReprov/seiTotal*100)}     cor="#AC1010" bg="#FFE4E4" border="#E45F5F"/>
-          </div>
+          <span style={{fontSize:10,background:'#EAFBD7',color:'#2B6418',padding:'2px 8px',borderRadius:100,fontWeight:600,border:'1px solid #86D562',flexShrink:0}}>● Online</span>
         </div>
 
+        <PieChartSei/>
       </div>
 
     </div>
@@ -2238,7 +2130,7 @@ function RelCadastradas({ showToast }) {
         {/* Linha 1: Órgão + Status + Categoria */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:14}}>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão cedente</label>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Órgão</label>
             <div style={{position:'relative'}}>
               <select value={f.orgaoId} onChange={e=>setFil('orgaoId',e.target.value)} style={{...iSt,appearance:'none',paddingRight:28,cursor:'pointer'}} onFocus={onFocus} onBlur={onBlur}>
                 <option value="">Todos</option>
@@ -2366,7 +2258,7 @@ function RelCadastradas({ showToast }) {
    HU.03.04 — Relatório de Uso das APIs
    Responde: quais órgãos estão consumindo quais APIs?
    Colunas: API | Órgão responsável | Qtd. chamadas | Período | Órgão consumidor
-   ADM vê todas as APIs. Cedente vê apenas APIs do seu órgão.
+   ADM vê todas as APIs. Consumidor vê apenas APIs do seu órgão.
 ══════════════════════════════════════════════════════════════ */
 
 /* Dados simulados — solicitações de acesso às APIs
@@ -2773,27 +2665,27 @@ function App() {
 }
 
 function Dashboard({ onNav }) {
-  /* ── Dados ── */
-  const totalApis     = INITIAL_APIS.length;
-  const apisAtivas    = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
-  const apisInativas  = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
-  const totalOps      = INITIAL_APIS.reduce((s,a)=>s+(a.operacoes||[]).length,0);
-  const totalCats     = INITIAL_CATS.length;
-  const catAtivas     = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
-  const totalOrgaos   = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
-  const usrsAtivos    = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
-  const pendentes     = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
-  const totalUsuarios = INITIAL_USUARIOS.length;
+  /* ── Dados base ── */
+  const totalApis    = INITIAL_APIS.length;
+  const apisAtivas   = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
+  const apisInativas = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
+  const totalCats    = INITIAL_CATS.length;
+  const catAtivas    = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
+  const totalOrgaos  = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
+  const usrsAtivos   = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
+  const pendentes    = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
 
-  const seiTotal      = SEI_STATUS.reduce((s,i)=>s+i.qtd,0);
-  const seiAprovadas  = SEI_STATUS.find(s=>s.key==='aprovadas')?.qtd||0;
-  const seiAnalise    = SEI_STATUS.find(s=>s.key==='analise')?.qtd||0;
-  const seiPendSEI    = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
-  const seiReprov     = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
+  const seiTotal     = SEI_STATUS.reduce((s,i)=>s+i.qtd,0);
+  const seiAprovadas = SEI_STATUS.find(s=>s.key==='aprovadas')?.qtd||0;
+  const seiAnalise   = SEI_STATUS.find(s=>s.key==='analise')?.qtd||0;
+  const seiPendSEI   = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
+  const seiReprov    = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
 
   const [ts] = React.useState(new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
 
-  /* ── Mini sparkline SVG (linha simples) ── */
+  const pct = (v) => seiTotal>0 ? Math.round((v/seiTotal)*100) : 0;
+
+  /* ── Mini sparkline SVG ── */
   const Spark = ({vals, color}) => {
     const W=80, H=32, max=Math.max(...vals), min=Math.min(...vals);
     const range = max-min||1;
@@ -2810,73 +2702,107 @@ function Dashboard({ onNav }) {
     );
   };
 
-  /* ── Mini barra de progresso ── */
+  /* ── Barra de progresso ── */
   const ProgressBar = ({value, total, color}) => {
-    const pct = total>0 ? Math.round((value/total)*100) : 0;
+    const percentual = total>0 ? Math.round((value/total)*100) : 0;
     return (
       <div style={{marginTop:6}}>
         <div style={{height:4,background:'#E7E9EB',borderRadius:100,overflow:'hidden'}}>
-          <div style={{height:'100%',width:`${pct}%`,background:color,borderRadius:100,transition:'width 0.5s'}}/>
+          <div style={{height:'100%',width:`${percentual}%`,background:color,borderRadius:100,transition:'width 0.5s'}}/>
         </div>
-        <div style={{fontSize:10,color:'#888',marginTop:3}}>{pct}% do total</div>
+        <div style={{fontSize:10,color:'#888',marginTop:3}}>{percentual}% do total</div>
       </div>
     );
   };
 
-  /* ── Card tipo Salesforce ──
-     label cinza pequeno no topo, número grande colorido, sub/link embaixo */
   const KCard = ({label, valor, sub, cor, bg, border, nav, spark, sparkColor, progress, progressTotal}) => (
     <div style={{
-      background: bg||'#fff',
-      border: `1px solid ${border||'#E7E9EB'}`,
-      borderRadius: 8,
-      padding: '14px 16px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 2,
-      minHeight: 110,
-      position: 'relative',
-      overflow: 'hidden',
-      transition: 'box-shadow 0.15s',
-      cursor: nav?'pointer':'default',
+      background:bg||'#fff',
+      border:`1px solid ${border||'#E7E9EB'}`,
+      borderRadius:8,
+      padding:'14px 16px',
+      display:'flex',
+      flexDirection:'column',
+      gap:2,
+      minHeight:110,
+      position:'relative',
+      overflow:'hidden',
+      transition:'box-shadow 0.15s',
+      cursor:nav?'pointer':'default',
     }}
       onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
       onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}
       onClick={nav?()=>onNav(nav):undefined}
     >
-      {/* Label topo */}
       <div style={{fontSize:11,color:'#888',fontWeight:500,lineHeight:1.2}}>{label}</div>
-
-      {/* Número + sparkline lado a lado */}
       <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:2}}>
         <div style={{fontSize:32,fontWeight:700,color:cor||'#28272C',lineHeight:1}}>{valor}</div>
         {spark && <Spark vals={spark} color={sparkColor||cor||C.brand}/>}
       </div>
-
-      {/* Sub */}
       {sub && <div style={{fontSize:11,color:'#aaa',marginTop:2}}>{sub}</div>}
-
-      {/* Barra de progresso opcional */}
       {progress!==undefined && <ProgressBar value={progress} total={progressTotal} color={cor||C.brand}/>}
-
-      {/* Link de ação */}
-      
     </div>
   );
 
-  /* ── Card SEI estilo status ── */
-  const SeiCard = ({label, valor, pct, cor, bg, border}) => (
-    <div style={{background:bg,border:`1.5px solid ${border}`,borderRadius:8,padding:'12px 14px',
-      display:'flex',flexDirection:'column',gap:3,minHeight:88}}>
-      <div style={{fontSize:11,fontWeight:600,color:cor}}>{label}</div>
-      <div style={{fontSize:28,fontWeight:700,color:cor,lineHeight:1}}>{valor}</div>
-      <div style={{fontSize:11,color:cor,opacity:0.75}}>{pct}% do total</div>
-    </div>
-  );
+  const PieChartSei = () => {
+    const aprovPct = pct(seiAprovadas);
+    const analisePct = pct(seiAnalise);
+    const pendPct = pct(seiPendSEI);
+    const reproPct = pct(seiReprov);
 
-  /* Sparklines simulados — tendência de uso dos últimos 6 meses */
+    const itens = [
+      {label:'Aprovadas',  valor:seiAprovadas, pct:aprovPct,  cor:'#6BBF45'},
+      {label:'Em análise', valor:seiAnalise,   pct:analisePct, cor:'#FFCD37'},
+      {label:'Pendentes',  valor:seiPendSEI,   pct:pendPct,    cor:'#4B8BFF'},
+      {label:'Reprovadas', valor:seiReprov,    pct:reproPct,   cor:'#E45F5F'},
+    ];
+
+    return (
+      <div style={{display:'flex',alignItems:'center',gap:34,marginTop:8,flexWrap:'wrap'}}>
+        <div style={{
+          width:190,
+          height:190,
+          borderRadius:'50%',
+          background:`conic-gradient(
+            #6BBF45 0% ${aprovPct}%,
+            #FFCD37 ${aprovPct}% ${aprovPct+analisePct}%,
+            #4B8BFF ${aprovPct+analisePct}% ${aprovPct+analisePct+pendPct}%,
+            #E45F5F ${aprovPct+analisePct+pendPct}% 100%
+          )`,
+          position:'relative',
+          flexShrink:0
+        }}>
+          <div style={{
+            position:'absolute',
+            inset:48,
+            background:'#fff',
+            borderRadius:'50%',
+            display:'flex',
+            flexDirection:'column',
+            alignItems:'center',
+            justifyContent:'center',
+            boxShadow:'0 0 0 1px #E7E9EB inset'
+          }}>
+            <div style={{fontSize:26,fontWeight:700,color:'#28272C',lineHeight:1}}>{seiTotal}</div>
+            <div style={{fontSize:12,color:'#888',marginTop:4}}>total</div>
+          </div>
+        </div>
+
+        <div style={{display:'grid',gap:14,minWidth:360}}>
+          {itens.map(item=>(
+            <div key={item.label} style={{display:'grid',gridTemplateColumns:'18px 110px 130px 50px',alignItems:'center',gap:10}}>
+              <span style={{width:14,height:14,borderRadius:'50%',background:item.cor}}/>
+              <strong style={{fontSize:13,color:'#28272C'}}>{item.label}</strong>
+              <span style={{fontSize:12,color:'#888'}}>{item.valor} solicitações</span>
+              <strong style={{fontSize:12,color:'#28272C'}}>{item.pct}%</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const sparkApis    = [3,3,5,6,7,8,apisAtivas];
-  const sparkOps     = [5,7,8,9,9,10,totalOps];
   const sparkUsrs    = [2,3,3,4,5,6,usrsAtivos];
   const sparkSolicit = [14,16,17,19,21,23,seiTotal];
 
@@ -2884,124 +2810,63 @@ function Dashboard({ onNav }) {
     <div style={{flex:1,overflowY:'auto',padding:'20px 22px',background:'#F8FAFC'}}>
 
       {/* ── Cabeçalho ── */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}>
         <div>
           <div style={{fontSize:11,color:'#888',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>BACKOFFICE</div>
           <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',letterSpacing:'-0.3px',marginBottom:1}}>Dashboard — Conecta Gov.PE</h1>
           <div style={{fontSize:12,color:'#888'}}>Atualizado em {new Date().toLocaleDateString('pt-BR')} às {ts} · Perfil: ADM</div>
         </div>
-        <div style={{display:'flex',gap:8}}>
+      </div>
 
+      {pendentes>0 && (
+        <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
+          padding:'8px 14px',marginBottom:14,display:'flex',gap:8,alignItems:'center'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span style={{fontSize:13,color:'#B77706',flex:1}}>
+            <strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso ao sistema.
+          </span>
+          <button onClick={()=>onNav('usuarios')} style={{background:'#B77706',border:'none',
+            borderRadius:5,padding:'4px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+            Revisar →
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* ── Alerta pendentes ── */}
-      
-
-      {/* ── Linha 1: KPIs principais com sparkline ── */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:10}}>
-        <KCard
-          label="APIs Disponíveis"
-          valor={apisAtivas}
-          sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
-          cor="#2B6418"
-          bg="#fff"
-          border="#E7E9EB"
-          nav="apis"
-          spark={sparkApis}
-          sparkColor="#2B6418"
-        />
-        <KCard
-          label="Operações publicadas"
-          valor={totalOps}
-          sub={`em ${apisAtivas} APIs ativas`}
-          cor={C.brand}
-          bg="#fff"
-          border="#E7E9EB"
-          nav="apis"
-          spark={sparkOps}
-          sparkColor={C.brand}
-        />
-        <KCard
-          label="Usuários com acesso"
-          valor={usrsAtivos}
-          sub="com acesso liberado"
-          cor="#2B6418"
-          bg="#fff"
-          border="#E7E9EB"
-          nav="usuarios"
-          spark={sparkUsrs}
-          sparkColor="#2B6418"
-        />
-        <KCard
-          label="Solicitações SEI-PE"
-          valor={seiTotal}
-          sub="no período"
-          cor={C.brand}
-          bg="#fff"
-          border="#E7E9EB"
-          nav="relatorios"
-          spark={sparkSolicit}
-          sparkColor={C.brand}
-        />
-      </div>
-
-      {/* ── Linha 2: Cards de detalhe (APIs + Categorias + Órgãos) ── */}
+      {/* ── Linha 1: KPIs principais sem "Operações publicadas" ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
-        <KCard
-          label="APIs Ativas no catálogo"
-          valor={apisAtivas}
-          cor="#2B6418"
-          bg="#fff"
-          border="#E7E9EB"
-          nav="apis"
-          progress={apisAtivas}
-          progressTotal={totalApis}
-        />
-        <KCard
-          label="Categorias Ativas"
-          valor={catAtivas}
-          sub={`de ${totalCats} categorias cadastradas`}
-          cor={C.brand}
-          bg="#fff"
-          border="#E7E9EB"
-          nav="categorias"
-          progress={catAtivas}
-          progressTotal={totalCats}
-        />
-        <KCard
-          label="Órgãos cedentes"
-          valor={totalOrgaos}
-          sub="com ao menos 1 API cadastrada"
-          cor={C.brand}
-          bg="#fff"
-          border="#E7E9EB"
-          nav="apis"
-        />
+        <KCard label="APIs Disponíveis" valor={apisAtivas}
+          sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
+          cor="#2B6418" nav="apis" spark={sparkApis} sparkColor="#2B6418"/>
+        <KCard label="Usuários com acesso" valor={usrsAtivos}
+          sub="com acesso liberado"
+          cor="#2B6418" nav="usuarios" spark={sparkUsrs} sparkColor="#2B6418"/>
+        <KCard label="Solicitações SEI-PE" valor={seiTotal}
+          sub="no período"
+          cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
       </div>
 
-      {/* ── Linha 3: Solicitações SEI-PE ── */}
-      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px'}}>
+      {/* ── Linha 2: Cards de detalhe ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+        <KCard label="APIs Ativas no catálogo" valor={apisAtivas}
+          cor="#2B6418" nav="apis" progress={apisAtivas} progressTotal={totalApis}/>
+        <KCard label="Categorias Ativas" valor={catAtivas}
+          sub={`de ${totalCats} categorias cadastradas`}
+          cor={C.brand} nav="categorias" progress={catAtivas} progressTotal={totalCats}/>
+        <KCard label="Órgãos com APIs" valor={totalOrgaos}
+          sub="com ao menos 1 API cadastrada" cor={C.brand} nav="apis"/>
+      </div>
+
+      {/* ── Linha 3: Solicitações de Acesso em formato de pizza ── */}
+      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div>
             <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Solicitações de Acesso — SEI-PE</div>
             <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Dados somente leitura · sync a cada 15 min</div>
           </div>
-          <span style={{fontSize:10,background:'#EAFBD7',color:'#2B6418',padding:'2px 8px',borderRadius:100,fontWeight:600,border:'1px solid #86D562'}}>● Online</span>
+          <span style={{fontSize:10,background:'#EAFBD7',color:'#2B6418',padding:'2px 8px',borderRadius:100,fontWeight:600,border:'1px solid #86D562',flexShrink:0}}>● Online</span>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr repeat(4,1fr)',gap:10}}>
-          {/* Card total neutro */}
-          <div style={{background:'#F8FAFC',border:'1px solid #E7E9EB',borderRadius:8,padding:'12px 14px',
-            display:'flex',flexDirection:'column',gap:3,minHeight:88,justifyContent:'center'}}>
-            <div style={{fontSize:11,color:'#888',fontWeight:500}}>Total</div>
-            <div style={{fontSize:32,fontWeight:700,color:'#28272C',lineHeight:1}}>{seiTotal}</div>
-            <div style={{fontSize:11,color:'#aaa'}}>solicitações</div>
-          </div>
-          <SeiCard label="Aprovadas"   valor={seiAprovadas} pct={Math.round(seiAprovadas/seiTotal*100)} cor="#2B6418" bg="#EAFBD7" border="#86D562"/>
-          <SeiCard label="Em análise"  valor={seiAnalise}   pct={Math.round(seiAnalise/seiTotal*100)}   cor="#B77706" bg="#FFF6CE" border="#FFE082"/>
-          <SeiCard label="Pendentes"   valor={seiPendSEI}   pct={Math.round(seiPendSEI/seiTotal*100)}   cor="#0034B7" bg="#E6F3FF" border="#99C6FF"/>
-          <SeiCard label="Reprovadas"  valor={seiReprov}    pct={Math.round(seiReprov/seiTotal*100)}     cor="#AC1010" bg="#FFE4E4" border="#E45F5F"/>
-        </div>
+
+        <PieChartSei/>
       </div>
 
     </div>
@@ -3033,23 +2898,23 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 /* Dados simulados — log de auditoria (20 eventos) */
 const AUDIT_LOG = [
   { id:'a001', timestamp:'09/06/2026 14:32', acao:'API_ATIVADA',      modulo:'Gerenciar APIs',      registro:'Catálogo de Serviços', executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' },  detalhe:"API 'Catálogo de Serviços' ativada." },
-  { id:'a002', timestamp:'09/06/2026 13:58', acao:'USUARIO_ATIVADO',  modulo:'Controle de Acesso',  registro:'Mariana Lima',         executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Pendente' }, after:{ status:'Ativo', perfil:'Cedente', orgao:'SEPLAG' }, detalhe:"Usuário 'Mariana Lima' ativado com perfil Cedente." },
+  { id:'a002', timestamp:'09/06/2026 13:58', acao:'USUARIO_ATIVADO',  modulo:'Controle de Acesso',  registro:'Mariana Lima',         executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Pendente' }, after:{ status:'Ativo', perfil:'Consumidor', orgao:'SEPLAG' }, detalhe:"Usuário 'Mariana Lima' ativado com perfil Consumidor." },
   { id:'a003', timestamp:'09/06/2026 11:20', acao:'API_EDITADA',      modulo:'Gerenciar APIs',      registro:'Consulta de CPF',      executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ versao:'v1.0', descricao:'Consulta de dados.' }, after:{ versao:'v1.1', descricao:'Consulta de dados cadastrais via CPF.' }, detalhe:"Versão e descrição da API 'Consulta de CPF' atualizados." },
   { id:'a004', timestamp:'09/06/2026 09:05', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
   { id:'a005', timestamp:'08/06/2026 17:44', acao:'USUARIO_INATIVADO',modulo:'Controle de Acesso',  registro:'Roberto Nunes',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"Usuário 'Roberto Nunes' inativado." },
   { id:'a006', timestamp:'08/06/2026 16:30', acao:'CATEGORIA_CRIADA', modulo:'Gerenciar Categorias',registro:'Meio Ambiente',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:{ nome:'Meio Ambiente', status:'Inativo' }, detalhe:"Categoria 'Meio Ambiente' criada." },
   { id:'a007', timestamp:'08/06/2026 15:12', acao:'API_INATIVADA',    modulo:'Gerenciar APIs',      registro:'Licença Ambiental',    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"API 'Licença Ambiental' inativada." },
-  { id:'a008', timestamp:'08/06/2026 14:01', acao:'USUARIO_EDITADO',  modulo:'Controle de Acesso',  registro:'Ana Costa',            executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ perfil:'ADM', orgao:'—' }, after:{ perfil:'Cedente', orgao:'SEFAZ' }, detalhe:"Perfil de 'Ana Costa' alterado de ADM para Cedente." },
-  { id:'a009', timestamp:'08/06/2026 10:50', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Cedente', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
+  { id:'a008', timestamp:'08/06/2026 14:01', acao:'USUARIO_EDITADO',  modulo:'Controle de Acesso',  registro:'Ana Costa',            executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ perfil:'ADM', orgao:'—' }, after:{ perfil:'Consumidor', orgao:'SEFAZ' }, detalhe:"Perfil de 'Ana Costa' alterado de ADM para Consumidor." },
+  { id:'a009', timestamp:'08/06/2026 10:50', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Consumidor', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
   { id:'a010', timestamp:'07/06/2026 16:22', acao:'API_CRIADA',       modulo:'Gerenciar APIs',      registro:'Programas Habitacionais', executor:'João Silva', perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:{ nome:'Programas Habitacionais', status:'Inativo', versao:'v1.1' }, detalhe:"API 'Programas Habitacionais' criada." },
   { id:'a011', timestamp:'07/06/2026 15:40', acao:'CATEGORIA_EDITADA',modulo:'Gerenciar Categorias',registro:'Saúde',                executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ descricao:'APIs da saúde.' }, after:{ descricao:'APIs do sistema de saúde pública, regulação e agendamentos.' }, detalhe:"Descrição da categoria 'Saúde' atualizada." },
   { id:'a012', timestamp:'07/06/2026 11:08', acao:'USUARIO_REGISTRADO',modulo:'Controle de Acesso', registro:'Carlos Mendes',        executor:'SYSTEM',       perfil:'SYSTEM', orgao:'—',   ip:'189.40.11.33', before:null, after:{ status:'Pendente', origemCadastro:'SSO' }, detalhe:"Usuário 'Carlos Mendes' registrado automaticamente via SSO." },
   { id:'a013', timestamp:'06/06/2026 17:55', acao:'LOGIN_NEGADO',     modulo:'Autenticação',        registro:'—',                    executor:'Carlos Mendes',perfil:'Pendente', orgao:'—', ip:'189.40.11.33', before:null, after:null, detalhe:"Tentativa de login negada — CPF com status Pendente." },
   { id:'a014', timestamp:'06/06/2026 14:20', acao:'API_ATIVADA',      modulo:'Gerenciar APIs',      registro:'Boletim de Ocorrência',executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' }, detalhe:"API 'Boletim de Ocorrência' ativada." },
-  { id:'a015', timestamp:'06/06/2026 10:33', acao:'SESSAO_EXPIRADA',  modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Cedente', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Sessão encerrada automaticamente por inatividade (30 min)." },
+  { id:'a015', timestamp:'06/06/2026 10:33', acao:'SESSAO_EXPIRADA',  modulo:'Autenticação',        registro:'—',                    executor:'Ana Costa',    perfil:'Consumidor', orgao:'SEFAZ', ip:'177.131.22.55', before:null, after:null, detalhe:"Sessão encerrada automaticamente por inatividade (30 min)." },
   { id:'a016', timestamp:'05/06/2026 16:47', acao:'CATEGORIA_INATIVADA',modulo:'Gerenciar Categorias',registro:'Educação',           executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Ativo' }, after:{ status:'Inativo' }, detalhe:"Categoria 'Educação' inativada." },
   { id:'a017', timestamp:'05/06/2026 14:05', acao:'API_EDITADA',      modulo:'Gerenciar APIs',      registro:'Emissão de Certidões', executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ versao:'v1.4' }, after:{ versao:'v1.5' }, detalhe:"Versão da API 'Emissão de Certidões' atualizada para v1.5." },
-  { id:'a018', timestamp:'05/06/2026 09:15', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Fernanda Souza',perfil:'Cedente', orgao:'SES', ip:'201.22.77.99', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
+  { id:'a018', timestamp:'05/06/2026 09:15', acao:'LOGIN_SUCESSO',    modulo:'Autenticação',        registro:'—',                    executor:'Fernanda Souza',perfil:'Consumidor', orgao:'SES', ip:'201.22.77.99', before:null, after:null, detalhe:"Login via SSO realizado com sucesso." },
   { id:'a019', timestamp:'04/06/2026 15:30', acao:'USUARIO_REATIVADO',modulo:'Controle de Acesso',  registro:'Roberto Nunes',        executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:{ status:'Inativo' }, after:{ status:'Ativo' }, detalhe:"Usuário 'Roberto Nunes' reativado." },
   { id:'a020', timestamp:'04/06/2026 11:00', acao:'LOGOUT',           modulo:'Autenticação',        registro:'—',                    executor:'João Silva',   perfil:'ADM', orgao:'ATI',    ip:'200.238.84.120', before:null, after:null, detalhe:"Sessão encerrada pelo usuário." },
 ];
