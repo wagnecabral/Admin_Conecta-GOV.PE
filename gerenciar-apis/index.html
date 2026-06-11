@@ -2768,7 +2768,11 @@ function App() {
         {section==='auditoria'  && <RelAuditoria showToast={showToast}/>}
         {section==='config'     && <Placeholder titulo="Configurações" descricao="Configurações gerais, de segurança e integrações do portal. Disponível na próxima sprint." icon="⚙️"/>}
       </div>
- Dashboard({ onNav }) {
+    </div>
+  );
+}
+
+function Dashboard({ onNav }) {
   /* ── Dados ── */
   const totalApis     = INITIAL_APIS.length;
   const apisAtivas    = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
@@ -3596,4 +3600,5 @@ function RelAuditoria({ showToast }) {
   );
 }
 </script>
->
+</body>
+</html>
