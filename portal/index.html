@@ -542,10 +542,10 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
    DADOS SIMULADOS — Solicitações do cidadão (perfil GOV.BR)
 ══════════════════════════════════════════════════════════════ */
 const GOVBR_USUARIOS = {
-  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', email:'maria.gracas@email.com.br' },
-  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', email:'roberto.neto@empresa.pe.gov.br' },
-  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', email:'juliana.costa@email.com.br' },
-  '046.318.094-18': { nome:'Wagne Goveia Cabral', cpf:'046.318.094-18', email:'wagnecabral@hotmail.com' },
+  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', email:'maria.gracas@email.com.br', tipo:'orgao', tipoLabel:'Órgão Público' },
+  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', email:'roberto.neto@empresa.pe.gov.br', tipo:'empresa', tipoLabel:'Empresa' },
+  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', email:'juliana.costa@email.com.br', tipo:'orgao', tipoLabel:'Órgão Público' },
+  '046.318.094-18': { nome:'Wagne Goveia Cabral', cpf:'046.318.094-18', email:'wagnecabral@hotmail.com', tipo:'orgao', tipoLabel:'Órgão Público' },
 };
 
 const GOVBR_SOLICITACOES = {
@@ -719,41 +719,65 @@ function MinhasSolicitacoes({ usuario, onSair }) {
           </div>
         </div>
 
-        {/* Aba */}
+        {/* Aba dinâmica: Órgão Público | Empresa */}
         <div style={{ display:'flex', gap:0, borderBottom:'2px solid #E7E9EB', marginBottom:16 }}>
           <button onClick={()=>setFiltroFase('')} style={{ padding:'8px 18px', border:'none', background:'none', fontSize:13, fontWeight:filtroFase===''?700:400, color:filtroFase===''?'#0034B7':'#494C57', cursor:'pointer', borderBottom:filtroFase===''?'2px solid #0034B7':'2px solid transparent', marginBottom:'-2px', fontFamily:"'Inter',sans-serif" }}>
-            Pessoa Física ({todasSolicitacoes.length})
+            {usuario.tipoLabel || 'Solicitante'} ({todasSolicitacoes.length})
           </button>
         </div>
 
-        {/* Lista */}
+        {/* Grid + Lista expansível */}
         {filtradas.length === 0 ? (
           <div style={{ background:'#fff', border:'1px solid #E7E9EB', borderRadius:10, padding:'48px', textAlign:'center', color:'#888', fontSize:13 }}>Nenhuma solicitação encontrada para o filtro selecionado.</div>
         ) : (
-          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          <div style={{ background:'#fff', border:'1px solid #E7E9EB', borderRadius:10, overflow:'hidden', marginBottom:10 }}>
+
+            {/* Cabeçalho da grid */}
+            <div style={{ display:'grid', gridTemplateColumns:'2fr 2.5fr 1.4fr 1.3fr 1fr', background:'#F8FAFC', borderBottom:'2px solid #E7E9EB', padding:'0 16px' }}>
+              {['Nº Protocolo','Nome da API','Data de Requisição','Fase',''].map((h,i)=>(
+                <div key={i} style={{ padding:'10px 8px 10px', fontSize:11, fontWeight:700, color:'#494C57', textTransform:'uppercase', letterSpacing:'0.5px', textAlign:i===4?'right':'left' }}>{h}</div>
+              ))}
+            </div>
+
+            {/* Linhas da grid */}
+            <div>
             {filtradas.map(sol => {
               const aberto = !!expandido[sol.id];
               const cfg = statusCfg[sol.status] || {};
               const msg = bannerMsg[sol.status] || '';
               return (
-                <div key={sol.id}
-                  style={{ background:'#fff', border:`1px solid ${aberto?'#0034B7':'#E7E9EB'}`, borderRadius:10, overflow:'hidden', cursor:'pointer', transition:'border-color 0.15s, box-shadow 0.15s', boxShadow:aberto?'0 2px 12px rgba(0,52,183,0.1)':'none' }}
-                  onClick={()=>toggleExpandir(sol.id)}>
+                <div key={sol.id} style={{ borderBottom:'1px solid #F0F2F5' }}>
 
-                  {/* Cabeçalho */}
-                  <div style={{ padding:'16px 20px', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                        <code style={{ fontSize:11, fontFamily:'monospace', background:'#F4F5F7', padding:'2px 8px', borderRadius:4, color:'#444' }}>{sol.protocolo}</code>
-                        <span style={{ fontSize:11, fontWeight:700, background:'#E6F3FF', color:'#0034B7', padding:'2px 8px', borderRadius:100, border:'1px solid #99C6FF' }}>{sol.orgaoCedente}</span>
-                      </div>
-                      <div style={{ fontSize:15, fontWeight:700, color:'#001A7A', marginBottom:2 }}>{sol.api}</div>
-                      <div style={{ fontSize:12, color:'#494C57' }}>Data da requisição: <strong style={{ color:'#28272C' }}>{sol.dataSolicitacao}</strong></div>
+                  {/* Linha clicável */}
+                  <div
+                    style={{ display:'grid', gridTemplateColumns:'2fr 2.5fr 1.4fr 1.3fr 1fr', padding:'0 16px', alignItems:'center', cursor:'pointer', transition:'background 0.12s', background:aberto?'#F0F5FF':'#fff', minHeight:52 }}
+                    onClick={()=>toggleExpandir(sol.id)}
+                    onMouseEnter={e=>{ if(!aberto) e.currentTarget.style.background='#F8FAFC'; }}
+                    onMouseLeave={e=>{ if(!aberto) e.currentTarget.style.background='#fff'; }}>
+
+                    {/* Nº Protocolo */}
+                    <div style={{ padding:'12px 8px' }}>
+                      <code style={{ fontSize:11, fontFamily:'monospace', background:'#F4F5F7', padding:'2px 7px', borderRadius:4, color:'#444', display:'inline-block' }}>{sol.protocolo}</code>
                     </div>
-                    <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8, flexShrink:0 }}>
+
+                    {/* Nome da API */}
+                    <div style={{ padding:'12px 8px' }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:'#001A7A', marginBottom:2 }}>{sol.api}</div>
+                      <span style={{ fontSize:10, fontWeight:700, background:'#E6F3FF', color:'#0034B7', padding:'1px 7px', borderRadius:100, border:'1px solid #99C6FF' }}>{sol.orgaoCedente}</span>
+                    </div>
+
+                    {/* Data de Requisição */}
+                    <div style={{ padding:'12px 8px', fontSize:12, color:'#28272C', fontWeight:500 }}>{sol.dataSolicitacao}</div>
+
+                    {/* Fase */}
+                    <div style={{ padding:'12px 8px' }}>
                       <StatusBadge status={sol.status}/>
-                      <div style={{ fontSize:11, color:'#888' }}>Fase: <strong style={{ color:'#444' }}>{sol.fase}</strong></div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0034B7" strokeWidth="2.5" strokeLinecap="round" style={{ transform:aberto?'rotate(180deg)':'none', transition:'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+                      <div style={{ fontSize:10, color:'#888', marginTop:3 }}>{sol.fase}</div>
+                    </div>
+
+                    {/* Ação */}
+                    <div style={{ padding:'12px 8px', textAlign:'right', display:'flex', alignItems:'center', justifyContent:'flex-end', gap:6 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0034B7" strokeWidth="2.5" strokeLinecap="round" style={{ transform:aberto?'rotate(180deg)':'none', transition:'transform 0.2s', flexShrink:0 }}><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
                   </div>
 
@@ -814,6 +838,7 @@ function MinhasSolicitacoes({ usuario, onSair }) {
                 </div>
               );
             })}
+            </div>
           </div>
         )}
 
@@ -866,7 +891,7 @@ function App() {
     if(usuario){
       setGovbrUsuario(usuario);
     } else {
-      setGovbrUsuario({ nome:'Cidadão', cpf:cpfLimpo, email:'' });
+      setGovbrUsuario({ nome:'Cidadão', cpf:cpfLimpo, email:'', tipo:'orgao', tipoLabel:'Órgão Público' });
     }
     setShowSsoModal(false);
   };
