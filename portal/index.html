@@ -14,7 +14,7 @@ html, body, #root { min-height:100%; }
 body { font-family:'Inter',sans-serif; background:#F4F5F7; color:#28272C; }
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-thumb { background:#CED2D7; border-radius:3px; }
-button, input { font-family:'Inter',sans-serif; }
+button, input, select { font-family:'Inter',sans-serif; }
 </style>
 </head>
 <body>
@@ -207,12 +207,6 @@ const APIS_CAT = [
   { id:5, nome:'Emissão de Certidões', orgaoId:'2', versao:'v1.5', status:'Ativo', descricao:'Emissão de certidões fiscais e negativas de débitos estaduais.', operacoes:'GET /certidoes/negativa — emite CND\nGET /certidoes/debitos — lista débitos', baseSistema:'SEFAZ — Sistema Tributário', comoAcessar:'Integração via API Key. Solicitar chave no portal SEFAZ.', detalhamento:'HTTPS. Retorna PDF ou JSON: contribuinte, situação, validade.', contatos:[{nome:'SEFAZ', email:'sefaz@sefaz.pe.gov.br'}], categoria:'Fiscal', atualizado:'05/01/2025' },
   { id:8, nome:'Programas Habitacionais', orgaoId:'6', versao:'v1.1', status:'Ativo', descricao:'Inscrições e consultas em programas habitacionais do estado.', operacoes:'POST /inscricoes — realiza inscrição\nGET /inscricoes/{cpf} — consulta', baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS mediante solicitação.', detalhamento:'HTTPS. Retorna: inscrição, programa, situação, posição na fila.', contatos:[{nome:'SEDS TI', email:'ti@seds.pe.gov.br'}], categoria:'Social', atualizado:'20/02/2025' },
 ];
-const CAT_COLORS = {
-  'Serviços':  { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF' },
-  'Fiscal':    { bg:'#FFF6CE', color:'#B77706', border:'#FFB70C' },
-  'Segurança': { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F' },
-  'Social':    { bg:'#EAFBD7', color:'#2B6418', border:'#86D562' },
-};
 
 function DetailPage({ api, onBack }) {
   const orgao = ORGAOS_CAT[api.orgaoId];
@@ -413,271 +407,93 @@ function QuemSomos() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════
-   SSO MODAL — substitui o AdminModal com login/senha
-   Fluxo: Acessar → Modal SSO → Expresso (simulado) → Backoffice ou Negado
-   ══════════════════════════════════════════════════════════ */
-
-/* Dados simulados de usuários pré-cadastrados (CPFs autorizados) */
+/* ── SSO Modal ───────────────────────────────────────────── */
 const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
 function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado }) {
-  /* Fluxo: selecionar provedor → formulário do provedor escolhido */
-  const [tela, setTela] = React.useState('selecao'); /* 'selecao' | 'expresso' | 'govbr' */
-  const [cpf,     setCpf]    = React.useState('');
-  const [senha,   setSenha]  = React.useState('');
-  const [loading, setLoading]= React.useState(false);
-  const [erro,    setErro]   = React.useState('');
-
+  const [tela, setTela] = React.useState('selecao');
+  const [cpf, setCpf] = React.useState('');
+  const [senha, setSenha] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [erro, setErro] = React.useState('');
   const CPF_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
-
-  const formatCpf = v => {
-    const n = v.replace(/\D/g,'').slice(0,11);
-    if(n.length<=3) return n;
-    if(n.length<=6) return n.slice(0,3)+'.'+n.slice(3);
-    if(n.length<=9) return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6);
-    return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6,9)+'-'+n.slice(9);
-  };
-
+  const formatCpf = v => { const n=v.replace(/\D/g,'').slice(0,11); if(n.length<=3)return n; if(n.length<=6)return n.slice(0,3)+'.'+n.slice(3); if(n.length<=9)return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6); return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6,9)+'-'+n.slice(9); };
   const resetForm = () => { setCpf(''); setSenha(''); setErro(''); };
-
   const handleVoltar = () => { resetForm(); setTela('selecao'); };
-
   const handleEntrar = () => {
     if(!cpf||!senha){ setErro('Preencha CPF e senha para continuar.'); return; }
     setLoading(true); setErro('');
     setTimeout(()=>{
       setLoading(false);
-      if (tela === 'govbr') {
-        /* GOV.BR → área do solicitante (qualquer CPF válido) */
-        if (onGovBrAutenticado) onGovBrAutenticado(cpf);
-      } else {
-        /* Expresso → backoffice (CPF deve estar na lista) */
-        if(CPF_AUTORIZADOS.includes(cpf)) { onAcessoAutorizado(cpf); }
-        else { onAcessoNegado(); }
-      }
+      if(tela==='govbr'){ if(onGovBrAutenticado) onGovBrAutenticado(cpf); }
+      else { if(CPF_AUTORIZADOS.includes(cpf)){ onAcessoAutorizado(cpf); } else { onAcessoNegado(); } }
     }, 1400);
   };
+  const fSt = bg => ({ width:'100%', background:'transparent', border:'none', borderBottom:`1.5px solid ${bg}`, outline:'none', fontSize:16, padding:'8px 0', fontFamily:'inherit' });
 
-  /* Estilos compartilhados do campo underline */
-  const fSt = bg => ({
-    width:'100%', background:'transparent', border:'none',
-    borderBottom:`1.5px solid ${bg}`,
-    outline:'none', fontSize:16,
-    padding:'8px 0', fontFamily:'inherit',
-  });
-
-  /* ─────────────────────────────────────────────
-     TELA 1 — Seleção de provedor
-  ───────────────────────────────────────────── */
-  if (tela === 'selecao') {
-    return (
-      <div style={{ position:'fixed', inset:0, background:'rgba(0,26,122,0.5)', zIndex:1000,
-        display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-        <div style={{ background:'#fff', borderRadius:12, width:'100%', maxWidth:420,
-          boxShadow:'0 8px 40px rgba(0,26,122,0.22)', overflow:'hidden' }}>
-
-          {/* Barra azul topo */}
-          <div style={{ background:'#0034B7', height:5 }}/>
-
-          {/* Conteúdo */}
-          <div style={{ padding:'40px 40px 36px', textAlign:'center' }}>
-            <h2 style={{ fontSize:20, fontWeight:600, color:'#28272C', marginBottom:6 }}>
-              Entrar na sua conta
-            </h2>
-            <div style={{ height:1, background:'#E7E9EB', margin:'20px 0 28px' }}/>
-
-            {/* Botão GOV.BR */}
-            <button
-              onClick={()=>{ resetForm(); setTela('govbr'); }}
-              style={{ width:'100%', height:48, borderRadius:100, background:'#1351B4',
-                border:'none', color:'#fff', fontSize:15, fontWeight:700,
-                cursor:'pointer', marginBottom:14, display:'flex',
-                alignItems:'center', justifyContent:'center', gap:8,
-                transition:'background 0.2s' }}
-              onMouseEnter={e=>e.currentTarget.style.background='#0C3C8A'}
-              onMouseLeave={e=>e.currentTarget.style.background='#1351B4'}
-            >
-              Entrar com <strong>gov.br</strong>
-            </button>
-
-            {/* Botão Expresso.PE */}
-            <button
-              onClick={()=>{ resetForm(); setTela('expresso'); }}
-              style={{ width:'100%', height:48, borderRadius:100, background:'#0034B7',
-                border:'none', color:'#fff', fontSize:15, fontWeight:700,
-                cursor:'pointer', display:'flex',
-                alignItems:'center', justifyContent:'center', gap:8,
-                transition:'background 0.2s' }}
-              onMouseEnter={e=>e.currentTarget.style.background='#001A7A'}
-              onMouseLeave={e=>e.currentTarget.style.background='#0034B7'}
-            >
-              Entrar com <strong>expresso.pe</strong>
-            </button>
-
-            {/* Voltar */}
-            <div style={{ marginTop:24 }}>
-              <button onClick={onClose}
-                style={{ background:'none', border:'none', cursor:'pointer',
-                  fontSize:12, color:'#888' }}>
-                ← Voltar ao portal
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─────────────────────────────────────────────
-     TELA 2 — Login GOV.BR
-  ───────────────────────────────────────────── */
-  if (tela === 'govbr') {
-    return (
-      <div style={{ position:'fixed', inset:0, background:'#1351B4', zIndex:1000,
-        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
-
-        {/* Logo GOV.BR tipográfico */}
-        <div style={{ marginBottom:48, textAlign:'center' }}>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:0,
-            background:'rgba(255,255,255,0.12)', borderRadius:8, padding:'8px 20px',
-            border:'1px solid rgba(255,255,255,0.2)' }}>
-            <span style={{ fontSize:28, fontWeight:900, color:'#fff', letterSpacing:'-1px' }}>gov</span>
-            <span style={{ fontSize:28, fontWeight:900, color:'#FFCD07', letterSpacing:'-1px' }}>.br</span>
-          </div>
-          <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', marginTop:8, letterSpacing:'0.5px' }}>
-            ACESSO À CONTA ÚNICA DO GOVERNO FEDERAL
-          </div>
-        </div>
-
-        <div style={{ width:'100%', maxWidth:440 }}>
-          {erro && (
-            <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px',
-              fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>
-              {erro}
-            </div>
-          )}
-
-          <div style={{ marginBottom:28 }}>
-            <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
-            <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))}
-              maxLength={14}
-              style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }}
-              onFocus={e=>e.target.style.borderBottomColor='#fff'}
-              onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
-              onKeyDown={e=>e.key==='Enter'&&handleEntrar()}
-            />
-          </div>
-
-          <div style={{ marginBottom:40 }}>
-            <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>Senha</label>
-            <input type="password" value={senha} onChange={e=>setSenha(e.target.value)}
-              style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }}
-              onFocus={e=>e.target.style.borderBottomColor='#fff'}
-              onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
-              onKeyDown={e=>e.key==='Enter'&&handleEntrar()}
-            />
-          </div>
-
-          <button onClick={handleEntrar} disabled={loading}
-            style={{ width:140, height:42, borderRadius:100,
-              background: loading ? 'rgba(255,255,255,0.2)' : '#FFCD07',
-              border:'none',
-              color: loading ? '#fff' : '#1351B4',
-              fontSize:14, fontWeight:700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display:'block', margin:'0 auto',
-              transition:'all 0.2s' }}>
-            {loading ? '...' : 'Entrar'}
-          </button>
-
-          <div style={{ textAlign:'center', marginTop:28 }}>
-            <button onClick={handleVoltar}
-              style={{ background:'none', border:'none', cursor:'pointer',
-                fontSize:12, color:'rgba(255,255,255,0.5)' }}>
-              ← Voltar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─────────────────────────────────────────────
-     TELA 3 — Login Expresso.PE
-  ───────────────────────────────────────────── */
-  if (tela !== 'expresso') return null;
-
-  const govpeLogoB64 = "data:image/png;base64,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";
-  return (
-    <div style={{ position:'fixed', inset:0, background:'#1B3FA6', zIndex:1000,
-      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
-
-      {/* Logo Governo PE */}
-      <div style={{ marginBottom:52, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <img src={govpeLogoB64} alt="Governo de Pernambuco — Estado de Mudança"
-          style={{ height:110, width:'auto', objectFit:'contain', mixBlendMode:'screen' }}
-        />
-      </div>
-
-      <div style={{ width:'100%', maxWidth:480 }}>
-        {erro && (
-          <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px',
-            fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>
-            {erro}
-          </div>
-        )}
-
-        <div style={{ marginBottom:28 }}>
-          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
-          <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))}
-            maxLength={14}
-            style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }}
-            onFocus={e=>e.target.style.borderBottomColor='#fff'}
-            onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
-            onKeyDown={e=>e.key==='Enter'&&handleEntrar()}
-          />
-        </div>
-
-        <div style={{ marginBottom:40 }}>
-          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>Senha</label>
-          <input type="password" value={senha} onChange={e=>setSenha(e.target.value)}
-            style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }}
-            onFocus={e=>e.target.style.borderBottomColor='#fff'}
-            onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'}
-            onKeyDown={e=>e.key==='Enter'&&handleEntrar()}
-          />
-        </div>
-
-        <button onClick={handleEntrar} disabled={loading}
-          style={{ width:120, height:40, borderRadius:6,
-            background: loading ? 'rgba(255,255,255,0.25)' : '#fff',
-            border:'none', color: loading ? '#fff' : '#1B3FA6',
-            fontSize:14, fontWeight:700,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition:'all 0.2s', display:'block', margin:'0 auto' }}>
-          {loading ? '...' : 'Entrar'}
-        </button>
-
-        <div style={{ textAlign:'center', marginTop:28 }}>
-          <button onClick={handleVoltar}
-            style={{ background:'none', border:'none', cursor:'pointer',
-              fontSize:12, color:'rgba(255,255,255,0.5)' }}>
-            ← Voltar
-          </button>
+  if(tela==='selecao') return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,26,122,0.5)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <div style={{ background:'#fff', borderRadius:12, width:'100%', maxWidth:420, boxShadow:'0 8px 40px rgba(0,26,122,0.22)', overflow:'hidden' }}>
+        <div style={{ background:'#0034B7', height:5 }}/>
+        <div style={{ padding:'40px 40px 36px', textAlign:'center' }}>
+          <h2 style={{ fontSize:20, fontWeight:600, color:'#28272C', marginBottom:6 }}>Entrar na sua conta</h2>
+          <div style={{ height:1, background:'#E7E9EB', margin:'20px 0 28px' }}/>
+          <button onClick={()=>{ resetForm(); setTela('govbr'); }} style={{ width:'100%', height:48, borderRadius:100, background:'#1351B4', border:'none', color:'#fff', fontSize:15, fontWeight:700, cursor:'pointer', marginBottom:14, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }} onMouseEnter={e=>e.currentTarget.style.background='#0C3C8A'} onMouseLeave={e=>e.currentTarget.style.background='#1351B4'}>Entrar com <strong>gov.br</strong></button>
+          <button onClick={()=>{ resetForm(); setTela('expresso'); }} style={{ width:'100%', height:48, borderRadius:100, background:'#0034B7', border:'none', color:'#fff', fontSize:15, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }} onMouseEnter={e=>e.currentTarget.style.background='#001A7A'} onMouseLeave={e=>e.currentTarget.style.background='#0034B7'}>Entrar com <strong>expresso.pe</strong></button>
+          <div style={{ marginTop:24 }}><button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'#888' }}>← Voltar ao portal</button></div>
         </div>
       </div>
     </div>
   );
+
+  if(tela==='govbr') return (
+    <div style={{ position:'fixed', inset:0, background:'#1351B4', zIndex:1000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <div style={{ marginBottom:48, textAlign:'center' }}>
+        <div style={{ display:'inline-flex', alignItems:'center', gap:0, background:'rgba(255,255,255,0.12)', borderRadius:8, padding:'8px 20px', border:'1px solid rgba(255,255,255,0.2)' }}>
+          <span style={{ fontSize:28, fontWeight:900, color:'#fff', letterSpacing:'-1px' }}>gov</span>
+          <span style={{ fontSize:28, fontWeight:900, color:'#FFCD07', letterSpacing:'-1px' }}>.br</span>
+        </div>
+        <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', marginTop:8, letterSpacing:'0.5px' }}>ACESSO À CONTA ÚNICA DO GOVERNO FEDERAL</div>
+      </div>
+      <div style={{ width:'100%', maxWidth:440 }}>
+        {erro && <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>{erro}</div>}
+        <div style={{ marginBottom:28 }}>
+          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
+          <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))} maxLength={14} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
+        </div>
+        <div style={{ marginBottom:40 }}>
+          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>Senha</label>
+          <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
+        </div>
+        <button onClick={handleEntrar} disabled={loading} style={{ width:140, height:42, borderRadius:100, background:loading?'rgba(255,255,255,0.2)':'#FFCD07', border:'none', color:loading?'#fff':'#1351B4', fontSize:14, fontWeight:700, cursor:loading?'not-allowed':'pointer', display:'block', margin:'0 auto' }}>{loading?'...':'Entrar'}</button>
+        <div style={{ textAlign:'center', marginTop:28 }}><button onClick={handleVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.5)' }}>← Voltar</button></div>
+      </div>
+    </div>
+  );
+
+  const govpeLogoB64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/wAARCABFAFUDASIAAhEBAxEB/8QAHQAAAgEFAQEAAAAAAAAAAAAAAAcGAQIDBQgECf/EAD0QAAEDAwMCAgcDCgcBAAAAAAECAwQABREGEiEHMRNBCBQiUWFxgRUykRZCUmKSobHB0fAkJTM0VHKCov/EABsBAAICAwEAAAAAAAAAAAAAAAUGAAQBAgMH/8QAMREAAQMCBAUCBQMFAAAAAAAAAQIDEQAEBRIhMQZBUWFxE4EHIjKhsRQkkUJSwfDx/9oADAMBAAIRAxEAPwDk1yfEW04PFUG1N7UsBHCTj++aq7cY211SXSW1NbW2PDxsV789qk84MRYjkgRG3NgztCRk/urw2mezPklk2vwQE7txSCP4V6jccGpt7lFq5dgOL2GRWu/MGOu9ZNigGCqtMm5Q0utuJSUlxQU/7PbCcYH1qpuUVKlqClK9ghIGe/Hv7VP9HWyCm6yXBFZIcZGUlAIBB74+v7q2N4kKhTSxG0mqa2Eg+K2lABPu5FV3+ELi1CvWeAgxohSvG3XfbQ0t32IptrtVsESRGuYDvz80rnLnDKFnZv3toSUlPPc7ufke9Dk+GfESw8phRCQl3Zk4HlU+uF2dRBeL2i3WG9hCnFBGEZ4z2pwanRabJYpV0+wI8v1dIPgsx0715IHHHxocvA/qh4EASZQodesHrtQq94k/SKbSWCSswIWncR5HPnXK02Uw7LU40SlPs7jtxvwDnj4145Kwt0qBBHl3/nXTmhb1Z9VrlsnR67f4CUkmTERtWDkYBx247Un+vdntNm1shu0tNR0vxkvPMNABLaypQ4A4TkAHH9aD4hhRatv1KXApJPQj81dwriIXV6bJxkoWBO4P47UvqKKK";
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'#1B3FA6', zIndex:1000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <div style={{ marginBottom:52, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <img src={govpeLogoB64} alt="Governo de Pernambuco" style={{ height:110, width:'auto', objectFit:'contain', mixBlendMode:'screen' }}/>
+      </div>
+      <div style={{ width:'100%', maxWidth:480 }}>
+        {erro && <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>{erro}</div>}
+        <div style={{ marginBottom:28 }}>
+          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
+          <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))} maxLength={14} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
+        </div>
+        <div style={{ marginBottom:40 }}>
+          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>Senha</label>
+          <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
+        </div>
+        <button onClick={handleEntrar} disabled={loading} style={{ width:120, height:40, borderRadius:6, background:loading?'rgba(255,255,255,0.25)':'#fff', border:'none', color:loading?'#fff':'#1B3FA6', fontSize:14, fontWeight:700, cursor:loading?'not-allowed':'pointer', display:'block', margin:'0 auto' }}>{loading?'...':'Entrar'}</button>
+        <div style={{ textAlign:'center', marginTop:28 }}><button onClick={handleVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.5)' }}>← Voltar</button></div>
+      </div>
+    </div>
+  );
 }
-
-
-function ExpressoScreen({ onVoltar, onAutenticar }) {
-  /* Mantido por compatibilidade — redireciona para SsoModal */
-  React.useEffect(()=>{ onVoltar(); }, []);
-  return null;
-}
-
 
 function AcessoNegadoScreen({ cpf, onVoltar }) {
   const cpfMascarado = cpf.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.XXX.XXX-$2');
@@ -687,24 +503,18 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
         <span style={{ color:'#FFCD37', fontSize:14 }}>★</span>
         <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
       </div>
-      {/* Navbar mínima */}
       <div style={{ background:'#fff', borderBottom:`1px solid ${C.divider}`, height:64, display:'flex', alignItems:'center', padding:'0 24px', gap:14 }}>
         <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
         <div style={{ width:1, height:28, background:C.divider }}/>
         <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
       </div>
-
       <div style={{ flex:1, background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
         <div style={{ background:'#fff', borderRadius:12, border:`1px solid ${C.divider}`, padding:40, maxWidth:480, width:'100%', textAlign:'center', boxShadow:'0 4px 24px rgba(0,26,122,0.08)' }}>
-          {/* Ícone */}
           <div style={{ width:72, height:72, background:C.dangerBg, border:`2px solid ${C.dangerBorder}`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={C.danger} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
-
           <h2 style={{ fontSize:22, fontWeight:700, color:C.brandDark, marginBottom:8 }}>Acesso não autorizado</h2>
           <p style={{ fontSize:14, color:C.textSec, lineHeight:1.6, marginBottom:20 }}>Seu CPF não possui permissão de acesso ao portal Conecta Gov.PE. Seu cadastro foi registrado automaticamente e aguarda aprovação pelo administrador do sistema.</p>
-
-          {/* Status badge */}
           <div style={{ background:'#FFF6CE', border:'1px solid #FFE082', borderRadius:8, padding:'12px 16px', marginBottom:20, textAlign:'left' }}>
             <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke='#B77706' strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -715,13 +525,9 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
               </div>
             </div>
           </div>
-
           <div style={{ background:C.brandLight, border:`1px solid ${C.brandBorder}`, borderRadius:8, padding:'12px 16px', marginBottom:24, textAlign:'left' }}>
-            <p style={{ fontSize:12, color:C.brand, lineHeight:1.5 }}>
-              <strong>O que aconteceu?</strong> Seu acesso via Login Estadual foi autenticado com sucesso, porém seu perfil ainda não foi ativado no sistema Conecta Gov.PE. Isso é feito pelo administrador do portal.
-            </p>
+            <p style={{ fontSize:12, color:C.brand, lineHeight:1.5 }}><strong>O que aconteceu?</strong> Seu acesso via Login Estadual foi autenticado com sucesso, porém seu perfil ainda não foi ativado no sistema Conecta Gov.PE. Isso é feito pelo administrador do portal.</p>
           </div>
-
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             <button onClick={onVoltar} style={{ height:44, borderRadius:8, background:C.brand, border:'none', color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer', width:'100%' }}>Voltar ao portal</button>
             <a href="mailto:gestao.conecta.pe@ati.pe.gov.br" style={{ fontSize:13, color:C.brand, textDecoration:'none' }}>Entrar em contato: gestao.conecta.pe@ati.pe.gov.br</a>
@@ -732,134 +538,139 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
   );
 }
 
-/* ── App ─────────────────────────────────────────────────── */
-
 /* ═══════════════════════════════════════════════════════════════
    DADOS SIMULADOS — Solicitações do cidadão (perfil GOV.BR)
-   Em produção: GET /v1/sei/solicitacoes?cpf={cpf}
 ══════════════════════════════════════════════════════════════ */
-
-/* CPFs simulados com perfil GOV.BR (solicitantes) */
 const GOVBR_USUARIOS = {
-  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', cpfMask:'111.XXX.XXX-44', email:'maria.gracas@email.com.br' },
-  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', cpfMask:'555.XXX.XXX-88', email:'roberto.neto@empresa.pe.gov.br' },
-  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', cpfMask:'999.XXX.XXX-22', email:'juliana.costa@email.com.br' },
+  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', email:'maria.gracas@email.com.br' },
+  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', email:'roberto.neto@empresa.pe.gov.br' },
+  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', email:'juliana.costa@email.com.br' },
+  '046.318.094-18': { nome:'Wagne Goveia Cabral', cpf:'046.318.094-18', email:'wagnecabral@hotmail.com' },
 };
 
-/* Solicitações por CPF */
 const GOVBR_SOLICITACOES = {
   '111.222.333-44': [
-    { id:1, protocolo:'SEI-PE 2025.00000010-3', api:'Catálogo de Serviços', orgaoCedente:'ATI', dataSolicitacao:'05/03/2025', dataAtualizacao:'12/03/2025', status:'Aprovada',  responsavel:'Ana Costa',      detalhe:'Credenciais enviadas por e-mail. Validade: 12 meses.' },
-    { id:2, protocolo:'SEI-PE 2025.00000018-7', api:'Consulta de CPF',      orgaoCedente:'SEFAZ', dataSolicitacao:'18/04/2025', dataAtualizacao:'22/04/2025', status:'Em análise', responsavel:'Pedro Oliveira', detalhe:'Processo em avaliação pelo órgão cedente.' },
-    { id:3, protocolo:'SEI-PE 2025.00000023-1', api:'Emissão de Certidões', orgaoCedente:'SEFAZ', dataSolicitacao:'02/05/2025', dataAtualizacao:'02/05/2025', status:'Pendente',   responsavel:'Fernanda Souza', detalhe:'Aguardando envio de documentação complementar.' },
+    { id:1, protocolo:'SEI-PE 2025.00000010-3', api:'Catálogo de Serviços', orgaoCedente:'ATI', dataSolicitacao:'05/03/2025', dataAtualizacao:'12/03/2025', status:'Aprovada', fase:'Resultado', responsavel:'Ana Costa', historico:[{msg:'Credenciais enviadas por e-mail. Validade: 12 meses.',data:'12/03/2025, 10:30'},{msg:'Processo em avaliação pelo órgão cedente.',data:'08/03/2025, 14:20'},{msg:'Solicitação recebida e protocolada.',data:'05/03/2025, 09:00'}] },
+    { id:2, protocolo:'SEI-PE 2025.00000018-7', api:'Consulta de CPF', orgaoCedente:'SEFAZ', dataSolicitacao:'18/04/2025', dataAtualizacao:'22/04/2025', status:'Em análise', fase:'Análise', responsavel:'Pedro Oliveira', historico:[{msg:'Processo em avaliação pelo órgão cedente.',data:'22/04/2025, 11:00'},{msg:'Solicitação recebida e protocolada.',data:'18/04/2025, 09:15'}] },
+    { id:3, protocolo:'SEI-PE 2025.00000023-1', api:'Emissão de Certidões', orgaoCedente:'SEFAZ', dataSolicitacao:'02/05/2025', dataAtualizacao:'02/05/2025', status:'Pendente', fase:'Solicitação', responsavel:'Fernanda Souza', historico:[{msg:'Aguardando envio de documentação complementar.',data:'02/05/2025, 16:45'},{msg:'Solicitação recebida e protocolada.',data:'02/05/2025, 14:00'}] },
   ],
   '555.666.777-88': [
-    { id:4, protocolo:'SEI-PE 2025.00000007-6', api:'Boletim de Ocorrência',   orgaoCedente:'SEPLAG', dataSolicitacao:'01/02/2025', dataAtualizacao:'15/02/2025', status:'Aprovada',   responsavel:'Leandro Melo',   detalhe:'Acesso liberado. Chave API disponível no portal.' },
-    { id:5, protocolo:'SEI-PE 2025.00000009-2', api:'Programas Habitacionais', orgaoCedente:'SEDS',   dataSolicitacao:'10/02/2025', dataAtualizacao:'28/02/2025', status:'Aprovada',   responsavel:'Roberta Mendes', detalhe:'Integração homologada com sucesso.' },
-    { id:6, protocolo:'SEI-PE 2025.00000031-4', api:'Catálogo de Serviços',    orgaoCedente:'ATI',    dataSolicitacao:'10/05/2025', dataAtualizacao:'10/05/2025', status:'Reprovada',  responsavel:'Carlos Mendes',  detalhe:'Solicitação não atende aos critérios de habilitação.' },
-    { id:7, protocolo:'SEI-PE 2025.00000035-6', api:'Agendamento de Saúde',    orgaoCedente:'SES',    dataSolicitacao:'14/05/2025', dataAtualizacao:'14/05/2025', status:'Pendente',   responsavel:'Maria Santos',   detalhe:'Aguardando assinatura do Termo de Responsabilidade.' },
+    { id:4, protocolo:'SEI-PE 2025.00000007-6', api:'Boletim de Ocorrência', orgaoCedente:'SEPLAG', dataSolicitacao:'01/02/2025', dataAtualizacao:'15/02/2025', status:'Aprovada', fase:'Resultado', responsavel:'Leandro Melo', historico:[{msg:'Acesso liberado. Chave API disponível no portal.',data:'15/02/2025, 10:00'},{msg:'Solicitação recebida e protocolada.',data:'01/02/2025, 09:00'}] },
+    { id:5, protocolo:'SEI-PE 2025.00000009-2', api:'Programas Habitacionais', orgaoCedente:'SEDS', dataSolicitacao:'10/02/2025', dataAtualizacao:'28/02/2025', status:'Aprovada', fase:'Resultado', responsavel:'Roberta Mendes', historico:[{msg:'Integração homologada com sucesso.',data:'28/02/2025, 15:30'},{msg:'Solicitação recebida e protocolada.',data:'10/02/2025, 08:30'}] },
+    { id:6, protocolo:'SEI-PE 2025.00000031-4', api:'Catálogo de Serviços', orgaoCedente:'ATI', dataSolicitacao:'10/05/2025', dataAtualizacao:'10/05/2025', status:'Reprovada', fase:'Resultado', responsavel:'Carlos Mendes', historico:[{msg:'Solicitação não atende aos critérios de habilitação.',data:'10/05/2025, 17:00'},{msg:'Solicitação recebida e protocolada.',data:'10/05/2025, 10:00'}] },
+    { id:7, protocolo:'SEI-PE 2025.00000035-6', api:'Agendamento de Saúde', orgaoCedente:'SES', dataSolicitacao:'14/05/2025', dataAtualizacao:'14/05/2025', status:'Pendente', fase:'Solicitação', responsavel:'Maria Santos', historico:[{msg:'Aguardando assinatura do Termo de Responsabilidade.',data:'14/05/2025, 13:00'},{msg:'Solicitação recebida e protocolada.',data:'14/05/2025, 09:00'}] },
   ],
   '999.000.111-22': [
-    { id:8, protocolo:'SEI-PE 2025.00000015-9', api:'Matrícula Escolar',        orgaoCedente:'SEE',    dataSolicitacao:'20/03/2025', dataAtualizacao:'05/04/2025', status:'Aprovada',   responsavel:'João Silva',     detalhe:'API disponível. Documentação técnica enviada.' },
-    { id:9, protocolo:'SEI-PE 2025.00000022-3', api:'Licença Ambiental',        orgaoCedente:'SEPLAG', dataSolicitacao:'28/04/2025', dataAtualizacao:'05/05/2025', status:'Em análise', responsavel:'Lucas Alves',    detalhe:'Em avaliação técnica.' },
+    { id:8, protocolo:'SEI-PE 2025.00000015-9', api:'Matrícula Escolar', orgaoCedente:'SEE', dataSolicitacao:'20/03/2025', dataAtualizacao:'05/04/2025', status:'Aprovada', fase:'Resultado', responsavel:'João Silva', historico:[{msg:'API disponível. Documentação técnica enviada.',data:'05/04/2025, 10:00'},{msg:'Solicitação recebida e protocolada.',data:'20/03/2025, 09:00'}] },
+    { id:9, protocolo:'SEI-PE 2025.00000022-3', api:'Licença Ambiental', orgaoCedente:'SEPLAG', dataSolicitacao:'28/04/2025', dataAtualizacao:'05/05/2025', status:'Em análise', fase:'Análise', responsavel:'Lucas Alves', historico:[{msg:'Em avaliação técnica.',data:'05/05/2025, 14:00'},{msg:'Solicitação recebida e protocolada.',data:'28/04/2025, 09:00'}] },
+  ],
+  '046.318.094-18': [
+    { id:10, protocolo:'2026002693916', api:'Disponibilizar uma API na Plataforma do Conecta', orgaoCedente:'GOV.BR', dataSolicitacao:'26/01/2026', dataAtualizacao:'27/01/2026', status:'Aprovada', fase:'Resultado', responsavel:'Equipe Conecta', historico:[{msg:'Avalie o serviço!',data:'27 jan. 2026, 15:03',avaliar:true},{msg:'Deliberação: Prezado,\nCaso tenha dúvidas, entre em contato conosco por e-mail: conecta@gestao.gov.br\n\nEquipe Conecta',data:'27 jan. 2026, 15:02'},{msg:'Sua solicitação de protocolo 2026002693916 foi encerrada.',data:'27 jan. 2026, 15:01'}] },
   ],
 };
 
 /* ─────────────────────────────────────────────────────────────
-   TELA PRINCIPAL: MINHAS SOLICITAÇÕES (perfil GOV.BR)
+   COMPONENTE: MinhasSolicitacoes — layout estilo Conecta Gov.br
 ───────────────────────────────────────────────────────────── */
 function MinhasSolicitacoes({ usuario, onSair }) {
-  const solicitacoes = GOVBR_SOLICITACOES[usuario.cpf] || [];
-  const [filtroStatus, setFiltroStatus] = React.useState('');
-  const [filtroApi,    setFiltroApi]    = React.useState('');
-  const [modalDetalhe, setModalDetalhe] = React.useState(null);
-  const [abaAtiva,     setAbaAtiva]     = React.useState('solicitacoes');
-  const [sync] = React.useState(
-    new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
-  );
+  const todasSolicitacoes = GOVBR_SOLICITACOES[usuario.cpf] || [];
+  const [filtroFase, setFiltroFase] = React.useState('');
+  const [filtroOrdem, setFiltroOrdem] = React.useState('recente');
+  const [expandido, setExpandido] = React.useState({});
 
-  /* KPIs */
-  const total     = solicitacoes.length;
-  const aprovadas = solicitacoes.filter(s=>s.status==='Aprovada').length;
-  const analise   = solicitacoes.filter(s=>s.status==='Em análise').length;
-  const pendentes = solicitacoes.filter(s=>s.status==='Pendente').length;
-  const reprovadas= solicitacoes.filter(s=>s.status==='Reprovada').length;
+  const toggleExpandir = (id) => setExpandido(prev => ({ ...prev, [id]: !prev[id] }));
 
-  /* APIs com acesso aprovado */
-  const apisAprovadas = solicitacoes.filter(s=>s.status==='Aprovada');
-
-  /* APIs únicas para dropdown */
-  const apisUnicas = [...new Set(solicitacoes.map(s=>s.api))];
-
-  /* Filtro */
-  const filtradas = solicitacoes.filter(s=>{
-    if(filtroStatus && s.status !== filtroStatus) return false;
-    if(filtroApi    && s.api    !== filtroApi)    return false;
-    return true;
+  const ordenadas = [...todasSolicitacoes].sort((a, b) => {
+    if(filtroOrdem==='recente') return b.id - a.id;
+    if(filtroOrdem==='antigo') return a.id - b.id;
+    return a.protocolo.localeCompare(b.protocolo);
   });
 
-  /* Cores de status */
+  const filtradas = filtroFase ? ordenadas.filter(s => s.fase === filtroFase) : ordenadas;
+
   const statusCfg = {
-    'Aprovada':   { bg:'#EAFBD7', color:'#2B6418', border:'#86D562',  dot:'#2B6418'  },
-    'Em análise': { bg:'#FFF6CE', color:'#B77706', border:'#FFE082',  dot:'#B77706'  },
-    'Pendente':   { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF',  dot:'#0034B7'  },
-    'Reprovada':  { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F',  dot:'#AC1010'  },
+    'Aprovada':   { bg:'#EAFBD7', color:'#2B6418', border:'#86D562', dot:'#2B6418', banner:'#F0FBE8', bannerBorder:'#C2EEAC', bannerColor:'#2B6418' },
+    'Em análise': { bg:'#FFF6CE', color:'#B77706', border:'#FFE082', dot:'#B77706', banner:'#FFFBEB', bannerBorder:'#FFE082', bannerColor:'#B77706' },
+    'Pendente':   { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF', dot:'#0034B7', banner:'#EFF6FF', bannerBorder:'#99C6FF', bannerColor:'#0034B7' },
+    'Reprovada':  { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F', dot:'#AC1010', banner:'#FFF0F0', bannerBorder:'#E45F5F', bannerColor:'#AC1010' },
   };
 
-  const StatusBadge = ({status}) => {
-    const c = statusCfg[status] || {bg:'#F1EFE8',color:'#5F5E5A',border:'#D3D1C7',dot:'#888'};
+  const bannerMsg = {
+    'Aprovada':   'A sua solicitação foi finalizada.',
+    'Em análise': 'Processo em avaliação pelo órgão cedente.',
+    'Pendente':   'Aguardando documentação ou assinatura de termo.',
+    'Reprovada':  'Solicitação não atende aos critérios de habilitação.',
+  };
+
+  const StatusBadge = ({ status }) => {
+    const c = statusCfg[status] || { bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7', dot:'#888' };
     return (
-      <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',
-        borderRadius:100,fontSize:12,fontWeight:600,background:c.bg,color:c.color,
-        border:`1px solid ${c.border}`}}>
-        <span style={{width:6,height:6,borderRadius:'50%',background:c.dot,flexShrink:0}}/>
+      <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:700, background:c.bg, color:c.color, border:`1px solid ${c.border}`, flexShrink:0 }}>
+        <span style={{ width:6, height:6, borderRadius:'50%', background:c.dot }}/>
         {status}
       </span>
     );
   };
 
+  const Timeline = ({ fase, status }) => {
+    const steps = [{ label:'Solicitação' }, { label:'Em análise' }, { label:'Resultado' }];
+    const stepAtivo = fase==='Solicitação' ? 0 : (fase==='Análise'||fase==='Em atendimento') ? 1 : 2;
+    const concluido = status==='Aprovada' || status==='Reprovada';
+    return (
+      <div style={{ display:'flex', alignItems:'center', marginBottom:14 }}>
+        {steps.map((step, i) => {
+          const done = concluido ? true : i < stepAtivo;
+          const active = !concluido && i === stepAtivo;
+          return (
+            <React.Fragment key={i}>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:700, background:done?'#1351B4':'#fff', border:done?'none':active?'2px solid #1351B4':'2px solid #CED2D7', color:done?'#fff':active?'#1351B4':'#999' }}>
+                  {done ? '✓' : i+1}
+                </div>
+                <span style={{ fontSize:11, fontWeight:(done||active)?600:400, color:(done||active)?'#1351B4':'#999', whiteSpace:'nowrap' }}>{step.label}</span>
+              </div>
+              {i < steps.length-1 && <div style={{ flex:1, height:2, background:done?'#1351B4':'#E7E9EB', margin:'0 6px' }}/>}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
-    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',background:'#F4F5F7'}}>
+    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:'#F4F5F7', fontFamily:"'Inter',sans-serif" }}>
 
       {/* Barra gov.pe */}
-      <div style={{background:'#001A7A',height:32,display:'flex',alignItems:'center',
-        justifyContent:'space-between',padding:'0 24px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:7}}>
-          <span style={{color:'#FFCD37',fontSize:14}}>★</span>
-          <span style={{color:'#F8FAFC',fontSize:12,fontWeight:500}}>Governo de Pernambuco</span>
+      <div style={{ background:'#001A7A', height:32, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+          <span style={{ color:'#FFCD37', fontSize:14 }}>★</span>
+          <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          {['A-','A','A+'].map(t=><span key={t} style={{color:'#F8FAFC',fontSize:12,fontWeight:700,cursor:'pointer',padding:'0 2px'}}>{t}</span>)}
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          {['A-','A','A+'].map(t=><span key={t} style={{ color:'#F8FAFC', fontSize:12, fontWeight:700, cursor:'pointer', padding:'0 2px' }}>{t}</span>)}
         </div>
       </div>
 
       {/* Header */}
-      <div style={{background:'#fff',borderBottom:'1px solid #E7E9EB',padding:'0 24px',
-        display:'flex',alignItems:'center',justifyContent:'space-between',height:64}}>
-        <div style={{display:'flex',alignItems:'center',gap:14}}>
-          <img src="../assets/ati_logo.png" alt="ATI" style={{height:40,width:'auto',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
-          <div style={{width:1,height:32,background:'#E7E9EB'}}/>
-          <img src="../assets/Brasao.png" alt="Brasão" style={{height:40,width:'auto',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
-          <img src="../assets/Governo.png" alt="Gov PE" style={{height:32,width:'auto',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
-          <div style={{width:1,height:32,background:'#E7E9EB'}}/>
-          <span style={{fontSize:14,fontWeight:700,color:'#001A7A'}}>Conecta Gov.PE</span>
+      <div style={{ background:'#fff', borderBottom:'1px solid #E7E9EB', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+          <img src="../assets/ati_logo.png" alt="ATI" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+          <div style={{ width:1, height:32, background:'#E7E9EB' }}/>
+          <img src="../assets/Brasao.png" alt="Brasão" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+          <img src="../assets/Governo.png" alt="Gov PE" style={{ height:32, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+          <div style={{ width:1, height:32, background:'#E7E9EB' }}/>
+          <span style={{ fontSize:14, fontWeight:700, color:'#001A7A' }}>Conecta Gov.PE</span>
         </div>
-        {/* Usuário logado */}
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
-          {/* Badge GOV.BR */}
-          <div style={{display:'flex',alignItems:'center',gap:6,background:'#F0F4FF',
-            border:'1px solid #C7D6FF',borderRadius:100,padding:'4px 12px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:0,
-              background:'#1351B4',borderRadius:4,padding:'2px 6px'}}>
-              <span style={{fontSize:10,fontWeight:900,color:'#fff',letterSpacing:'-0.5px'}}>gov</span>
-              <span style={{fontSize:10,fontWeight:900,color:'#FFCD07',letterSpacing:'-0.5px'}}>.br</span>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:6, background:'#F0F4FF', border:'1px solid #C7D6FF', borderRadius:100, padding:'4px 12px' }}>
+            <div style={{ display:'flex', alignItems:'center', background:'#1351B4', borderRadius:4, padding:'2px 6px' }}>
+              <span style={{ fontSize:10, fontWeight:900, color:'#fff', letterSpacing:'-0.5px' }}>gov</span>
+              <span style={{ fontSize:10, fontWeight:900, color:'#FFCD07', letterSpacing:'-0.5px' }}>.br</span>
             </div>
-            <span style={{fontSize:12,fontWeight:600,color:'#001A7A'}}>{usuario.nome.split(' ')[0]}</span>
+            <span style={{ fontSize:12, fontWeight:600, color:'#001A7A' }}>{usuario.nome.split(' ')[0]}</span>
           </div>
           <button onClick={onSair}
-            style={{height:34,padding:'0 14px',borderRadius:6,border:'1px solid #E45F5F',
-              background:'#fff',color:'#AC1010',fontSize:12,fontWeight:600,cursor:'pointer',
-              display:'flex',alignItems:'center',gap:6,transition:'all 0.15s'}}
+            style={{ height:34, padding:'0 14px', borderRadius:6, border:'1px solid #E45F5F', background:'#fff', color:'#AC1010', fontSize:12, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}
             onMouseEnter={e=>e.currentTarget.style.background='#FFE4E4'}
             onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AC1010" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -869,369 +680,178 @@ function MinhasSolicitacoes({ usuario, onSair }) {
       </div>
 
       {/* Conteúdo */}
-      <div style={{flex:1,padding:'28px 24px',maxWidth:1100,width:'100%',margin:'0 auto'}}>
+      <div style={{ flex:1, padding:'28px 24px', maxWidth:900, width:'100%', margin:'0 auto' }}>
 
-        {/* Saudação */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
-          <div>
-            <h1 style={{fontSize:22,fontWeight:700,color:'#001A7A',marginBottom:3}}>
-              Olá, {usuario.nome.split(' ')[0]} 👋
-            </h1>
-            <p style={{fontSize:13,color:'#494C57'}}>
-              Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE
-            </p>
-          </div>
-          <div style={{textAlign:'right'}}>
-            <div style={{display:'flex',alignItems:'center',gap:5,justifyContent:'flex-end',marginBottom:3}}>
-              <div style={{width:7,height:7,borderRadius:'50%',background:'#2B6418'}}/>
-              <span style={{fontSize:11,color:'#2B6418',fontWeight:500}}>SEI-PE disponível</span>
-            </div>
-            <span style={{fontSize:11,color:'#888'}}>Sincronizado hoje às {sync}</span>
-          </div>
-        </div>
-
-        {/* Cards KPI */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:20}}>
-          {[
-            {label:'Total',       valor:total,     cor:'#001A7A', bg:'#fff',     border:'#E7E9EB'},
-            {label:'Aprovadas',   valor:aprovadas, cor:'#2B6418', bg:'#EAFBD7',  border:'#86D562'},
-            {label:'Em análise',  valor:analise,   cor:'#B77706', bg:'#FFF6CE',  border:'#FFE082'},
-            {label:'Pendentes',   valor:pendentes, cor:'#0034B7', bg:'#E6F3FF',  border:'#99C6FF'},
-            {label:'Reprovadas',  valor:reprovadas,cor:'#AC1010', bg:'#FFE4E4',  border:'#E45F5F'},
-          ].map(k=>(
-            <div key={k.label} onClick={()=>{ setFiltroStatus(k.label==='Total'?'':k.label); setAbaAtiva('solicitacoes'); }}
-              style={{background:k.bg,border:`1.5px solid ${k.border}`,borderRadius:8,
-                padding:'14px 16px',cursor:'pointer',transition:'box-shadow 0.15s'}}
-              onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 14px rgba(0,26,122,0.12)'}
-              onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
-              <div style={{fontSize:11,color:k.cor,fontWeight:500,opacity:0.8,marginBottom:4}}>{k.label}</div>
-              <div style={{fontSize:30,fontWeight:700,color:k.cor,lineHeight:1}}>{k.valor}</div>
-              {k.label!=='Total'&&total>0&&<div style={{fontSize:10,color:k.cor,opacity:0.65,marginTop:4}}>{Math.round((k.valor/total)*100)}% do total</div>}
-            </div>
-          ))}
-        </div>
-
-        {/* Aviso pendente */}
-        {(pendentes > 0 || analise > 0) && (
-          <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
-            padding:'10px 14px',marginBottom:16,display:'flex',gap:10,alignItems:'center'}}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span style={{fontSize:13,color:'#B77706'}}>
-              Você tem <strong>{analise + pendentes} solicitaç{(analise+pendentes)!==1?'ões':'ão'}</strong> que requerem atenção ou aguardam análise.
+        <div style={{ marginBottom:20 }}>
+          <h1 style={{ fontSize:22, fontWeight:700, color:'#001A7A', marginBottom:4 }}>Minhas solicitações</h1>
+          <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'#494C57' }}>
+            <span>Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE</span>
+            <span style={{ color:'#CED2D7' }}>·</span>
+            <span style={{ display:'flex', alignItems:'center', gap:4, color:'#2B6418', fontWeight:500 }}>
+              <span style={{ width:7, height:7, borderRadius:'50%', background:'#2B6418', display:'inline-block' }}/>
+              SEI-PE disponível
             </span>
           </div>
-        )}
-
-        {/* Abas */}
-        <div style={{display:'flex',gap:0,borderBottom:'2px solid #E7E9EB',marginBottom:16}}>
-          {[
-            {key:'solicitacoes', label:`Todas as solicitações (${total})`},
-            {key:'aprovadas',    label:`APIs com acesso autorizado (${aprovadas})`},
-          ].map(aba=>(
-            <button key={aba.key} onClick={()=>setAbaAtiva(aba.key)}
-              style={{padding:'10px 20px',border:'none',background:'none',
-                fontSize:13,fontWeight:abaAtiva===aba.key?700:400,
-                color:abaAtiva===aba.key?'#0034B7':'#494C57',cursor:'pointer',
-                borderBottom:abaAtiva===aba.key?'2px solid #0034B7':'2px solid transparent',
-                marginBottom:'-2px',transition:'all 0.15s'}}>
-              {aba.label}
-            </button>
-          ))}
         </div>
 
-        {/* ── ABA: TODAS AS SOLICITAÇÕES ── */}
-        {abaAtiva === 'solicitacoes' && (
-          <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
-
-            {/* Filtros */}
-            <div style={{padding:'12px 16px',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',
-              display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-              <span style={{fontSize:12,fontWeight:600,color:'#494C57'}}>Filtrar:</span>
-              {/* Status */}
-              <div style={{position:'relative'}}>
-                <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)}
-                  style={{height:32,border:'1px solid #CED2D7',borderRadius:5,padding:'0 24px 0 10px',
-                    fontSize:12,color:'#28272C',background:'#fff',outline:'none',appearance:'none',cursor:'pointer'}}>
-                  <option value="">Todos os status</option>
-                  {['Aprovada','Em análise','Pendente','Reprovada'].map(s=><option key={s} value={s}>{s}</option>)}
-                </select>
-                <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>▾</span>
-              </div>
-              {/* API */}
-              <div style={{position:'relative'}}>
-                <select value={filtroApi} onChange={e=>setFiltroApi(e.target.value)}
-                  style={{height:32,border:'1px solid #CED2D7',borderRadius:5,padding:'0 24px 0 10px',
-                    fontSize:12,color:'#28272C',background:'#fff',outline:'none',appearance:'none',cursor:'pointer'}}>
-                  <option value="">Todas as APIs</option>
-                  {apisUnicas.map(a=><option key={a} value={a}>{a}</option>)}
-                </select>
-                <span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>▾</span>
-              </div>
-              {(filtroStatus||filtroApi)&&(
-                <button onClick={()=>{setFiltroStatus('');setFiltroApi('');}}
-                  style={{height:32,padding:'0 12px',borderRadius:5,border:'1px solid #CED2D7',
-                    background:'#fff',color:'#494C57',fontSize:12,cursor:'pointer'}}>
-                  Limpar
-                </button>
-              )}
-              <span style={{fontSize:11,color:'#888',marginLeft:'auto'}}>
-                {filtradas.length} de {total} registro{total!==1?'s':''}
-              </span>
-            </div>
-
-            {filtradas.length === 0 ? (
-              <div style={{padding:'48px',textAlign:'center',color:'#888',fontSize:13}}>
-                Nenhuma solicitação encontrada com os filtros aplicados.
-              </div>
-            ) : (
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr>
-                      {['Protocolo SEI','API solicitada','Órgão cedente','Data da solicitação','Última atualização','Status',''].map(h=>(
-                        <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,
-                          color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtradas.map((s)=>(
-                      <tr key={s.id} style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
-                        onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
-                        onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                        <td style={{padding:'11px 14px'}}>
-                          <code style={{fontSize:11,fontFamily:'monospace',background:'#F4F5F7',
-                            padding:'2px 7px',borderRadius:3,color:'#28272C'}}>{s.protocolo}</code>
-                        </td>
-                        <td style={{padding:'11px 14px',fontSize:13,fontWeight:600,color:'#001A7A'}}>{s.api}</td>
-                        <td style={{padding:'11px 14px'}}>
-                          <span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',
-                            padding:'2px 8px',borderRadius:100,border:'1px solid #99C6FF'}}>
-                            {s.orgaoCedente}
-                          </span>
-                        </td>
-                        <td style={{padding:'11px 14px',fontSize:12,color:'#494C57'}}>{s.dataSolicitacao}</td>
-                        <td style={{padding:'11px 14px',fontSize:12,color:'#494C57'}}>{s.dataAtualizacao}</td>
-                        <td style={{padding:'11px 14px'}}><StatusBadge status={s.status}/></td>
-                        <td style={{padding:'11px 14px',textAlign:'right'}}>
-                          <button onClick={()=>setModalDetalhe(s)}
-                            style={{height:30,padding:'0 12px',borderRadius:5,border:'1px solid #99C6FF',
-                              background:'#E6F3FF',color:'#0034B7',fontSize:11,fontWeight:600,
-                              cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s'}}
-                            onMouseEnter={e=>e.currentTarget.style.background='#C7DFFF'}
-                            onMouseLeave={e=>e.currentTarget.style.background='#E6F3FF'}>
-                            Ver detalhes
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Rodapé informativo */}
-            <div style={{padding:'10px 16px',borderTop:'1px solid #E7E9EB',background:'#F8FAFC',
-              display:'flex',alignItems:'center',gap:8}}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span style={{fontSize:11,color:'#888'}}>
-                Dados somente leitura · Sincronizados com o SEI-PE · As solicitações são gerenciadas exclusivamente no SEI-PE
-              </span>
+        {/* Filtros */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, flexWrap:'wrap', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:12, color:'#494C57', fontWeight:600 }}>Fase:</span>
+            <div style={{ position:'relative' }}>
+              <select value={filtroFase} onChange={e=>setFiltroFase(e.target.value)} style={{ height:32, border:'1px solid #CED2D7', borderRadius:5, padding:'0 26px 0 10px', fontSize:12, color:'#28272C', background:'#fff', outline:'none', appearance:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
+                <option value="">Todas as fases</option>
+                {['Solicitação','Análise','Em atendimento','Resultado'].map(f=><option key={f} value={f}>{f}</option>)}
+              </select>
+              <span style={{ position:'absolute', right:7, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:10, color:'#666' }}>▾</span>
             </div>
           </div>
-        )}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:12, color:'#494C57', fontWeight:600 }}>Classificar por:</span>
+            <div style={{ position:'relative' }}>
+              <select value={filtroOrdem} onChange={e=>setFiltroOrdem(e.target.value)} style={{ height:32, border:'1px solid #CED2D7', borderRadius:5, padding:'0 26px 0 10px', fontSize:12, color:'#28272C', background:'#fff', outline:'none', appearance:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
+                <option value="recente">Atualização mais recente</option>
+                <option value="antigo">Data de criação</option>
+                <option value="protocolo">Protocolo</option>
+              </select>
+              <span style={{ position:'absolute', right:7, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:10, color:'#666' }}>▾</span>
+            </div>
+          </div>
+        </div>
 
-        {/* ── ABA: APIs COM ACESSO APROVADO ── */}
-        {abaAtiva === 'aprovadas' && (
-          <div>
-            {apisAprovadas.length === 0 ? (
-              <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,
-                padding:'48px',textAlign:'center'}}>
-                <div style={{fontSize:40,marginBottom:12}}>🔒</div>
-                <div style={{fontSize:16,fontWeight:600,color:'#28272C',marginBottom:6}}>Nenhuma API aprovada ainda</div>
-                <div style={{fontSize:13,color:'#888',maxWidth:400,margin:'0 auto'}}>
-                  Suas solicitações serão exibidas aqui após aprovação pelo órgão cedente.
-                </div>
-              </div>
-            ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:14}}>
-                {apisAprovadas.map(s=>(
-                  <div key={s.id}
-                    style={{background:'#fff',border:'1.5px solid #86D562',borderRadius:10,
-                      padding:'20px',boxShadow:'0 2px 12px rgba(43,100,24,0.08)',
-                      transition:'box-shadow 0.15s'}}
-                    onMouseEnter={e=>e.currentTarget.style.boxShadow='0 6px 24px rgba(43,100,24,0.15)'}
-                    onMouseLeave={e=>e.currentTarget.style.boxShadow='0 2px 12px rgba(43,100,24,0.08)'}>
-                    {/* Topo do card */}
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
-                      <div>
-                        <div style={{fontSize:15,fontWeight:700,color:'#001A7A',marginBottom:3}}>{s.api}</div>
-                        <span style={{fontSize:11,fontWeight:600,background:'#E6F3FF',color:'#0034B7',
-                          padding:'2px 8px',borderRadius:100,border:'1px solid #99C6FF'}}>
-                          {s.orgaoCedente}
-                        </span>
+        {/* Aba */}
+        <div style={{ display:'flex', gap:0, borderBottom:'2px solid #E7E9EB', marginBottom:16 }}>
+          <button onClick={()=>setFiltroFase('')} style={{ padding:'8px 18px', border:'none', background:'none', fontSize:13, fontWeight:filtroFase===''?700:400, color:filtroFase===''?'#0034B7':'#494C57', cursor:'pointer', borderBottom:filtroFase===''?'2px solid #0034B7':'2px solid transparent', marginBottom:'-2px', fontFamily:"'Inter',sans-serif" }}>
+            Pessoa Física ({todasSolicitacoes.length})
+          </button>
+        </div>
+
+        {/* Lista */}
+        {filtradas.length === 0 ? (
+          <div style={{ background:'#fff', border:'1px solid #E7E9EB', borderRadius:10, padding:'48px', textAlign:'center', color:'#888', fontSize:13 }}>Nenhuma solicitação encontrada para o filtro selecionado.</div>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {filtradas.map(sol => {
+              const aberto = !!expandido[sol.id];
+              const cfg = statusCfg[sol.status] || {};
+              const msg = bannerMsg[sol.status] || '';
+              return (
+                <div key={sol.id}
+                  style={{ background:'#fff', border:`1px solid ${aberto?'#0034B7':'#E7E9EB'}`, borderRadius:10, overflow:'hidden', cursor:'pointer', transition:'border-color 0.15s, box-shadow 0.15s', boxShadow:aberto?'0 2px 12px rgba(0,52,183,0.1)':'none' }}
+                  onClick={()=>toggleExpandir(sol.id)}>
+
+                  {/* Cabeçalho */}
+                  <div style={{ padding:'16px 20px', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                        <code style={{ fontSize:11, fontFamily:'monospace', background:'#F4F5F7', padding:'2px 8px', borderRadius:4, color:'#444' }}>{sol.protocolo}</code>
+                        <span style={{ fontSize:11, fontWeight:700, background:'#E6F3FF', color:'#0034B7', padding:'2px 8px', borderRadius:100, border:'1px solid #99C6FF' }}>{sol.orgaoCedente}</span>
                       </div>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',
-                        borderRadius:100,fontSize:11,fontWeight:700,background:'#EAFBD7',
-                        color:'#2B6418',border:'1px solid #86D562',flexShrink:0}}>
-                        <span style={{width:6,height:6,borderRadius:'50%',background:'#2B6418'}}/>
-                        Acesso ativo
-                      </span>
+                      <div style={{ fontSize:15, fontWeight:700, color:'#001A7A', marginBottom:2 }}>{sol.api}</div>
+                      <div style={{ fontSize:12, color:'#494C57' }}>Data da requisição: <strong style={{ color:'#28272C' }}>{sol.dataSolicitacao}</strong></div>
                     </div>
-                    {/* Detalhe */}
-                    <div style={{background:'#F4FAF0',border:'1px solid #C2EEAC',borderRadius:6,
-                      padding:'8px 12px',marginBottom:12,fontSize:12,color:'#2B6418',lineHeight:1.5}}>
-                      {s.detalhe}
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8, flexShrink:0 }}>
+                      <StatusBadge status={sol.status}/>
+                      <div style={{ fontSize:11, color:'#888' }}>Fase: <strong style={{ color:'#444' }}>{sol.fase}</strong></div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0034B7" strokeWidth="2.5" strokeLinecap="round" style={{ transform:aberto?'rotate(180deg)':'none', transition:'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
-                    {/* Infos */}
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:12}}>
-                      {[
-                        ['Protocolo SEI', s.protocolo.replace('SEI-PE ','')],
-                        ['Data da aprovação', s.dataAtualizacao],
-                        ['Responsável', s.responsavel],
-                      ].map(([k,v])=>(
-                        <div key={k} style={{background:'#F8FAFC',border:'1px solid #E7E9EB',
-                          borderRadius:5,padding:'7px 10px'}}>
-                          <div style={{fontSize:10,color:'#888',marginBottom:2}}>{k}</div>
-                          <div style={{fontSize:12,fontWeight:500,color:'#28272C',
-                            fontFamily:k==='Protocolo SEI'?'monospace':'inherit'}}>{v}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Ação */}
-                    <button
-                      onClick={()=>setModalDetalhe(s)}
-                      style={{width:'100%',height:34,borderRadius:6,
-                        border:'1.5px solid #0034B7',background:'#fff',
-                        color:'#0034B7',fontSize:12,fontWeight:600,cursor:'pointer',
-                        transition:'all 0.15s'}}
-                      onMouseEnter={e=>e.currentTarget.style.background='#E6F3FF'}
-                      onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                      Ver detalhes da solicitação
-                    </button>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  {/* Detalhes expandidos */}
+                  {aberto && (
+                    <div style={{ borderTop:'1px solid #F0F2F5', padding:'16px 20px' }} onClick={e=>e.stopPropagation()}>
+
+                      {/* Resumo */}
+                      <div style={{ background:'#F8FAFC', border:'1px solid #E7E9EB', borderRadius:8, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+                        {[['Data da criação',sol.dataSolicitacao],['Última atualização',sol.dataAtualizacao],['Status',sol.status],['Protocolo',sol.protocolo.replace('SEI-PE ','')]].map(([k,v])=>(
+                          <div key={k}>
+                            <div style={{ fontSize:10, color:'#888', marginBottom:2 }}>{k}</div>
+                            <div style={{ fontSize:12, fontWeight:600, color:'#28272C', fontFamily:k==='Protocolo'?'monospace':'inherit' }}>{v}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Timeline */}
+                      <Timeline fase={sol.fase} status={sol.status}/>
+
+                      {/* Banner */}
+                      <div style={{ background:cfg.banner, border:`1px solid ${cfg.bannerBorder}`, borderRadius:6, padding:'10px 14px', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={cfg.bannerColor} strokeWidth="2" strokeLinecap="round" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span style={{ fontSize:13, color:cfg.bannerColor, fontWeight:500 }}>{msg}</span>
+                      </div>
+
+                      {/* Histórico */}
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:700, color:'#28272C', marginBottom:10 }}>Histórico</div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                          {sol.historico.map((h, i) => (
+                            <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                              <div style={{ width:30, height:30, borderRadius:'50%', background:'#E6F3FF', border:'1px solid #99C6FF', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'#0034B7', flexShrink:0 }}>A</div>
+                              <div style={{ background:'#F8FAFC', border:'1px solid #E7E9EB', borderRadius:8, padding:'10px 14px', flex:1 }}>
+                                <div style={{ fontSize:11, fontWeight:700, color:'#444', marginBottom:5 }}>Atendimento · {h.data}</div>
+                                <p style={{ fontSize:12, color:'#494C57', lineHeight:1.65, whiteSpace:'pre-line' }}>{h.msg}</p>
+                                {h.avaliar && (
+                                  <button onClick={e=>e.stopPropagation()} style={{ marginTop:8, height:28, padding:'0 14px', borderRadius:100, background:'#1351B4', border:'none', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>Avaliar serviço</button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Ação */}
+                      <div style={{ marginTop:16, display:'flex', justifyContent:'flex-end' }}>
+                        <button
+                          onClick={e=>{ e.stopPropagation(); window.open('https://sei.pe.gov.br','_blank','noopener,noreferrer'); }}
+                          style={{ height:36, padding:'0 18px', borderRadius:6, border:'1.5px solid #0034B7', background:'#0034B7', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}
+                          onMouseEnter={e=>e.currentTarget.style.background='#001A7A'}
+                          onMouseLeave={e=>e.currentTarget.style.background='#0034B7'}>
+                          Acompanhar no SEI-PE →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
+
+        <div style={{ marginTop:12, padding:'8px 0', fontSize:11, color:'#888', display:'flex', alignItems:'center', gap:6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Dados somente leitura · Sincronizados com o SEI-PE · Clique em uma solicitação para expandir
+        </div>
       </div>
 
-      {/* Modal Detalhe */}
-      {modalDetalhe && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,26,122,0.4)',zIndex:1000,
-          display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
-          <div style={{background:'#fff',borderRadius:10,width:'100%',maxWidth:520,
-            boxShadow:'0 8px 40px rgba(0,26,122,0.2)',overflow:'hidden'}}>
-            {/* Header */}
-            <div style={{background:`linear-gradient(135deg,#001A7A 0%,#0034B7 100%)`,
-              padding:'18px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <div>
-                <div style={{fontSize:11,color:'rgba(248,250,252,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:3}}>Detalhes da solicitação</div>
-                <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>{modalDetalhe.api}</div>
-              </div>
-              <button onClick={()=>setModalDetalhe(null)}
-                style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:5,
-                  width:28,height:28,cursor:'pointer',color:'#fff',fontSize:16,
-                  display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-            </div>
-            {/* Conteúdo */}
-            <div style={{padding:'20px'}}>
-              {/* Status */}
-              <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
-                {(() => {
-                  const c = statusCfg[modalDetalhe.status]||{bg:'#F1EFE8',color:'#5F5E5A',border:'#D3D1C7',dot:'#888'};
-                  return (
-                    <span style={{display:'inline-flex',alignItems:'center',gap:6,padding:'6px 16px',
-                      borderRadius:100,fontSize:14,fontWeight:700,background:c.bg,color:c.color,
-                      border:`1.5px solid ${c.border}`}}>
-                      <span style={{width:8,height:8,borderRadius:'50%',background:c.dot}}/>
-                      {modalDetalhe.status}
-                    </span>
-                  );
-                })()}
-              </div>
-              {/* Campos */}
-              <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
-                {[
-                  ['Protocolo SEI',       modalDetalhe.protocolo, true],
-                  ['API solicitada',      modalDetalhe.api,        false],
-                  ['Órgão cedente',       modalDetalhe.orgaoCedente, false],
-                  ['Responsável no SEI',  modalDetalhe.responsavel,  false],
-                  ['Data da solicitação', modalDetalhe.dataSolicitacao, false],
-                  ['Última atualização',  modalDetalhe.dataAtualizacao, false],
-                ].map(([k,v,mono])=>(
-                  <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-                    padding:'8px 12px',background:'#F8FAFC',border:'1px solid #E7E9EB',borderRadius:6}}>
-                    <span style={{fontSize:12,color:'#494C57'}}>{k}</span>
-                    <span style={{fontSize:13,fontWeight:500,color:'#28272C',
-                      fontFamily:mono?'monospace':'inherit'}}>{v}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Observação */}
-              <div style={{background:'#E6F3FF',border:'1px solid #99C6FF',borderRadius:6,
-                padding:'10px 12px',display:'flex',gap:8,marginBottom:16}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0034B7" strokeWidth="2" style={{flexShrink:0,marginTop:1}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span style={{fontSize:12,color:'#0034B7',lineHeight:1.5}}>{modalDetalhe.detalhe}</span>
-              </div>
-              {/* Acompanhar no SEI */}
-              <div style={{display:'flex',gap:8}}>
-                <button
-                  onClick={()=>window.open('https://sei.pe.gov.br','_blank','noopener,noreferrer')}
-                  style={{flex:1,height:38,borderRadius:6,border:'1.5px solid #0034B7',
-                    background:'#0034B7',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',
-                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
-                    transition:'background 0.15s'}}
-                  onMouseEnter={e=>e.currentTarget.style.background='#001A7A'}
-                  onMouseLeave={e=>e.currentTarget.style.background='#0034B7'}>
-                  Acompanhar no SEI-PE →
-                </button>
-                <button onClick={()=>setModalDetalhe(null)}
-                  style={{height:38,padding:'0 16px',borderRadius:6,border:'1px solid #CED2D7',
-                    background:'#fff',color:'#494C57',fontSize:13,fontWeight:600,cursor:'pointer'}}>
-                  ← Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Footer */}
-      <div style={{background:'#0034B7',padding:'20px 24px',marginTop:'auto'}}>
-        <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:20}}>
-          <img src="../assets/ati_logo.png" alt="ATI" style={{height:36,objectFit:'contain',filter:'brightness(0) invert(1)'}} onError={e=>e.target.style.display='none'}/>
-          <div style={{width:1,height:32,background:'rgba(255,255,255,0.25)'}}/>
-          <img src="../assets/Governo.png" alt="Gov PE" style={{height:28,objectFit:'contain',filter:'brightness(0) invert(1)'}} onError={e=>e.target.style.display='none'}/>
+      <div style={{ background:'#0034B7', padding:'20px 24px', marginTop:'auto' }}>
+        <div style={{ maxWidth:900, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'flex-end', gap:20 }}>
+          <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
+          <div style={{ width:1, height:32, background:'rgba(255,255,255,0.25)' }}/>
+          <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
         </div>
-        <div style={{maxWidth:1100,margin:'8px auto 0',borderTop:'1px solid rgba(255,255,255,0.15)',paddingTop:12}}>
-          <span style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</span>
+        <div style={{ maxWidth:900, margin:'8px auto 0', borderTop:'1px solid rgba(255,255,255,0.15)', paddingTop:12 }}>
+          <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</span>
         </div>
       </div>
     </div>
   );
 }
 
+/* ── App ─────────────────────────────────────────────────── */
 function App() {
-  const [page, setPage]           = React.useState('Início');
+  const [page, setPage] = React.useState('Início');
   const [showSsoModal, setShowSsoModal] = React.useState(false);
-  const [telaExpresso, setTelaExpresso] = React.useState(false);
   const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null);
   const [detailApi, setDetailApi] = React.useState(null);
-  const [govbrUsuario, setGovbrUsuario] = React.useState(null); /* usuário autenticado via GOV.BR */
-
+  const [govbrUsuario, setGovbrUsuario] = React.useState(null);
   const [usuariosCadastrados, setUsuariosCadastrados] = React.useState([...USUARIOS_AUTORIZADOS]);
 
   const handleAdminClick = () => { setShowSsoModal(true); };
 
-  /* Autenticação via Expresso (ADM/Cedente → backoffice) */
   const handleAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
-    setTelaExpresso(false);
-    if (usuariosCadastrados.includes(cpfLimpo)) {
+    if(usuariosCadastrados.includes(cpfLimpo)){
       try { window.location.href = '../gerenciar-apis/index.html'; }
       catch(e) { alert('Acesso autorizado! Redirecionando para o backoffice...'); }
     } else {
@@ -1240,51 +860,31 @@ function App() {
     }
   };
 
-  /* Autenticação via GOV.BR (Solicitante → Minhas Solicitações) */
   const handleGovBrAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
     const usuario = GOVBR_USUARIOS[cpfLimpo];
-    if (usuario) {
+    if(usuario){
       setGovbrUsuario(usuario);
     } else {
-      /* CPF não tem solicitações cadastradas — cria perfil genérico */
-      setGovbrUsuario({
-        nome: 'Cidadão', cpf: cpfLimpo,
-        cpfMask: cpfLimpo.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.XXX.XXX-$2'),
-        email: '',
-      });
+      setGovbrUsuario({ nome:'Cidadão', cpf:cpfLimpo, email:'' });
     }
+    setShowSsoModal(false);
   };
 
-  /* Tela Minhas Solicitações (GOV.BR) */
-  if (govbrUsuario) {
-    return <MinhasSolicitacoes usuario={govbrUsuario} onSair={()=>setGovbrUsuario(null)}/>;
-  }
+  if(govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} onSair={()=>setGovbrUsuario(null)}/>;
+  if(telaAcessoNegado) return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
 
-  /* Tela do Expresso */
-  if (telaExpresso) {
-    return <ExpressoScreen onVoltar={()=>setTelaExpresso(false)} onAutenticar={handleAutenticar}/>;
-  }
-
-  /* Tela de acesso negado */
-  if (telaAcessoNegado) {
-    return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
-  }
-
-  /* Página de detalhe da API */
-  if (page === '__detail__') {
-    return (
-      <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
-        <GovBar/>
-        <Header activePage="Catálogo de APIs" onNav={p=>{ setDetailApi(null); setPage(p); }} onAdminClick={handleAdminClick}/>
-        <main style={{ flex:1 }}>
-          <DetailPage api={detailApi} onBack={()=>{ setDetailApi(null); setPage('Catálogo de APIs'); }}/>
-        </main>
-        <Footer/>
-        {showSsoModal && <SsoModal onClose={()=>{ setShowSsoModal(false); setTelaExpresso(true); }} onAcessoNegado={()=>{}} onAcessoAutorizado={handleAutenticar}/>}
-      </div>
-    );
-  }
+  if(page === '__detail__') return (
+    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
+      <GovBar/>
+      <Header activePage="Catálogo de APIs" onNav={p=>{ setDetailApi(null); setPage(p); }} onAdminClick={handleAdminClick}/>
+      <main style={{ flex:1 }}>
+        <DetailPage api={detailApi} onBack={()=>{ setDetailApi(null); setPage('Catálogo de APIs'); }}/>
+      </main>
+      <Footer/>
+      {showSsoModal && <SsoModal onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>}
+    </div>
+  );
 
   const pageContent = {
     'Início':           (<><Hero onNav={setPage}/><Sobre/><Faq/></>),
@@ -1302,12 +902,10 @@ function App() {
         {pageContent[page]}
       </main>
       <Footer/>
-
-      {/* Modal SSO — substitui completamente o AdminModal com login/senha */}
       {showSsoModal && (
         <SsoModal
-          onClose={()=>{ setShowSsoModal(false); setTelaExpresso(true); }}
-          onAcessoNegado={()=>{}}
+          onClose={()=>setShowSsoModal(false)}
+          onAcessoNegado={()=>{setShowSsoModal(false);}}
           onAcessoAutorizado={handleAutenticar}
           onGovBrAutenticado={handleGovBrAutenticar}
         />
