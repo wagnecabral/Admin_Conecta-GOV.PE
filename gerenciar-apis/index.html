@@ -1969,14 +1969,11 @@ function Dashboard({ onNav }) {
         </div>
       )}
 
-      {/* ── Linha 1: KPIs principais sem "Operações publicadas" ── */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+      {/* ── Linha 1: KPIs principais ajustados — removidos KPIs marcados ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:10}}>
         <KCard label="APIs Disponíveis" valor={apisAtivas}
           sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
           cor="#2B6418" nav="apis" spark={sparkApis} sparkColor="#2B6418"/>
-        <KCard label="Usuários com acesso" valor={usrsAtivos}
-          sub="com acesso liberado"
-          cor="#2B6418" nav="usuarios" spark={sparkUsrs} sparkColor="#2B6418"/>
         <KCard label="Solicitações SEI-PE" valor={seiTotal}
           sub="no período"
           cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
@@ -2330,8 +2327,13 @@ function RelUso({ showToast }) {
     const p=[];
     if(f.apiNome)    p.push('API: '+f.apiNome);
     if(f.tipo)       p.push('Tipo: '+f.tipo);
-    if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
-    if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
+    const formatDt = (v) => {
+      if(!v) return '';
+      const [d,t='00:00'] = v.split('T');
+      return `${d.split('-').reverse().join('/')} ${t}`;
+    };
+    if(f.dataInicio) p.push('De: '+formatDt(f.dataInicio));
+    if(f.dataFim)    p.push('Até: '+formatDt(f.dataFim));
     return p.length ? p.join(' | ') : 'Sem filtros — todos os registros';
   };
 
@@ -2498,12 +2500,12 @@ function RelUso({ showToast }) {
         {/* Linha 2: Data Início + Data Fim + botões */}
         <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
           <div style={{flex:'0 0 200px'}}>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
-            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data/Hora Início</label>
+            <input type="datetime-local" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div style={{flex:'0 0 200px'}}>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
-            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data/Hora Fim</label>
+            <input type="datetime-local" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div style={{marginLeft:'auto',display:'flex',gap:8}}>
             <button onClick={handleLimpar}
@@ -2832,14 +2834,11 @@ function Dashboard({ onNav }) {
         </div>
       )}
 
-      {/* ── Linha 1: KPIs principais sem "Operações publicadas" ── */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+      {/* ── Linha 1: KPIs principais ajustados — removidos KPIs marcados ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:10}}>
         <KCard label="APIs Disponíveis" valor={apisAtivas}
           sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
           cor="#2B6418" nav="apis" spark={sparkApis} sparkColor="#2B6418"/>
-        <KCard label="Usuários com acesso" valor={usrsAtivos}
-          sub="com acesso liberado"
-          cor="#2B6418" nav="usuarios" spark={sparkUsrs} sparkColor="#2B6418"/>
         <KCard label="Solicitações SEI-PE" valor={seiTotal}
           sub="no período"
           cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
@@ -2980,7 +2979,6 @@ function RelAuditoria({ showToast }) {
     }
     if(f.dataFim){
       const fim = new Date(f.dataFim);
-      fim.setHours(23,59,59);
       if(parseTs(r.timestamp) > fim) return false;
     }
     return true;
@@ -2988,8 +2986,13 @@ function RelAuditoria({ showToast }) {
 
   const filtrosLabel = () => {
     const p=[];
-    if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
-    if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
+    const formatDt = (v) => {
+      if(!v) return '';
+      const [d,t='00:00'] = v.split('T');
+      return `${d.split('-').reverse().join('/')} ${t}`;
+    };
+    if(f.dataInicio) p.push('De: '+formatDt(f.dataInicio));
+    if(f.dataFim)    p.push('Até: '+formatDt(f.dataFim));
     if(f.modulo)     p.push('Módulo: '+f.modulo);
     if(f.acao)       p.push('Ação: '+(ACAO_CFG[f.acao]?.label||f.acao));
     if(f.executor)   p.push('Executor: '+f.executor);
@@ -3165,12 +3168,12 @@ function RelAuditoria({ showToast }) {
         {/* Linha 1: Período + Módulo + Tipo de ação */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:14,marginBottom:14}}>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
-            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data/Hora Início</label>
+            <input type="datetime-local" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div>
-            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
-            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data/Hora Fim</label>
+            <input type="datetime-local" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Módulo</label>
