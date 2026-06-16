@@ -1808,6 +1808,7 @@ function Dashboard({ onNav }) {
   const apisInativas = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
   const totalCats    = INITIAL_CATS.length;
   const catAtivas    = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
+  const catInativas  = Math.max(totalCats - catAtivas, 0);
   const totalOrgaos  = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
   const usrsAtivos   = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
   const pendentes    = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
@@ -1880,6 +1881,61 @@ function Dashboard({ onNav }) {
       {progress!==undefined && <ProgressBar value={progress} total={progressTotal} color={cor||C.brand}/>}
     </div>
   );
+
+
+  const ColumnChartCard = ({label, total, ativo, inativo, corAtivo, nav}) => {
+    const max = Math.max(ativo, inativo, 1);
+    const alturaAtivo = Math.max((ativo / max) * 94, ativo > 0 ? 18 : 0);
+    const alturaInativo = Math.max((inativo / max) * 94, inativo > 0 ? 18 : 0);
+    const pctAtivo = total > 0 ? Math.round((ativo / total) * 100) : 0;
+    const pctInativo = total > 0 ? Math.round((inativo / total) * 100) : 0;
+
+    const coluna = (titulo, valor, percentual, altura, cor, bgSuave) => (
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:128,minWidth:78}}>
+        <div style={{fontSize:13,fontWeight:700,color:cor,marginBottom:4,lineHeight:1}}>{valor}</div>
+        <div style={{height:98,display:'flex',alignItems:'flex-end'}}>
+          <div style={{width:46,height:altura,background:cor,borderRadius:'7px 7px 0 0',boxShadow:`0 6px 14px ${bgSuave}`}} />
+        </div>
+        <div style={{fontSize:12,fontWeight:600,color:'#28272C',marginTop:8}}>{titulo}</div>
+        <div style={{fontSize:10,color:'#888',marginTop:2}}>{percentual}%</div>
+      </div>
+    );
+
+    return (
+      <div style={{
+        background:'#fff',
+        border:'1px solid #E7E9EB',
+        borderRadius:8,
+        padding:'14px 16px',
+        minHeight:210,
+        boxShadow:'0 0 20px 0 rgba(231,233,235,0.75)',
+        cursor:nav?'pointer':'default',
+        transition:'box-shadow 0.15s',
+      }}
+        onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
+        onMouseLeave={e=>{ e.currentTarget.style.boxShadow='0 0 20px 0 rgba(231,233,235,0.75)'; }}
+        onClick={nav?()=>onNav(nav):undefined}
+      >
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+          <div>
+            <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
+            <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Ativas x Inativas</div>
+          </div>
+          <div style={{fontSize:26,fontWeight:800,color:'#001A7A',lineHeight:1}}>{total}</div>
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:34,marginTop:8}}>
+          {coluna('Ativas', ativo, pctAtivo, alturaAtivo, corAtivo || '#2B6418', 'rgba(43,100,24,0.18)')}
+          {coluna('Inativas', inativo, pctInativo, alturaInativo, '#AC1010', 'rgba(172,16,16,0.16)')}
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:8,borderTop:'1px solid #E7E9EB',paddingTop:10}}>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:corAtivo||'#2B6418'}}/>Ativas</span>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:'#AC1010'}}/>Inativas</span>
+        </div>
+      </div>
+    );
+  };
 
   const PieChartSei = () => {
     const aprovPct = pct(seiAprovadas);
@@ -1955,20 +2011,6 @@ function Dashboard({ onNav }) {
         </div>
       </div>
 
-      {pendentes>0 && (
-        <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
-          padding:'8px 14px',marginBottom:14,display:'flex',gap:8,alignItems:'center'}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span style={{fontSize:13,color:'#B77706',flex:1}}>
-            <strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso ao sistema.
-          </span>
-          <button onClick={()=>onNav('usuarios')} style={{background:'#B77706',border:'none',
-            borderRadius:5,padding:'4px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-            Revisar →
-          </button>
-        </div>
-      )}
-
       {/* ── Linha 1: KPIs principais ajustados — removidos KPIs marcados ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:10}}>
         <KCard label="APIs Disponíveis" valor={apisAtivas}
@@ -1979,13 +2021,14 @@ function Dashboard({ onNav }) {
           cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
       </div>
 
-      {/* ── Linha 2: Cards de detalhe ── */}
+      {/* ── Linha 2: Cards de detalhe com gráficos de coluna ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
-        <KCard label="APIs Ativas no catálogo" valor={apisAtivas}
-          cor="#2B6418" nav="apis" progress={apisAtivas} progressTotal={totalApis}/>
-        <KCard label="Categorias Ativas" valor={catAtivas}
-          sub={`de ${totalCats} categorias cadastradas`}
-          cor={C.brand} nav="categorias" progress={catAtivas} progressTotal={totalCats}/>
+        <ColumnChartCard label="APIs no Catálogo"
+          total={totalApis} ativo={apisAtivas} inativo={apisInativas}
+          corAtivo="#2B6418" nav="apis"/>
+        <ColumnChartCard label="Categorias"
+          total={totalCats} ativo={catAtivas} inativo={catInativas}
+          corAtivo={C.brand} nav="categorias"/>
         <KCard label="Órgãos com APIs" valor={totalOrgaos}
           sub="com ao menos 1 API cadastrada" cor={C.brand} nav="apis"/>
       </div>
@@ -2673,6 +2716,7 @@ function Dashboard({ onNav }) {
   const apisInativas = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
   const totalCats    = INITIAL_CATS.length;
   const catAtivas    = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
+  const catInativas  = Math.max(totalCats - catAtivas, 0);
   const totalOrgaos  = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
   const usrsAtivos   = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
   const pendentes    = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
@@ -2745,6 +2789,61 @@ function Dashboard({ onNav }) {
       {progress!==undefined && <ProgressBar value={progress} total={progressTotal} color={cor||C.brand}/>}
     </div>
   );
+
+
+  const ColumnChartCard = ({label, total, ativo, inativo, corAtivo, nav}) => {
+    const max = Math.max(ativo, inativo, 1);
+    const alturaAtivo = Math.max((ativo / max) * 94, ativo > 0 ? 18 : 0);
+    const alturaInativo = Math.max((inativo / max) * 94, inativo > 0 ? 18 : 0);
+    const pctAtivo = total > 0 ? Math.round((ativo / total) * 100) : 0;
+    const pctInativo = total > 0 ? Math.round((inativo / total) * 100) : 0;
+
+    const coluna = (titulo, valor, percentual, altura, cor, bgSuave) => (
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:128,minWidth:78}}>
+        <div style={{fontSize:13,fontWeight:700,color:cor,marginBottom:4,lineHeight:1}}>{valor}</div>
+        <div style={{height:98,display:'flex',alignItems:'flex-end'}}>
+          <div style={{width:46,height:altura,background:cor,borderRadius:'7px 7px 0 0',boxShadow:`0 6px 14px ${bgSuave}`}} />
+        </div>
+        <div style={{fontSize:12,fontWeight:600,color:'#28272C',marginTop:8}}>{titulo}</div>
+        <div style={{fontSize:10,color:'#888',marginTop:2}}>{percentual}%</div>
+      </div>
+    );
+
+    return (
+      <div style={{
+        background:'#fff',
+        border:'1px solid #E7E9EB',
+        borderRadius:8,
+        padding:'14px 16px',
+        minHeight:210,
+        boxShadow:'0 0 20px 0 rgba(231,233,235,0.75)',
+        cursor:nav?'pointer':'default',
+        transition:'box-shadow 0.15s',
+      }}
+        onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
+        onMouseLeave={e=>{ e.currentTarget.style.boxShadow='0 0 20px 0 rgba(231,233,235,0.75)'; }}
+        onClick={nav?()=>onNav(nav):undefined}
+      >
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+          <div>
+            <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
+            <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Ativas x Inativas</div>
+          </div>
+          <div style={{fontSize:26,fontWeight:800,color:'#001A7A',lineHeight:1}}>{total}</div>
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:34,marginTop:8}}>
+          {coluna('Ativas', ativo, pctAtivo, alturaAtivo, corAtivo || '#2B6418', 'rgba(43,100,24,0.18)')}
+          {coluna('Inativas', inativo, pctInativo, alturaInativo, '#AC1010', 'rgba(172,16,16,0.16)')}
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:8,borderTop:'1px solid #E7E9EB',paddingTop:10}}>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:corAtivo||'#2B6418'}}/>Ativas</span>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:'#AC1010'}}/>Inativas</span>
+        </div>
+      </div>
+    );
+  };
 
   const PieChartSei = () => {
     const aprovPct = pct(seiAprovadas);
@@ -2820,20 +2919,6 @@ function Dashboard({ onNav }) {
         </div>
       </div>
 
-      {pendentes>0 && (
-        <div style={{background:'#FFF6CE',border:'1px solid #FFE082',borderRadius:7,
-          padding:'8px 14px',marginBottom:14,display:'flex',gap:8,alignItems:'center'}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B77706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span style={{fontSize:13,color:'#B77706',flex:1}}>
-            <strong>{pendentes} usuário{pendentes>1?'s':''}</strong> aguardam aprovação de acesso ao sistema.
-          </span>
-          <button onClick={()=>onNav('usuarios')} style={{background:'#B77706',border:'none',
-            borderRadius:5,padding:'4px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-            Revisar →
-          </button>
-        </div>
-      )}
-
       {/* ── Linha 1: KPIs principais ajustados — removidos KPIs marcados ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:10}}>
         <KCard label="APIs Disponíveis" valor={apisAtivas}
@@ -2844,13 +2929,14 @@ function Dashboard({ onNav }) {
           cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
       </div>
 
-      {/* ── Linha 2: Cards de detalhe ── */}
+      {/* ── Linha 2: Cards de detalhe com gráficos de coluna ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
-        <KCard label="APIs Ativas no catálogo" valor={apisAtivas}
-          cor="#2B6418" nav="apis" progress={apisAtivas} progressTotal={totalApis}/>
-        <KCard label="Categorias Ativas" valor={catAtivas}
-          sub={`de ${totalCats} categorias cadastradas`}
-          cor={C.brand} nav="categorias" progress={catAtivas} progressTotal={totalCats}/>
+        <ColumnChartCard label="APIs no Catálogo"
+          total={totalApis} ativo={apisAtivas} inativo={apisInativas}
+          corAtivo="#2B6418" nav="apis"/>
+        <ColumnChartCard label="Categorias"
+          total={totalCats} ativo={catAtivas} inativo={catInativas}
+          corAtivo={C.brand} nav="categorias"/>
         <KCard label="Órgãos com APIs" valor={totalOrgaos}
           sub="com ao menos 1 API cadastrada" cor={C.brand} nav="apis"/>
       </div>
