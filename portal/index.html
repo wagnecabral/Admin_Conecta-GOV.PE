@@ -200,29 +200,67 @@ function IconeTituloHistorico(){
 }
 
 function Timeline({fase}){
-  const steps = ['Em análise','Concluído','Cancelado'];
-  return (
-    <div style={{display:'flex',alignItems:'center',margin:'16px 0 18px'}}>
-      {steps.map((s,i)=>{
-        const ativo = s === fase;
-        const concluido = fase === 'Concluído' && i <= 1;
-        const cancelado = fase === 'Cancelado' && i === 2;
-        const marcado = ativo || concluido || cancelado;
-        const cor = cancelado ? C.danger : marcado ? '#1351B4' : '#999';
-        return (
-          <React.Fragment key={s}>
-            <div style={{display:'flex',alignItems:'center',gap:7}}>
-              <div style={{width:28,height:28,borderRadius:'50%',background:marcado?cor:'#fff',border:marcado?'none':`2px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,color:marcado?'#fff':'#999'}}>
-                {marcado?'✓':i+1}
-              </div>
-              <span style={{fontSize:12,fontWeight:marcado?700:500,color:marcado?cor:'#777',whiteSpace:'nowrap'}}>{s}</span>
-            </div>
-            {i < steps.length-1 && <div style={{flex:1,height:2,background:(fase==='Concluído' && i===0)?'#1351B4':C.divider,margin:'0 8px'}}/>}
-          </React.Fragment>
-        );
-      })}
+  const stepBase = {
+    display:'flex',
+    alignItems:'center',
+    gap:7
+  };
+
+  const circleBase = {
+    width:28,
+    height:28,
+    borderRadius:'50%',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    color:'#fff',
+    fontSize:12,
+    fontWeight:800,
+    flexShrink:0
+  };
+
+  const labelBase = {
+    fontSize:12,
+    fontWeight:700,
+    whiteSpace:'nowrap'
+  };
+
+  const Step = ({label, color, symbol}) => (
+    <div style={stepBase}>
+      <div style={{...circleBase, background:color}}>{symbol}</div>
+      <span style={{...labelBase, color}}>{label}</span>
     </div>
   );
+
+  if(fase === 'Em análise'){
+    return (
+      <div style={{display:'flex',alignItems:'center',margin:'16px 0 18px'}}>
+        <Step label="Em análise" color="#1351B4" symbol="✓" />
+      </div>
+    );
+  }
+
+  if(fase === 'Concluído'){
+    return (
+      <div style={{display:'flex',alignItems:'center',margin:'16px 0 18px'}}>
+        <Step label="Em análise" color="#1351B4" symbol="✓" />
+        <div style={{flex:1,height:2,background:'#1351B4',margin:'0 8px'}}/>
+        <Step label="Concluído" color="#1351B4" symbol="✓" />
+      </div>
+    );
+  }
+
+  if(fase === 'Cancelado'){
+    return (
+      <div style={{display:'flex',alignItems:'center',margin:'16px 0 18px'}}>
+        <Step label="Em análise" color="#1351B4" symbol="✓" />
+        <div style={{flex:1,height:2,background:C.dangerBorder,margin:'0 8px'}}/>
+        <Step label="Cancelado" color={C.dangerBorder} symbol="✕" />
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function BannerFase({fase}){
