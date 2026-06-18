@@ -105,7 +105,7 @@ function GovBar(){
   );
 }
 
-function Header(){
+function Header({onSair}){
   return (
     <div style={{height:64,background:'#fff',borderBottom:`1px solid ${C.divider}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px'}}>
       <div style={{display:'flex',alignItems:'center',gap:14}}>
@@ -123,7 +123,7 @@ function Header(){
           </span>
           <span style={{fontSize:12,fontWeight:700,color:C.brandDark}}>{usuario.nome.split(' ')[0]}</span>
         </div>
-        <button style={{height:34,padding:'0 14px',borderRadius:6,border:`1px solid ${C.dangerBorder}`,background:'#fff',color:C.danger,fontSize:12,fontWeight:700,cursor:'pointer'}}>Sair</button>
+        <button onClick={onSair} style={{height:34,padding:'0 14px',borderRadius:6,border:`1px solid ${C.dangerBorder}`,background:'#fff',color:C.danger,fontSize:12,fontWeight:700,cursor:'pointer'}}>Sair</button>
       </div>
     </div>
   );
@@ -352,6 +352,14 @@ function MinhasSolicitacoes(){
   const [ordem,setOrdem]=React.useState('recente');
   const fases = ['Em análise','Concluído','Cancelado'];
 
+  const handleSair = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '../index.html';
+    }
+  };
+
   const lista = [...SOLICITACOES]
     .filter(s=>!fase || s.fase===fase)
     .sort((a,b)=>{
@@ -363,7 +371,7 @@ function MinhasSolicitacoes(){
   return (
     <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
       <GovBar/>
-      <Header/>
+      <Header onSair={handleSair}/>
       <main style={{flex:1,padding:'32px 24px',maxWidth:1120,width:'100%',margin:'0 auto'}}>
         <div style={{marginBottom:24}}>
           <h1 style={{fontSize:28,fontWeight:800,color:C.brandDark,letterSpacing:'-.3px',marginBottom:4}}>Minhas solicitações</h1>
