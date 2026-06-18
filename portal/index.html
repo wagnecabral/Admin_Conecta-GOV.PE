@@ -1,928 +1,391 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Conecta Gov.PE</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conecta Gov.PE — Minhas Solicitações</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body, #root { min-height:100%; }
-body { font-family:'Inter',sans-serif; background:#F4F5F7; color:#28272C; }
-::-webkit-scrollbar { width:5px; }
-::-webkit-scrollbar-thumb { background:#CED2D7; border-radius:3px; }
-button, input, select { font-family:'Inter',sans-serif; }
+*{margin:0;padding:0;box-sizing:border-box}
+html,body,#root{min-height:100%}
+body{font-family:'Inter',sans-serif;background:#f4f5f7;color:#28272c}
+button,select,input{font-family:'Inter',sans-serif}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-
 const C = {
-  brand:'#0034B7', brandHover:'#337FFF', brandDark:'#001A7A',
-  brandLight:'#E6F3FF', brandBorder:'#99C6FF',
-  text:'#28272C', textSec:'#494C57',
-  border:'#CED2D7', divider:'#E7E9EB',
-  bg:'#F4F5F7', white:'#FFFFFF',
-  gold:'#FFCD37',
+  brand:'#0034B7', brandDark:'#001A7A', brandLight:'#E6F3FF', brandBorder:'#99C6FF',
+  text:'#28272C', textSec:'#494C57', border:'#CED2D7', divider:'#E7E9EB',
   success:'#2B6418', successBg:'#EAFBD7', successBorder:'#86D562',
   danger:'#AC1010', dangerBg:'#FFE4E4', dangerBorder:'#E45F5F',
-  warning:'#B77706', warningBg:'#FFF6CE',
+  warning:'#B77706', warningBg:'#FFF6CE', warningBorder:'#FFE082',
+  white:'#FFFFFF', bg:'#F4F5F7'
 };
 
-/* ── GovBar ───────────────────────────────────────────────── */
-function GovBar() {
-  return (
-    <div style={{ background:'#001A7A', height:32, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-        <span style={{ color:'#FFCD37', fontSize:14 }}>★</span>
-        <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
-      </div>
-      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        {['A-','A','A+'].map(t=>(
-          <span key={t} style={{ color:'#F8FAFC', fontSize:12, fontWeight:700, cursor:'pointer', padding:'0 2px' }}>{t}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
+const usuario = {
+  nome:'Wagne Goveia Cabral',
+  cpf:'046.318.094-18',
+  tipoLabel:'Órgão Público'
+};
 
-/* ── Header ──────────────────────────────────────────────── */
-function Header({ activePage, onNav, onAdminClick }) {
-  const navItems = ['Início','Como Acessar APIs','Catálogo de APIs','Interoperabilidade','Quem somos'];
-  return (
-    <div style={{ background:'#FFFFFF', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:72, borderBottom:'1px solid #E7E9EB' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-        <img src="../assets/ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
-        <div style={{ width:1, height:36, background:'#E7E9EB' }}/>
-        <img src="../assets/Brasao.png" alt="Brasão de Pernambuco" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
-        <img src="../assets/Governo.png" alt="Governo de Pernambuco" style={{ height:36, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
-      </div>
-      <nav style={{ display:'flex', gap:0, alignItems:'stretch', height:72 }}>
-        {navItems.map(item => {
-          const isActive = activePage === item;
-          return (
-            <div key={item} onClick={()=>onNav(item)} style={{ padding:'0 16px', height:72, display:'flex', alignItems:'center', fontSize:13, fontWeight:isActive?600:400, color:isActive?'#0034B7':'#28272C', borderBottom:isActive?'3px solid #0034B7':'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}
-              onMouseEnter={e=>{ if(!isActive){ e.currentTarget.style.color='#0034B7'; e.currentTarget.style.borderBottomColor='rgba(0,52,183,0.3)'; }}}
-              onMouseLeave={e=>{ if(!isActive){ e.currentTarget.style.color='#28272C'; e.currentTarget.style.borderBottomColor='transparent'; }}}
-            >{item}</div>
-          );
-        })}
-      </nav>
-      <div onClick={onAdminClick} style={{ padding:'0 16px', height:72, display:'flex', alignItems:'center', fontSize:13, fontWeight:400, color:'#28272C', borderBottom:'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}
-        onMouseEnter={e=>{ e.currentTarget.style.color='#0034B7'; e.currentTarget.style.borderBottomColor='rgba(0,52,183,0.3)'; }}
-        onMouseLeave={e=>{ e.currentTarget.style.color='#28272C'; e.currentTarget.style.borderBottomColor='transparent'; }}
-      >Acessar</div>
-    </div>
-  );
-}
-
-/* ── Hero ────────────────────────────────────────────────── */
-function Hero({ onNav }) {
-  return (
-    <div style={{ background:C.bg, padding:'32px 24px 40px', display:'flex', justifyContent:'center' }}>
-      <div style={{ background:`linear-gradient(160deg, #001A7A 0%, #0034B7 60%, #0A3FAA 100%)`, borderRadius:16, padding:'60px 56px 64px', maxWidth:900, width:'100%', position:'relative', overflow:'hidden' }}>
-        <div style={{ position:'absolute', right:-60, top:-60, width:280, height:280, borderRadius:'50%', background:'rgba(255,255,255,0.04)', pointerEvents:'none' }}/>
-        <div style={{ position:'absolute', right:40, bottom:-80, width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.03)', pointerEvents:'none' }}/>
-        <h1 style={{ fontSize:40, fontWeight:700, color:'#F8FAFC', marginBottom:12, letterSpacing:'-0.5px', lineHeight:1.15 }}>Conecta Gov.PE</h1>
-        <p style={{ fontSize:17, fontWeight:600, color:'rgba(248,250,252,0.9)', marginBottom:16 }}>Conectando Soluções para um Governo Integrado</p>
-        <p style={{ fontSize:14, color:'rgba(248,250,252,0.75)', lineHeight:1.6, maxWidth:480, marginBottom:32 }}>Plataforma estadual que facilita a interoperabilidade entre sistemas de informação e o compartilhamento seguro de dados através de APIs.</p>
-        <div style={{ display:'flex', gap:12 }}>
-          <button onClick={()=>onNav('Como Acessar APIs')} style={{ height:42, padding:'0 22px', borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:600, border:'none', cursor:'pointer' }}>Como acessar APIs</button>
-          <button onClick={()=>onNav('Catálogo de APIs')} style={{ height:42, padding:'0 22px', borderRadius:5, background:'transparent', color:'#F8FAFC', fontSize:14, fontWeight:600, border:'1.5px solid rgba(248,250,252,0.5)', cursor:'pointer' }}>Consultar APIs</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Sobre ───────────────────────────────────────────────── */
-function Sobre() {
-  return (
-    <div style={{ background:C.white, padding:'48px 24px' }}>
-      <div style={{ maxWidth:900, margin:'0 auto' }}>
-        <h2 style={{ fontSize:24, fontWeight:700, color:C.text, marginBottom:24 }}>Sobre o Conecta Gov.PE</h2>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:40 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.7 }}>O Conecta Gov.PE é a plataforma estadual que promove a troca segura de informações entre sistemas. Inspirada no modelo federal do Conecta gov.br, a solução foca no princípio de que o governo não deve solicitar ao cidadão informações que o próprio Estado já possua.</p>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.7 }}>Nesse contexto, o cidadão é o principal beneficiário, uma vez que a plataforma viabiliza jornadas de serviço unificadas e simplifica a interação com o Estado. Ao eliminar a necessidade de navegar por múltiplos portais ou de reapresentar documentos de forma redundante, as demandas passam a ser resolvidas em um ponto de contato mais ágil e inteligente.</p>
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.7 }}>No âmbito administrativo, ao fornecer acesso a dados confiáveis, o Conecta Gov.PE minimiza a conferência manual de informações, diminuindo a incidência de erros e fraudes.</p>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.7 }}>A governança do projeto é centralizada na ATI-PE (Agência Estadual de Tecnologia da Informação), que disponibiliza um catálogo unificado de APIs, processos simplificados para solicitação de acesso e documentação técnica de apoio. Todo esse suporte garante conformidade técnica e jurídica, com rigorosa observância à Lei Geral de Proteção de Dados (LGPD).</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── FAQ ─────────────────────────────────────────────────── */
-const FAQ_ITEMS = [
-  'O que é uma API?','Quais conjuntos de dados estão disponíveis no Conecta Gov.PE?',
-  'Quem pode utilizar o Conecta Gov.PE?','Quais são os requisitos para a adesão?',
-  'Como posso acessar as APIs disponíveis?','Como faço para disponibilizar uma API no portal?',
-  'O acesso às APIs tem algum custo?',
+/*
+  Conforme Ata de 17/06/2026:
+  - O Portal deve utilizar exclusivamente os status retornados pela API do Solicita;
+  - Os status oficiais considerados são: Em análise, Concluído e Cancelado;
+  - Não deve ser criado status próprio, como "Pendente";
+  - Histórico, ícones, comunicações e alertas devem refletir o retorno da API.
+*/
+const SOLICITACOES = [
+  {
+    id: 1,
+    protocolo:'SEI-PE 2026.0002693916',
+    api:'Disponibilizar uma API na Plataforma do Conecta',
+    orgao:'ATI',
+    dataCriacao:'26/01/2026, 13:27',
+    dataAtualizacao:'27/01/2026, 15:01',
+    fase:'Concluído',
+    status:'Concluído',
+    historico:[
+      {tipo:'info', titulo:'Atendimento', data:'27 jan. 2026, 15:03', texto:'Favor adicionar documento extra'},
+      {tipo:'comentario', titulo:'Atendimento', data:'27 jan. 2026, 15:02', texto:'#pendente favor adicionar documento extra'},
+      {tipo:'comentario', titulo:'Atendimento', data:'27 jan. 2026, 15:01', texto:'#suspenso: favor anexar a documentação complementar xxxx'},
+      {tipo:'carta', titulo:'Atendimento', data:'27 jan. 2026, 15:00', texto:': favor anexar a documentação complementar xxxx'},
+      {tipo:'remetido', titulo:'Movimentação', data:'26 jan. 2026, 14:46', texto:'Processo remetido pela unidade ATI - GAS'},
+      {tipo:'inicio', titulo:'Solicitação', data:'26 jan. 2026, 13:27', texto:'Processo restrito gerado, informação pessoal.'}
+    ]
+  },
+  {
+    id: 2,
+    protocolo:'SEI-PE 2026.00000018-7',
+    api:'Consulta de CPF',
+    orgao:'SEFAZ',
+    dataCriacao:'18/04/2026, 09:15',
+    dataAtualizacao:'22/04/2026, 11:00',
+    fase:'Em análise',
+    status:'Em análise',
+    historico:[
+      {tipo:'comunicacao', titulo:'Atendimento', data:'22 abr. 2026, 11:00', texto:'Comunicação enviada ao solicitante para complementação de informações técnicas.'},
+      {tipo:'documento', titulo:'Atendimento', data:'18 abr. 2026, 09:15', texto:'Solicitação recebida e protocolada no Solicita.'}
+    ]
+  },
+  {
+    id: 3,
+    protocolo:'SEI-PE 2026.00000031-4',
+    api:'Catálogo de Serviços',
+    orgao:'ATI',
+    dataCriacao:'10/05/2026, 10:00',
+    dataAtualizacao:'10/05/2026, 17:00',
+    fase:'Cancelado',
+    status:'Cancelado',
+    historico:[
+      {tipo:'alerta', titulo:'Atendimento', data:'10 mai. 2026, 17:00', texto:'Solicitação cancelada conforme andamento registrado no Solicita.'},
+      {tipo:'documento', titulo:'Atendimento', data:'10 mai. 2026, 10:00', texto:'Solicitação recebida e protocolada no Solicita.'}
+    ]
+  }
 ];
 
-function FaqItem({ question }) {
-  const [open, setOpen] = React.useState(false);
+function GovBar(){
   return (
-    <div style={{ border:`1px solid ${C.divider}`, borderRadius:8, overflow:'hidden', marginBottom:8, background:C.white }}>
-      <button onClick={()=>setOpen(o=>!o)} style={{ width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 20px', background:'none', border:'none', cursor:'pointer', textAlign:'left' }}>
-        <span style={{ fontSize:14, fontWeight:600, color:C.text }}>{question}</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink:0, transform:open?'rotate(180deg)':'none', transition:'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      {open && (<div style={{ padding:'0 20px 16px', fontSize:13.5, color:C.textSec, lineHeight:1.7 }}>Entre em contato com a equipe pelo e-mail <strong>gestao.conecta.pe@ati.pe.gov.br</strong> para mais informações.</div>)}
-    </div>
-  );
-}
-
-function Faq() {
-  return (
-    <div style={{ background:C.bg, padding:'48px 24px' }}>
-      <div style={{ maxWidth:900, margin:'0 auto' }}>
-        <h2 style={{ fontSize:24, fontWeight:700, color:C.text, marginBottom:8 }}>Perguntas frequentes</h2>
-        <p style={{ fontSize:13.5, color:C.textSec, marginBottom:28, lineHeight:1.6 }}>Separamos as perguntas mais frequentes. Caso sua resposta não esteja aqui, entre em contato: <strong>gestao.conecta.pe@ati.pe.gov.br</strong></p>
-        {FAQ_ITEMS.map((q,i)=><FaqItem key={i} question={q}/>)}
+    <div style={{height:32,background:C.brandDark,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:7}}>
+        <span style={{color:'#FFCD37',fontSize:14}}>★</span>
+        <span style={{color:'#F8FAFC',fontSize:12,fontWeight:600}}>Governo de Pernambuco</span>
+      </div>
+      <div style={{display:'flex',gap:10}}>
+        {['A-','A','A+'].map(t=><span key={t} style={{color:'#fff',fontSize:12,fontWeight:800}}>{t}</span>)}
       </div>
     </div>
   );
 }
 
-/* ── Footer ──────────────────────────────────────────────── */
-function Footer() {
+function Header(){
   return (
-    <div style={{ background:'#0034B7', color:'#F8FAFC', padding:'40px 24px 0' }}>
-      <div style={{ maxWidth:900, margin:'0 auto' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:48, paddingBottom:32 }}>
-          <div>
-            <div style={{ fontSize:15, fontWeight:700, color:'#F8FAFC', marginBottom:14 }}>Portal Conecta Gov.PE</div>
-            <p style={{ fontSize:13, color:'rgba(248,250,252,0.65)', lineHeight:1.7, maxWidth:340 }}>Estrutura digital baseada no Padrão Pernambuco Digital para oferecer uma experiência mais consistente, acessível e integrada aos serviços do Estado.</p>
-          </div>
-          <div>
-            <div style={{ fontSize:14, fontWeight:600, color:'#F8FAFC', marginBottom:12 }}>Contato institucional</div>
-            <div style={{ fontSize:13, color:'rgba(248,250,252,0.65)', lineHeight:1.85 }}>
-              <div>gestao.conecta.pe@ati.pe.gov.br</div>
-              <div>(81) 3181-8121</div>
-              <div>Av. Rio Capibaribe, 147 · São José · CEP: 50.020-080 · Recife-PE</div>
-              <div>Horário: 8h às 12h e 13h às 17h</div>
-            </div>
-          </div>
+    <div style={{height:64,background:'#fff',borderBottom:`1px solid ${C.divider}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        <img src="../assets/ati_logo.png" alt="ATI" style={{height:40,width:'auto',objectFit:'contain'}} onError={e=>e.currentTarget.style.display='none'}/>
+        <div style={{width:1,height:32,background:C.divider}}/>
+        <img src="../assets/Brasao.png" alt="Brasão" style={{height:40,width:'auto',objectFit:'contain'}} onError={e=>e.currentTarget.style.display='none'}/>
+        <img src="../assets/Governo.png" alt="Governo de Pernambuco" style={{height:32,width:'auto',objectFit:'contain'}} onError={e=>e.currentTarget.style.display='none'}/>
+        <div style={{width:1,height:32,background:C.divider}}/>
+        <span style={{fontSize:14,fontWeight:800,color:C.brandDark}}>Conecta Gov.PE</span>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,background:'#F0F4FF',border:'1px solid #C7D6FF',borderRadius:100,padding:'4px 12px'}}>
+          <span style={{background:'#1351B4',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:900,color:'#fff'}}>
+            gov<span style={{color:'#FFCD07'}}>.br</span>
+          </span>
+          <span style={{fontSize:12,fontWeight:700,color:C.brandDark}}>{usuario.nome.split(' ')[0]}</span>
         </div>
-        <div style={{ borderTop:'1px solid rgba(248,250,252,0.2)', padding:'20px 0', display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:20 }}>
-            <img src="../assets/ati_logo.png" alt="ATI" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
-            <img src="../assets/Brasao.png" alt="Brasão" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <img src="../assets/Governo.png" alt="Governo PE" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
-            <img src="../assets/liga_digital.png" alt="Liga Digital" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-          </div>
-        </div>
-        <div style={{ borderTop:'1px solid rgba(248,250,252,0.08)', padding:'14px 0 18px' }}>
-          <span style={{ fontSize:12, color:'rgba(248,250,252,0.35)' }}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</span>
-        </div>
+        <button style={{height:34,padding:'0 14px',borderRadius:6,border:`1px solid ${C.dangerBorder}`,background:'#fff',color:C.danger,fontSize:12,fontWeight:700,cursor:'pointer'}}>Sair</button>
       </div>
     </div>
   );
 }
 
-/* ── Catálogo ────────────────────────────────────────────── */
-const ORGAOS_CAT = {
-  '1':{ short:'ATI',    name:'Agência Estadual de Tecnologia da Informação' },
-  '2':{ short:'SEFAZ',  name:'Secretaria da Fazenda' },
-  '3':{ short:'SEPLAG', name:'Secretaria de Planejamento e Gestão' },
-  '4':{ short:'SES',    name:'Secretaria de Saúde' },
-  '5':{ short:'SEE',    name:'Secretaria de Educação' },
-  '6':{ short:'SEDS',   name:'Secretaria de Desenvolvimento Social' },
-};
-const APIS_CAT = [
-  { id:1, nome:'Catálogo de Serviços', orgaoId:'1', versao:'v2.1', status:'Ativo', descricao:'API pública de catálogo de serviços do estado de Pernambuco.', operacoes:'GET /servicos — lista todos os serviços\nGET /servicos/{id} — detalhe do serviço', baseSistema:'ATI — Portal de Serviços PE', comoAcessar:'Solicitar credenciais via portal ATI. Autenticar via Bearer Token.', detalhamento:'Protocolo HTTPS. Retorna JSON com campos: id, nome, orgao, descricao, status.', contatos:[{nome:'Time ATI', email:'api@ati.pe.gov.br'}], categoria:'Serviços', atualizado:'10/04/2025' },
-  { id:2, nome:'Consulta de CPF', orgaoId:'2', versao:'v1.0', status:'Ativo', descricao:'Consulta de dados cadastrais de contribuintes via CPF.', operacoes:'GET /cpf/{numero} — retorna dados do cidadão', baseSistema:'SEFAZ — Cadastro Fiscal', comoAcessar:'Solicitar acesso via SEFAZ Digital. Requer convênio assinado.', detalhamento:'Protocolo HTTPS. IP fixo obrigatório. Retorna: nome, situação, data nascimento.', contatos:[{nome:'SEFAZ Digital', email:'digital@sefaz.pe.gov.br'}], categoria:'Fiscal', atualizado:'03/02/2025' },
-  { id:4, nome:'Boletim de Ocorrência', orgaoId:'3', versao:'v3.0', status:'Ativo', descricao:'Registro e consulta de boletins de ocorrência policial.', operacoes:'POST /bo — registra BO\nGET /bo/{protocolo} — consulta BO', baseSistema:'SEPLAG — Segurança Pública', comoAcessar:'Credenciais fornecidas pela SEPLAG mediante solicitação formal.', detalhamento:'HTTPS. Retorna: protocolo, data, tipo, status, delegacia.', contatos:[{nome:'SEPLAG TI', email:'ti@seplag.pe.gov.br'}], categoria:'Segurança', atualizado:'18/04/2025' },
-  { id:5, nome:'Emissão de Certidões', orgaoId:'2', versao:'v1.5', status:'Ativo', descricao:'Emissão de certidões fiscais e negativas de débitos estaduais.', operacoes:'GET /certidoes/negativa — emite CND\nGET /certidoes/debitos — lista débitos', baseSistema:'SEFAZ — Sistema Tributário', comoAcessar:'Integração via API Key. Solicitar chave no portal SEFAZ.', detalhamento:'HTTPS. Retorna PDF ou JSON: contribuinte, situação, validade.', contatos:[{nome:'SEFAZ', email:'sefaz@sefaz.pe.gov.br'}], categoria:'Fiscal', atualizado:'05/01/2025' },
-  { id:8, nome:'Programas Habitacionais', orgaoId:'6', versao:'v1.1', status:'Ativo', descricao:'Inscrições e consultas em programas habitacionais do estado.', operacoes:'POST /inscricoes — realiza inscrição\nGET /inscricoes/{cpf} — consulta', baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS mediante solicitação.', detalhamento:'HTTPS. Retorna: inscrição, programa, situação, posição na fila.', contatos:[{nome:'SEDS TI', email:'ti@seds.pe.gov.br'}], categoria:'Social', atualizado:'20/02/2025' },
-];
-
-function DetailPage({ api, onBack }) {
-  const orgao = ORGAOS_CAT[api.orgaoId];
-  const accessSteps = ['Selecionar a API desejada no Catálogo do Portal Conecta GOV.PE.','No Portal de Serviços (PE GOV), preencher o formulário de requisição e anexar a documentação técnica necessária.','A solicitação será validada pelo órgão cedente da API e pela equipe do Conecta GOV.PE.','Assinar o Termo de Responsabilidade em conformidade com a LGPD.','Após a aprovação, as credenciais de acesso serão disponibilizadas.','Realizar a integração com a API e utilizar os dados compartilhados na solução autorizada.'];
-  const SectionHeader = ({ title }) => (<div style={{ background:'#EEF1F6', padding:'9px 16px', borderBottom:`1px solid ${C.divider}` }}><span style={{ fontSize:13, fontWeight:600, color:C.text }}>{title}</span></div>);
-  const SectionBody = ({ children }) => (<div style={{ background:C.white, padding:'12px 16px', fontSize:13, color:C.brand, lineHeight:1.75 }}>{children}</div>);
-  const operacoes = (api.operacoes||'').split('\n').filter(Boolean);
-  const sistemas = (api.baseSistema||'').split('\n').filter(Boolean);
-  const detalheLines = (api.detalhamento||'').split('.').map(s=>s.trim()).filter(Boolean);
+function StatusBadge({fase}){
+  const cfg = {
+    'Em análise': {bg:C.warningBg,color:C.warning,border:C.warningBorder,dot:C.warning},
+    'Concluído': {bg:C.successBg,color:C.success,border:C.successBorder,dot:C.success},
+    'Cancelado': {bg:C.dangerBg,color:C.danger,border:C.dangerBorder,dot:C.danger}
+  }[fase];
   return (
-    <div style={{ background:C.bg, padding:'20px 32px', flex:1 }}>
-      <div style={{ maxWidth:980, margin:'0 auto' }}>
-        <button onClick={onBack} style={{ display:'inline-flex', alignItems:'center', gap:6, height:30, padding:'0 12px', borderRadius:5, border:`1px solid ${C.border}`, background:C.white, color:C.text, fontSize:12, cursor:'pointer', marginBottom:18 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Voltar ao catálogo
-        </button>
-        <div style={{ marginBottom:20 }}>
-          <h1 style={{ fontSize:26, fontWeight:700, color:C.brand, marginBottom:3, letterSpacing:'-0.2px' }}>{api.nome}</h1>
-          <div style={{ fontSize:13, color:C.textSec, marginBottom:1 }}>{orgao?.name} ({orgao?.short})</div>
-          <div style={{ fontSize:13, color:C.textSec, marginBottom:10 }}>Versão {api.versao} • Atualizado em {api.atualizado}</div>
-          <p style={{ fontSize:13.5, color:C.brand, lineHeight:1.6, maxWidth:720, marginBottom:16 }}>{api.descricao}</p>
-          <button style={{ height:38, padding:'0 20px', borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:600, border:'none', cursor:'pointer' }}>Solicitar API</button>
-        </div>
-        <div style={{ border:`1px solid ${C.divider}`, borderRadius:8, overflow:'hidden' }}>
-          <div style={{ borderBottom:`1px solid ${C.divider}` }}>
-            <SectionHeader title="Principais Operações"/>
-            <SectionBody>{operacoes.map((op,i)=>{ const method=op.match(/^(GET|POST|PUT|PATCH|DELETE)/)?.[1]; const rest=op.replace(/^(GET|POST|PUT|PATCH|DELETE)\s*/,''); const [endpoint,desc]=rest.split('—').map(s=>s.trim()); return (<div key={i} style={{ marginBottom:i<operacoes.length-1?6:0 }}>{method?<>{method==='GET'?'Consulta':method==='POST'?'Criação':method}: <code style={{ fontSize:12.5, background:'#F0F3F8', padding:'1px 5px', borderRadius:3 }}>{endpoint}</code>{desc?` — ${desc.toLowerCase()}`:''}</>:op}</div>); })}</SectionBody>
-          </div>
-          <div style={{ borderBottom:`1px solid ${C.divider}` }}>
-            <SectionHeader title="Base/Sistemas de Origem"/>
-            <SectionBody>{sistemas.map((s,i)=>(<div key={i} style={{ marginBottom:i<sistemas.length-1?4:0 }}>• {s}</div>))}</SectionBody>
-          </div>
-          <div style={{ borderBottom:`1px solid ${C.divider}` }}>
-            <SectionHeader title="Como acessar a API"/>
-            <SectionBody>{accessSteps.map((s,i)=>(<div key={i} style={{ marginBottom:i<accessSteps.length-1?4:0 }}>• {s}</div>))}</SectionBody>
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr' }}>
-            <div style={{ borderRight:`1px solid ${C.divider}` }}>
-              <SectionHeader title="Detalhamento Técnico"/>
-              <SectionBody>
-                <div style={{ marginBottom:4 }}><strong style={{ color:C.text }}>Protocolo:</strong> REST/JSON</div>
-                <div style={{ marginBottom:10 }}><strong style={{ color:C.text }}>IP Fixo:</strong> Obrigatório</div>
-                <div style={{ marginBottom:6 }}><strong style={{ color:C.text }}>Campos Retornados (Payload)</strong></div>
-                {detalheLines.map((line,i)=>{ const colonIdx=line.indexOf(':'); if(colonIdx>0&&colonIdx<30){ const key=line.slice(0,colonIdx).trim(); const val=line.slice(colonIdx+1).trim(); return(<div key={i} style={{ marginBottom:4 }}><strong style={{ color:C.text }}>{key}:</strong> {val}</div>); } return <div key={i} style={{ marginBottom:4 }}>{line}.</div>; })}
-              </SectionBody>
-            </div>
-            <div>
-              <SectionHeader title="Contatos"/>
-              <SectionBody>{api.contatos?.length>0?api.contatos.map((c,i)=>(<div key={i} style={{ marginBottom:8 }}><div style={{ fontWeight:600, color:C.text, marginBottom:2 }}>{c.nome} (Tecnologia)</div><div>{c.email}</div></div>)):<div>gestao.conecta.pe@ati.pe.gov.br</div>}</SectionBody>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <span style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:100,fontSize:12,fontWeight:700,background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.border}`}}>
+      <span style={{width:7,height:7,borderRadius:'50%',background:cfg.dot}}/>
+      {fase}
+    </span>
   );
 }
 
-function CatalogPage({ onSelectApi }) {
-  const [search, setSearch] = React.useState('');
-  const CATEGORIAS_CATALOG = [
-    { titulo:'Consulta de Categorias de Serviços', count:3, versao:'Versão 1.0', apis:APIS_CAT.filter(a=>a.categoria==='Serviços') },
-    { titulo:'Dados Fiscais e Tributários', count:2, versao:'Versão 1.5', apis:APIS_CAT.filter(a=>a.categoria==='Fiscal') },
-    { titulo:'Segurança Pública', count:1, versao:'Versão 3.0', apis:APIS_CAT.filter(a=>a.categoria==='Segurança') },
-    { titulo:'Habitação e Desenvolvimento Social', count:1, versao:'Versão 1.1', apis:APIS_CAT.filter(a=>a.categoria==='Social') },
-  ];
-  const filtered = CATEGORIAS_CATALOG.filter(cat=>{ const q=search.toLowerCase(); return !q||cat.titulo.toLowerCase().includes(q)||cat.apis.some(a=>a.nome.toLowerCase().includes(q)); });
-  return (
-    <div style={{ background:C.bg, padding:'40px 24px', flex:1 }}>
-      <div style={{ maxWidth:900, margin:'0 auto' }}>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px', marginBottom:20 }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:6 }}>Catálogo de APIs</h2>
-          <p style={{ fontSize:13.5, color:C.brand, marginBottom:20 }}>Descubra serviços disponíveis para integração com sistemas estaduais e parceiros habilitados.</p>
-          <div style={{ marginBottom:6 }}>
-            <div style={{ fontSize:13, fontWeight:600, color:C.brand, marginBottom:6 }}>Buscar API ou categoria</div>
-            <div style={{ display:'flex', gap:0 }}>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="" style={{ flex:1, height:42, border:`1px solid ${C.border}`, borderRight:'none', borderRadius:'5px 0 0 5px', padding:'0 14px', fontSize:14, color:C.text, outline:'none' }} onFocus={e=>e.target.style.borderColor=C.brand} onBlur={e=>e.target.style.borderColor=C.border}/>
-              <button style={{ width:44, height:42, background:C.brand, border:'none', borderRadius:'0 5px 5px 0', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-            </div>
-          </div>
-          <div style={{ marginTop:24 }}>
-            <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:14 }}>Categorias</div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px,1fr))', gap:12 }}>
-              {filtered.map((cat,i)=>(
-                <div key={i} onClick={()=>{ const firstApi=cat.apis[0]; if(firstApi) onSelectApi(firstApi); }} style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:10, padding:'18px 20px', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{ e.currentTarget.style.borderColor=C.brandBorder; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,52,183,0.08)'; }} onMouseLeave={e=>{ e.currentTarget.style.borderColor=C.divider; e.currentTarget.style.boxShadow='none'; }}>
-                  <div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:6, lineHeight:1.4 }}>{cat.titulo}</div>
-                  <div style={{ fontSize:12, color:C.textSec }}>{cat.count} • {cat.versao}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Como Acessar ────────────────────────────────────────── */
-function ComoAcessar({ onNav }) {
-  const steps = [
-    { n:1, title:'Selecionar API', desc:'Selecionar a API desejada no Catálogo do Portal Conecta GOV.PE.' },
-    { n:2, title:'Preencher formulário', desc:'No Portal de Serviços (PE GOV), preencher o formulário de requisição e anexar a documentação técnica necessária.' },
-    { n:3, title:'Validação', desc:'A solicitação será validada pelo órgão cedente da API e pela equipe do Conecta GOV.PE.' },
-    { n:4, title:'Termo de Responsabilidade', desc:'Assinar o Termo de Responsabilidade em conformidade com a LGPD.' },
-    { n:5, title:'Credenciais de acesso', desc:'Após a aprovação, as credenciais de acesso serão disponibilizadas.' },
-    { n:6, title:'Integração', desc:'Realizar a integração com a API e utilizar os dados compartilhados na solução autorizada.' },
-  ];
-  const Check = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#2B6418"/><polyline points="7 12 10.5 15.5 17 9" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>);
-  return (
-    <div style={{ background:C.bg, padding:'40px 24px', flex:1 }}>
-      <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:20 }}>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:16 }}>Como acessar as APIs</h2>
-          <p style={{ fontSize:13.5, color:C.brand, lineHeight:1.7 }}>O Conecta GOV.PE promove a interoperabilidade e a desburocratização por meio de um fluxo estruturado para o compartilhamento seguro de dados, buscando assegurar conformidade técnica e jurídica, inclusive em observância à Lei Geral de Proteção de Dados (LGPD).</p>
-        </div>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:12 }}>Pré-requisitos</h2>
-          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            {[['Conta gov.br','Acesso à plataforma federal.'],['Informações Técnicas','Descrição básica do sistema e finalidade do uso dos dados, em conformidade com os princípios da LGPD.'],['Vínculo Institucional','Representar órgão público ou parceiro externo que desenvolva serviços digitais de interesse público para o Estado.']].map(([k,v],i)=>(<div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10 }}><div style={{ flexShrink:0, marginTop:1 }}><Check/></div><p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.6 }}><strong style={{ color:C.text }}>{k}:</strong> {v}</p></div>))}
-          </div>
-        </div>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:20 }}>Passo a passo</h2>
-          <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
-            {steps.map(s=>(<div key={s.n} style={{ display:'flex', alignItems:'flex-start', gap:14 }}><div style={{ width:30, height:30, borderRadius:'50%', background:C.brand, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}><span style={{ color:'#fff', fontSize:13, fontWeight:700 }}>{s.n}</span></div><div><div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:3 }}>{s.title}</div><div style={{ fontSize:13.5, color:C.brand, lineHeight:1.6 }}>{s.desc}</div></div></div>))}
-          </div>
-        </div>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8 }}>Próximo passo</h2>
-          <p style={{ fontSize:13.5, color:C.textSec, marginBottom:20, lineHeight:1.6 }}>Se você já tem os pré-requisitos e quer descobrir quais integrações estão disponíveis, avance para o catálogo.</p>
-          <div style={{ display:'flex', gap:12 }}>
-            <button onClick={()=>onNav('Catálogo de APIs')} style={{ height:42, padding:'0 22px', borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:600, border:'none', cursor:'pointer' }}>Consultar APIs</button>
-            <button onClick={()=>onNav('Início')} style={{ height:42, padding:'0 22px', borderRadius:5, background:C.white, color:C.text, fontSize:14, fontWeight:600, border:`1.5px solid ${C.border}`, cursor:'pointer' }}>Voltar ao início</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Interoperabilidade ──────────────────────────────────── */
-function Interoperabilidade() {
-  const docs = [
-    { title:'Guia de Interoperabilidade - Conecta Gov.PE', tipo:'Apresentação', fonte:'Google Slides' },
-    { title:'FRAMEWORK TÉCNICO DE INTEROPERABILIDADE', tipo:'Documento', fonte:'Google Drive' },
-    { title:'GUIA DE PUBLICAÇÃO E CONSUMO DE APIs', tipo:'Documento', fonte:'Google Drive' },
-    { title:'GUIA TÉCNICO DE INTEGRAÇÃO VIA PLATAFORMA DE INTEROPERABILIDADE', tipo:'Documento', fonte:'Google Drive' },
-  ];
-  return (
-    <div style={{ background:C.bg, padding:'40px 24px', flex:1 }}>
-      <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:20 }}>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:20 }}>Interoperabilidade</h2>
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.75, textAlign:'justify' }}>O <strong style={{ color:C.text }}>Framework Técnico de Interoperabilidade</strong> estabelece os princípios, diretrizes e padrões tecnológicos fundamentais para a integração de sistemas e o compartilhamento seguro de dados na administração pública do Estado de Pernambuco.</p>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.75, textAlign:'justify' }}>O <strong style={{ color:C.text }}>Guia de Publicação e Consumo de APIs</strong> detalha as boas práticas e os requisitos técnicos para o desenvolvimento e a gestão do ciclo de vida de APIs governamentais, consolidando a abordagem API-first.</p>
-            <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.75, textAlign:'justify' }}>O <strong style={{ color:C.text }}>Guia Técnico de Integração via Plataforma de Interoperabilidade</strong> orienta tecnicamente o funcionamento e o ingresso na infraestrutura tecnológica da PGD, pautada por um modelo distribuído e federado.</p>
-          </div>
-        </div>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:20 }}>Documentos</h2>
-          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-            {docs.map((doc,i)=>(<div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px', border:`1px solid ${C.divider}`, borderRadius:8 }}><div><div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:4 }}>{doc.title}</div><div style={{ fontSize:12, color:C.textSec }}>{doc.tipo} • {doc.fonte}</div></div><button style={{ height:34, padding:'0 18px', borderRadius:5, border:`1.5px solid ${C.brand}`, background:C.white, color:C.brand, fontSize:13, fontWeight:600, cursor:'pointer', flexShrink:0 }}>Download</button></div>))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Quem Somos ──────────────────────────────────────────── */
-function QuemSomos() {
-  return (
-    <div style={{ background:C.bg, padding:'40px 24px', flex:1 }}>
-      <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:20 }}>
-        <div><h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:6 }}>Quem somos</h2><p style={{ fontSize:13.5, color:C.textSec }}>Conheça a ATI-PE e a gerência responsável pela governança da plataforma de interoperabilidade do Governo de Pernambuco.</p></div>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, overflow:'hidden' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr' }}>
-            <div style={{ padding:'28px 28px', borderRight:`1px solid ${C.divider}` }}>
-              <h3 style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:14, lineHeight:1.4 }}>ATI-PE - Agência Estadual de Tecnologia da Informação de Pernambuco</h3>
-              <p style={{ fontSize:13, color:C.textSec, lineHeight:1.75, textAlign:'justify' }}>A <strong style={{ color:C.text }}>Agência Estadual de Tecnologia da Informação de Pernambuco (ATI-PE)</strong> tem como competência institucional coordenar a implementação do Modelo de Informática Pública, garantindo a segurança e a qualidade dos produtos e serviços prestados, com racionalidade de custos.</p>
-            </div>
-            <div style={{ padding:'28px 28px' }}>
-              <h3 style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:14 }}>Setor de Arquitetura de Soluções de TIC</h3>
-              <p style={{ fontSize:13, color:C.textSec, lineHeight:1.75, textAlign:'justify' }}>GAS atua como agente essencial da evolução tecnológica estadual, gerenciando soluções de plataforma como serviço (PaaS) e engenharia de esteiras CI/CD para assegurar que a modernização dos órgãos estaduais ocorra de forma segura, escalável e sustentável.</p>
-            </div>
-          </div>
-        </div>
-        <div style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:12, padding:'28px 32px' }}>
-          <h3 style={{ fontSize:18, fontWeight:700, color:C.text, marginBottom:8 }}>Entre em contato</h3>
-          <p style={{ fontSize:13.5, color:C.textSec, lineHeight:1.7, marginBottom:16 }}>Para mais informações, entre em contato com a Gerência Técnica de Arquitetura de Soluções (GAS) da ATI-PE.</p>
-          <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13.5, color:C.brand }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            gestao.conecta.pe@ati.pe.gov.br
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── SSO Modal ───────────────────────────────────────────── */
-const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
-
-function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado }) {
-  const [tela, setTela] = React.useState('selecao');
-  const [cpf, setCpf] = React.useState('');
-  const [senha, setSenha] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [erro, setErro] = React.useState('');
-  const CPF_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
-  const formatCpf = v => { const n=v.replace(/\D/g,'').slice(0,11); if(n.length<=3)return n; if(n.length<=6)return n.slice(0,3)+'.'+n.slice(3); if(n.length<=9)return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6); return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6,9)+'-'+n.slice(9); };
-  const resetForm = () => { setCpf(''); setSenha(''); setErro(''); };
-  const handleVoltar = () => { resetForm(); setTela('selecao'); };
-  const handleEntrar = () => {
-    if(!cpf||!senha){ setErro('Preencha CPF e senha para continuar.'); return; }
-    setLoading(true); setErro('');
-    setTimeout(()=>{
-      setLoading(false);
-      if(tela==='govbr'){ if(onGovBrAutenticado) onGovBrAutenticado(cpf); }
-      else { if(CPF_AUTORIZADOS.includes(cpf)){ onAcessoAutorizado(cpf); } else { onAcessoNegado(); } }
-    }, 1400);
+function IconeHistorico({tipo}){
+  const common = {
+    width:36,
+    height:36,
+    borderRadius:'50%',
+    background:'#2F73C9',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    color:'#fff',
+    flexShrink:0,
+    boxShadow:'0 1px 2px rgba(0,0,0,0.10)'
   };
-  const fSt = bg => ({ width:'100%', background:'transparent', border:'none', borderBottom:`1.5px solid ${bg}`, outline:'none', fontSize:16, padding:'8px 0', fontFamily:'inherit' });
 
-  if(tela==='selecao') return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,26,122,0.5)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <div style={{ background:'#fff', borderRadius:12, width:'100%', maxWidth:420, boxShadow:'0 8px 40px rgba(0,26,122,0.22)', overflow:'hidden' }}>
-        <div style={{ background:'#0034B7', height:5 }}/>
-        <div style={{ padding:'40px 40px 36px', textAlign:'center' }}>
-          <h2 style={{ fontSize:20, fontWeight:600, color:'#28272C', marginBottom:6 }}>Entrar na sua conta</h2>
-          <div style={{ height:1, background:'#E7E9EB', margin:'20px 0 28px' }}/>
-          <button onClick={()=>{ resetForm(); setTela('govbr'); }} style={{ width:'100%', height:48, borderRadius:100, background:'#1351B4', border:'none', color:'#fff', fontSize:15, fontWeight:700, cursor:'pointer', marginBottom:14, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }} onMouseEnter={e=>e.currentTarget.style.background='#0C3C8A'} onMouseLeave={e=>e.currentTarget.style.background='#1351B4'}>Entrar com <strong>gov.br</strong></button>
-          <button onClick={()=>{ resetForm(); setTela('expresso'); }} style={{ width:'100%', height:48, borderRadius:100, background:'#0034B7', border:'none', color:'#fff', fontSize:15, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }} onMouseEnter={e=>e.currentTarget.style.background='#001A7A'} onMouseLeave={e=>e.currentTarget.style.background='#0034B7'}>Entrar com <strong>expresso.pe</strong></button>
-          <div style={{ marginTop:24 }}><button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'#888' }}>← Voltar ao portal</button></div>
-        </div>
-      </div>
-    </div>
+  const Svg = ({children}) => (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      {children}
+    </svg>
   );
 
-  if(tela==='govbr') return (
-    <div style={{ position:'fixed', inset:0, background:'#1351B4', zIndex:1000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <div style={{ marginBottom:48, textAlign:'center' }}>
-        <div style={{ display:'inline-flex', alignItems:'center', gap:0, background:'rgba(255,255,255,0.12)', borderRadius:8, padding:'8px 20px', border:'1px solid rgba(255,255,255,0.2)' }}>
-          <span style={{ fontSize:28, fontWeight:900, color:'#fff', letterSpacing:'-1px' }}>gov</span>
-          <span style={{ fontSize:28, fontWeight:900, color:'#FFCD07', letterSpacing:'-1px' }}>.br</span>
-        </div>
-        <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', marginTop:8, letterSpacing:'0.5px' }}>ACESSO À CONTA ÚNICA DO GOVERNO FEDERAL</div>
-      </div>
-      <div style={{ width:'100%', maxWidth:440 }}>
-        {erro && <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>{erro}</div>}
-        <div style={{ marginBottom:28 }}>
-          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
-          <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))} maxLength={14} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
-        </div>
-        <div style={{ marginBottom:40 }}>
-          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>Senha</label>
-          <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
-        </div>
-        <button onClick={handleEntrar} disabled={loading} style={{ width:140, height:42, borderRadius:100, background:loading?'rgba(255,255,255,0.2)':'#FFCD07', border:'none', color:loading?'#fff':'#1351B4', fontSize:14, fontWeight:700, cursor:loading?'not-allowed':'pointer', display:'block', margin:'0 auto' }}>{loading?'...':'Entrar'}</button>
-        <div style={{ textAlign:'center', marginTop:28 }}><button onClick={handleVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.5)' }}>← Voltar</button></div>
-      </div>
-    </div>
-  );
+  const icons = {
+    /* Ícone de informação — utilizado para avisos simples retornados no histórico */
+    info: <Svg><circle cx="12" cy="12" r="9"/><line x1="12" y1="10" x2="12" y2="16"/><circle cx="12" cy="7" r="0.8" fill="#fff" stroke="none"/></Svg>,
 
-  const govpeLogoB64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/wAARCABFAFUDASIAAhEBAxEB/8QAHQAAAgEFAQEAAAAAAAAAAAAAAAcGAQIDBQgECf/EAD0QAAEDAwMCAgcDCgcBAAAAAAECAwQABREGEiEHMRNBCBQiUWFxgRUykRZCUmKSobHB0fAkJTM0VHKCov/EABsBAAICAwEAAAAAAAAAAAAAAAUGAAQBAgMH/8QAMREAAQMCBAUCBQMFAAAAAAAAAQIDEQAEBRIhMQZBUWFxE4EHIjKhsRQkkUJSwfDx/9oADAMBAAIRAxEAPwDk1yfEW04PFUG1N7UsBHCTj++aq7cY211SXSW1NbW2PDxsV789qk84MRYjkgRG3NgztCRk/urw2mezPklk2vwQE7txSCP4V6jccGpt7lFq5dgOL2GRWu/MGOu9ZNigGCqtMm5Q0utuJSUlxQU/7PbCcYH1qpuUVKlqClK9ghIGe/Hv7VP9HWyCm6yXBFZIcZGUlAIBB74+v7q2N4kKhTSxG0mqa2Eg+K2lABPu5FV3+ELi1CvWeAgxohSvG3XfbQ0t32IptrtVsESRGuYDvz80rnLnDKFnZv3toSUlPPc7ufke9Dk+GfESw8phRCQl3Zk4HlU+uF2dRBeL2i3WG9hCnFBGEZ4z2pwanRabJYpV0+wI8v1dIPgsx0715IHHHxocvA/qh4EASZQodesHrtQq94k/SKbSWCSswIWncR5HPnXK02Uw7LU40SlPs7jtxvwDnj4145Kwt0qBBHl3/nXTmhb1Z9VrlsnR67f4CUkmTERtWDkYBx247Un+vdntNm1shu0tNR0vxkvPMNABLaypQ4A4TkAHH9aD4hhRatv1KXApJPQj81dwriIXV6bJxkoWBO4P47UvqKKK";
+    /* Ícone de mensagem/comunicação — usado para hashtags como #pendente, #suspenso, #comunicacao */
+    comentario: <Svg><rect x="4" y="5" width="16" height="12" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="15" y2="13"/><path d="M8 17l-3 3v-5"/></Svg>,
 
+    /* Ícone de carta — usado quando a comunicação dispara e-mail/carta ao solicitante */
+    carta: <Svg><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M4 8l8 6 8-6"/></Svg>,
+
+    /* Ícone de remessa/movimentação — usado para processo remetido entre unidades */
+    remetido: <Svg><line x1="5" y1="12" x2="18" y2="12"/><polyline points="13 7 18 12 13 17"/></Svg>,
+
+    /* Ícone de início/processo gerado */
+    inicio: <Svg><polygon points="9 7 17 12 9 17 9 7" fill="#fff" stroke="#fff"/></Svg>,
+
+    documento: <Svg><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v5h5"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="14" y2="16"/></Svg>,
+    avaliacao: <Svg><circle cx="12" cy="12" r="9"/><polyline points="7 12 10.5 15.5 17 9"/></Svg>,
+    alerta: <Svg><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Svg>,
+    comunicacao: <Svg><rect x="4" y="5" width="16" height="12" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="15" y2="13"/></Svg>
+  };
+
+  return <div style={common}>{icons[tipo] || icons.documento}</div>;
+}
+
+function IconeTituloHistorico(){
   return (
-    <div style={{ position:'fixed', inset:0, background:'#1B3FA6', zIndex:1000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <div style={{ marginBottom:52, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <img src={govpeLogoB64} alt="Governo de Pernambuco" style={{ height:110, width:'auto', objectFit:'contain', mixBlendMode:'screen' }}/>
-      </div>
-      <div style={{ width:'100%', maxWidth:480 }}>
-        {erro && <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>{erro}</div>}
-        <div style={{ marginBottom:28 }}>
-          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
-          <input value={cpf} onChange={e=>setCpf(formatCpf(e.target.value))} maxLength={14} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
-        </div>
-        <div style={{ marginBottom:40 }}>
-          <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>Senha</label>
-          <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
-        </div>
-        <button onClick={handleEntrar} disabled={loading} style={{ width:120, height:40, borderRadius:6, background:loading?'rgba(255,255,255,0.25)':'#fff', border:'none', color:loading?'#fff':'#1B3FA6', fontSize:14, fontWeight:700, cursor:loading?'not-allowed':'pointer', display:'block', margin:'0 auto' }}>{loading?'...':'Entrar'}</button>
-        <div style={{ textAlign:'center', marginTop:28 }}><button onClick={handleVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.5)' }}>← Voltar</button></div>
-      </div>
-    </div>
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2F73C9" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 4h13v14H5z"/>
+      <path d="M8 8h7"/>
+      <path d="M8 12h7"/>
+      <path d="M3 7v14h13"/>
+    </svg>
   );
 }
 
-function AcessoNegadoScreen({ cpf, onVoltar }) {
-  const cpfMascarado = cpf.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.XXX.XXX-$2');
+function Timeline({fase}){
+  const steps = ['Em análise','Concluído','Cancelado'];
   return (
-    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
-      <div style={{ background:C.brandDark, height:32, display:'flex', alignItems:'center', padding:'0 24px', gap:8 }}>
-        <span style={{ color:'#FFCD37', fontSize:14 }}>★</span>
-        <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
-      </div>
-      <div style={{ background:'#fff', borderBottom:`1px solid ${C.divider}`, height:64, display:'flex', alignItems:'center', padding:'0 24px', gap:14 }}>
-        <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
-        <div style={{ width:1, height:28, background:C.divider }}/>
-        <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
-      </div>
-      <div style={{ flex:1, background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
-        <div style={{ background:'#fff', borderRadius:12, border:`1px solid ${C.divider}`, padding:40, maxWidth:480, width:'100%', textAlign:'center', boxShadow:'0 4px 24px rgba(0,26,122,0.08)' }}>
-          <div style={{ width:72, height:72, background:C.dangerBg, border:`2px solid ${C.dangerBorder}`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={C.danger} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          </div>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.brandDark, marginBottom:8 }}>Acesso não autorizado</h2>
-          <p style={{ fontSize:14, color:C.textSec, lineHeight:1.6, marginBottom:20 }}>Seu CPF não possui permissão de acesso ao portal Conecta Gov.PE. Seu cadastro foi registrado automaticamente e aguarda aprovação pelo administrador do sistema.</p>
-          <div style={{ background:'#FFF6CE', border:'1px solid #FFE082', borderRadius:8, padding:'12px 16px', marginBottom:20, textAlign:'left' }}>
-            <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke='#B77706' strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <div>
-                <p style={{ fontSize:13, fontWeight:600, color:'#7A5700', marginBottom:4 }}>Cadastro pendente de aprovação</p>
-                <p style={{ fontSize:12, color:'#7A5700', lineHeight:1.5 }}>CPF registrado: <code style={{ background:'#FFE082', padding:'1px 5px', borderRadius:3, fontFamily:'monospace' }}>{cpfMascarado}</code></p>
-                <p style={{ fontSize:12, color:'#7A5700', marginTop:4 }}>Aguarde o contato do administrador ou entre em contato com a equipe do Conecta Gov.PE.</p>
+    <div style={{display:'flex',alignItems:'center',margin:'16px 0 18px'}}>
+      {steps.map((s,i)=>{
+        const ativo = s === fase;
+        const concluido = fase === 'Concluído' && i <= 1;
+        const cancelado = fase === 'Cancelado' && i === 2;
+        const marcado = ativo || concluido || cancelado;
+        const cor = cancelado ? C.danger : marcado ? '#1351B4' : '#999';
+        return (
+          <React.Fragment key={s}>
+            <div style={{display:'flex',alignItems:'center',gap:7}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:marcado?cor:'#fff',border:marcado?'none':`2px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,color:marcado?'#fff':'#999'}}>
+                {marcado?'✓':i+1}
               </div>
+              <span style={{fontSize:12,fontWeight:marcado?700:500,color:marcado?cor:'#777',whiteSpace:'nowrap'}}>{s}</span>
             </div>
-          </div>
-          <div style={{ background:C.brandLight, border:`1px solid ${C.brandBorder}`, borderRadius:8, padding:'12px 16px', marginBottom:24, textAlign:'left' }}>
-            <p style={{ fontSize:12, color:C.brand, lineHeight:1.5 }}><strong>O que aconteceu?</strong> Seu acesso via Login Estadual foi autenticado com sucesso, porém seu perfil ainda não foi ativado no sistema Conecta Gov.PE. Isso é feito pelo administrador do portal.</p>
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            <button onClick={onVoltar} style={{ height:44, borderRadius:8, background:C.brand, border:'none', color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer', width:'100%' }}>Voltar ao portal</button>
-            <a href="mailto:gestao.conecta.pe@ati.pe.gov.br" style={{ fontSize:13, color:C.brand, textDecoration:'none' }}>Entrar em contato: gestao.conecta.pe@ati.pe.gov.br</a>
-          </div>
-        </div>
-      </div>
+            {i < steps.length-1 && <div style={{flex:1,height:2,background:(fase==='Concluído' && i===0)?'#1351B4':C.divider,margin:'0 8px'}}/>}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   DADOS SIMULADOS — Solicitações do cidadão (perfil GOV.BR)
-══════════════════════════════════════════════════════════════ */
-const GOVBR_USUARIOS = {
-  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', email:'maria.gracas@email.com.br', tipo:'orgao', tipoLabel:'Órgão Público' },
-  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', email:'roberto.neto@empresa.pe.gov.br', tipo:'empresa', tipoLabel:'Empresa' },
-  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', email:'juliana.costa@email.com.br', tipo:'orgao', tipoLabel:'Órgão Público' },
-  '046.318.094-18': { nome:'Wagne Goveia Cabral', cpf:'046.318.094-18', email:'wagnecabral@hotmail.com', tipo:'orgao', tipoLabel:'Órgão Público' },
-};
-
-const GOVBR_SOLICITACOES = {
-  '111.222.333-44': [
-    { id:1, protocolo:'SEI-PE 2025.00000010-3', api:'Catálogo de Serviços', orgaoCedente:'ATI', dataSolicitacao:'05/03/2025', dataAtualizacao:'12/03/2025', status:'Aprovada', fase:'Resultado', responsavel:'Ana Costa', historico:[{msg:'Credenciais enviadas por e-mail. Validade: 12 meses.',data:'12/03/2025, 10:30'},{msg:'Processo em avaliação pelo órgão cedente.',data:'08/03/2025, 14:20'},{msg:'Solicitação recebida e protocolada.',data:'05/03/2025, 09:00'}] },
-    { id:2, protocolo:'SEI-PE 2025.00000018-7', api:'Consulta de CPF', orgaoCedente:'SEFAZ', dataSolicitacao:'18/04/2025', dataAtualizacao:'22/04/2025', status:'Em análise', fase:'Análise', responsavel:'Pedro Oliveira', historico:[{msg:'Processo em avaliação pelo órgão cedente.',data:'22/04/2025, 11:00'},{msg:'Solicitação recebida e protocolada.',data:'18/04/2025, 09:15'}] },
-    { id:3, protocolo:'SEI-PE 2025.00000023-1', api:'Emissão de Certidões', orgaoCedente:'SEFAZ', dataSolicitacao:'02/05/2025', dataAtualizacao:'02/05/2025', status:'Pendente', fase:'Solicitação', responsavel:'Fernanda Souza', historico:[{msg:'Aguardando envio de documentação complementar.',data:'02/05/2025, 16:45'},{msg:'Solicitação recebida e protocolada.',data:'02/05/2025, 14:00'}] },
-  ],
-  '555.666.777-88': [
-    { id:4, protocolo:'SEI-PE 2025.00000007-6', api:'Boletim de Ocorrência', orgaoCedente:'SEPLAG', dataSolicitacao:'01/02/2025', dataAtualizacao:'15/02/2025', status:'Aprovada', fase:'Resultado', responsavel:'Leandro Melo', historico:[{msg:'Acesso liberado. Chave API disponível no portal.',data:'15/02/2025, 10:00'},{msg:'Solicitação recebida e protocolada.',data:'01/02/2025, 09:00'}] },
-    { id:5, protocolo:'SEI-PE 2025.00000009-2', api:'Programas Habitacionais', orgaoCedente:'SEDS', dataSolicitacao:'10/02/2025', dataAtualizacao:'28/02/2025', status:'Aprovada', fase:'Resultado', responsavel:'Roberta Mendes', historico:[{msg:'Integração homologada com sucesso.',data:'28/02/2025, 15:30'},{msg:'Solicitação recebida e protocolada.',data:'10/02/2025, 08:30'}] },
-    { id:6, protocolo:'SEI-PE 2025.00000031-4', api:'Catálogo de Serviços', orgaoCedente:'ATI', dataSolicitacao:'10/05/2025', dataAtualizacao:'10/05/2025', status:'Reprovada', fase:'Resultado', responsavel:'Carlos Mendes', historico:[{msg:'Solicitação não atende aos critérios de habilitação.',data:'10/05/2025, 17:00'},{msg:'Solicitação recebida e protocolada.',data:'10/05/2025, 10:00'}] },
-    { id:7, protocolo:'SEI-PE 2025.00000035-6', api:'Agendamento de Saúde', orgaoCedente:'SES', dataSolicitacao:'14/05/2025', dataAtualizacao:'14/05/2025', status:'Pendente', fase:'Solicitação', responsavel:'Maria Santos', historico:[{msg:'Aguardando assinatura do Termo de Responsabilidade.',data:'14/05/2025, 13:00'},{msg:'Solicitação recebida e protocolada.',data:'14/05/2025, 09:00'}] },
-  ],
-  '999.000.111-22': [
-    { id:8, protocolo:'SEI-PE 2025.00000015-9', api:'Matrícula Escolar', orgaoCedente:'SEE', dataSolicitacao:'20/03/2025', dataAtualizacao:'05/04/2025', status:'Aprovada', fase:'Resultado', responsavel:'João Silva', historico:[{msg:'API disponível. Documentação técnica enviada.',data:'05/04/2025, 10:00'},{msg:'Solicitação recebida e protocolada.',data:'20/03/2025, 09:00'}] },
-    { id:9, protocolo:'SEI-PE 2025.00000022-3', api:'Licença Ambiental', orgaoCedente:'SEPLAG', dataSolicitacao:'28/04/2025', dataAtualizacao:'05/05/2025', status:'Em análise', fase:'Análise', responsavel:'Lucas Alves', historico:[{msg:'Em avaliação técnica.',data:'05/05/2025, 14:00'},{msg:'Solicitação recebida e protocolada.',data:'28/04/2025, 09:00'}] },
-  ],
-  '046.318.094-18': [
-    { id:10, protocolo:'2026002693916', api:'Disponibilizar uma API na Plataforma do Conecta', orgaoCedente:'GOV.BR', dataSolicitacao:'26/01/2026', dataAtualizacao:'27/01/2026', status:'Aprovada', fase:'Resultado', responsavel:'Equipe Conecta', historico:[{msg:'Avalie o serviço!',data:'27 jan. 2026, 15:03',avaliar:true},{msg:'Deliberação: Prezado,\nCaso tenha dúvidas, entre em contato conosco por e-mail: conecta@gestao.gov.br\n\nEquipe Conecta',data:'27 jan. 2026, 15:02'},{msg:'Sua solicitação de protocolo 2026002693916 foi encerrada.',data:'27 jan. 2026, 15:01'}] },
-  ],
-};
-
-/* ─────────────────────────────────────────────────────────────
-   COMPONENTE: MinhasSolicitacoes — layout estilo Conecta Gov.br
-───────────────────────────────────────────────────────────── */
-function MinhasSolicitacoes({ usuario, onSair }) {
-  const todasSolicitacoes = GOVBR_SOLICITACOES[usuario.cpf] || [];
-  const [filtroFase, setFiltroFase] = React.useState('');
-  const [filtroOrdem, setFiltroOrdem] = React.useState('recente');
-  const [expandido, setExpandido] = React.useState({});
-
-  const toggleExpandir = (id) => setExpandido(prev => ({ ...prev, [id]: !prev[id] }));
-
-  const ordenadas = [...todasSolicitacoes].sort((a, b) => {
-    if(filtroOrdem==='recente') return b.id - a.id;
-    if(filtroOrdem==='antigo') return a.id - b.id;
-    return a.protocolo.localeCompare(b.protocolo);
-  });
-
-  const filtradas = filtroFase ? ordenadas.filter(s => s.fase === filtroFase) : ordenadas;
-
-  const statusCfg = {
-    'Aprovada':   { bg:'#EAFBD7', color:'#2B6418', border:'#86D562', dot:'#2B6418', banner:'#F0FBE8', bannerBorder:'#C2EEAC', bannerColor:'#2B6418' },
-    'Em análise': { bg:'#FFF6CE', color:'#B77706', border:'#FFE082', dot:'#B77706', banner:'#FFFBEB', bannerBorder:'#FFE082', bannerColor:'#B77706' },
-    'Pendente':   { bg:'#E6F3FF', color:'#0034B7', border:'#99C6FF', dot:'#0034B7', banner:'#EFF6FF', bannerBorder:'#99C6FF', bannerColor:'#0034B7' },
-    'Reprovada':  { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F', dot:'#AC1010', banner:'#FFF0F0', bannerBorder:'#E45F5F', bannerColor:'#AC1010' },
-  };
-
-  const bannerMsg = {
-    'Aprovada':   'A sua solicitação foi finalizada.',
-    'Em análise': 'Processo em avaliação pelo órgão cedente.',
-    'Pendente':   'Aguardando documentação ou assinatura de termo.',
-    'Reprovada':  'Solicitação não atende aos critérios de habilitação.',
-  };
-
-  const StatusBadge = ({ status }) => {
-    const c = statusCfg[status] || { bg:'#F1EFE8', color:'#5F5E5A', border:'#D3D1C7', dot:'#888' };
-    return (
-      <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:700, background:c.bg, color:c.color, border:`1px solid ${c.border}`, flexShrink:0 }}>
-        <span style={{ width:6, height:6, borderRadius:'50%', background:c.dot }}/>
-        {status}
-      </span>
-    );
-  };
-
-  const Timeline = ({ fase, status }) => {
-    const steps = [{ label:'Solicitação' }, { label:'Em análise' }, { label:'Resultado' }];
-    const stepAtivo = fase==='Solicitação' ? 0 : (fase==='Análise'||fase==='Em atendimento') ? 1 : 2;
-    const concluido = status==='Aprovada' || status==='Reprovada';
-    return (
-      <div style={{ display:'flex', alignItems:'center', marginBottom:14 }}>
-        {steps.map((step, i) => {
-          const done = concluido ? true : i < stepAtivo;
-          const active = !concluido && i === stepAtivo;
-          return (
-            <React.Fragment key={i}>
-              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:11, fontWeight:700, background:done?'#1351B4':'#fff', border:done?'none':active?'2px solid #1351B4':'2px solid #CED2D7', color:done?'#fff':active?'#1351B4':'#999' }}>
-                  {done ? '✓' : i+1}
-                </div>
-                <span style={{ fontSize:11, fontWeight:(done||active)?600:400, color:(done||active)?'#1351B4':'#999', whiteSpace:'nowrap' }}>{step.label}</span>
-              </div>
-              {i < steps.length-1 && <div style={{ flex:1, height:2, background:done?'#1351B4':'#E7E9EB', margin:'0 6px' }}/>}
-            </React.Fragment>
-          );
-        })}
-      </div>
-    );
-  };
+function BannerFase({fase}){
+  const cfg = {
+    'Em análise': {bg:'#FFFBEB',border:C.warningBorder,color:C.warning,msg:'A sua solicitação está em análise. As comunicações serão exibidas no histórico conforme retorno da API do Solicita.'},
+    'Concluído': {bg:'#F0FBE8',border:'#C2EEAC',color:C.success,msg:'A sua solicitação foi finalizada.'},
+    'Cancelado': {bg:'#FFF0F0',border:C.dangerBorder,color:C.danger,msg:'A sua solicitação foi cancelada.'}
+  }[fase];
 
   return (
-    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:'#F4F5F7', fontFamily:"'Inter',sans-serif" }}>
+    <div style={{background:cfg.bg,border:`1px solid ${cfg.border}`,borderRadius:8,padding:'11px 14px',display:'flex',gap:9,alignItems:'center',marginBottom:14}}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={cfg.color} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span style={{fontSize:13,color:cfg.color,fontWeight:600}}>{cfg.msg}</span>
+    </div>
+  );
+}
 
-      {/* Barra gov.pe */}
-      <div style={{ background:'#001A7A', height:32, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-          <span style={{ color:'#FFCD37', fontSize:14 }}>★</span>
-          <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
+function LinhaSolicitacao({sol}){
+  const [aberto,setAberto]=React.useState(false);
+  return (
+    <div style={{borderBottom:`1px solid ${C.divider}`}}>
+      <div onClick={()=>setAberto(!aberto)} style={{display:'grid',gridTemplateColumns:'2fr 2.5fr 1.4fr 1.4fr 60px',alignItems:'center',padding:'0 16px',minHeight:62,cursor:'pointer',background:aberto?'#F0F5FF':'#fff'}}>
+        <div style={{padding:'12px 8px'}}>
+          <code style={{fontSize:12,fontFamily:'monospace',background:'#F4F5F7',padding:'3px 7px',borderRadius:4,color:'#222'}}>{sol.protocolo}</code>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          {['A-','A','A+'].map(t=><span key={t} style={{ color:'#F8FAFC', fontSize:12, fontWeight:700, cursor:'pointer', padding:'0 2px' }}>{t}</span>)}
+        <div style={{padding:'12px 8px'}}>
+          <div style={{fontSize:14,fontWeight:800,color:C.brandDark,marginBottom:3}}>{sol.api}</div>
+          <span style={{fontSize:11,fontWeight:800,background:C.brandLight,color:C.brand,padding:'2px 8px',borderRadius:100,border:`1px solid ${C.brandBorder}`}}>{sol.orgao}</span>
         </div>
-      </div>
-
-      {/* Header */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #E7E9EB', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-          <img src="../assets/ati_logo.png" alt="ATI" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
-          <div style={{ width:1, height:32, background:'#E7E9EB' }}/>
-          <img src="../assets/Brasao.png" alt="Brasão" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
-          <img src="../assets/Governo.png" alt="Gov PE" style={{ height:32, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
-          <div style={{ width:1, height:32, background:'#E7E9EB' }}/>
-          <span style={{ fontSize:14, fontWeight:700, color:'#001A7A' }}>Conecta Gov.PE</span>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, background:'#F0F4FF', border:'1px solid #C7D6FF', borderRadius:100, padding:'4px 12px' }}>
-            <div style={{ display:'flex', alignItems:'center', background:'#1351B4', borderRadius:4, padding:'2px 6px' }}>
-              <span style={{ fontSize:10, fontWeight:900, color:'#fff', letterSpacing:'-0.5px' }}>gov</span>
-              <span style={{ fontSize:10, fontWeight:900, color:'#FFCD07', letterSpacing:'-0.5px' }}>.br</span>
-            </div>
-            <span style={{ fontSize:12, fontWeight:600, color:'#001A7A' }}>{usuario.nome.split(' ')[0]}</span>
-          </div>
-          <button onClick={onSair}
-            style={{ height:34, padding:'0 14px', borderRadius:6, border:'1px solid #E45F5F', background:'#fff', color:'#AC1010', fontSize:12, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}
-            onMouseEnter={e=>e.currentTarget.style.background='#FFE4E4'}
-            onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AC1010" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sair
-          </button>
+        <div style={{padding:'12px 8px',fontSize:13,fontWeight:600,color:C.text}}>{sol.dataCriacao.split(',')[0]}</div>
+        <div style={{padding:'12px 8px'}}><StatusBadge fase={sol.fase}/></div>
+        <div style={{padding:'12px 8px',textAlign:'right'}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brand} strokeWidth="2.5" style={{transform:aberto?'rotate(180deg)':'none',transition:'transform .2s'}}><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
 
-      {/* Conteúdo */}
-      <div style={{ flex:1, padding:'28px 24px', maxWidth:900, width:'100%', margin:'0 auto' }}>
-
-        <div style={{ marginBottom:20 }}>
-          <h1 style={{ fontSize:22, fontWeight:700, color:'#001A7A', marginBottom:4 }}>Minhas solicitações</h1>
-          <div style={{ fontSize:13, color:'#494C57' }}>
-            <span>Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE</span>
+      {aberto && (
+        <div style={{padding:'18px 22px',background:'#fff',borderTop:`1px solid ${C.divider}`}}>
+          <div style={{background:'#F8FAFC',border:`1px solid ${C.divider}`,borderRadius:10,padding:'14px 16px',display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:14}}>
+            {[
+              ['Data da criação',sol.dataCriacao],
+              ['Data da última atualização',sol.dataAtualizacao],
+              ['Status',sol.status],
+              ['Protocolo',sol.protocolo.replace('SEI-PE ','')]
+            ].map(([k,v])=>(
+              <div key={k}>
+                <div style={{fontSize:11,color:C.brand,fontWeight:600,marginBottom:5}}>{k}</div>
+                <div style={{fontSize:13,color:C.text,fontWeight:600,fontFamily:k==='Protocolo'?'monospace':'inherit'}}>{v}</div>
+              </div>
+            ))}
           </div>
-        </div>
 
-        {/* Filtros */}
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, flexWrap:'wrap', justifyContent:'space-between' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ fontSize:12, color:'#494C57', fontWeight:600 }}>Fase:</span>
-            <div style={{ position:'relative' }}>
-              <select value={filtroFase} onChange={e=>setFiltroFase(e.target.value)} style={{ height:32, border:'1px solid #CED2D7', borderRadius:5, padding:'0 26px 0 10px', fontSize:12, color:'#28272C', background:'#fff', outline:'none', appearance:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
-                <option value="">Todas as fases</option>
-                {['Solicitação','Análise','Em atendimento','Resultado'].map(f=><option key={f} value={f}>{f}</option>)}
-              </select>
-              <span style={{ position:'absolute', right:7, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:10, color:'#666' }}>▾</span>
-            </div>
+          <Timeline fase={sol.fase}/>
+          <BannerFase fase={sol.fase}/>
+
+          <div style={{background:C.warningBg,border:`1px solid ${C.warningBorder}`,borderRadius:8,padding:'10px 12px',display:'flex',gap:9,alignItems:'flex-start',marginBottom:18}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.warning} strokeWidth="2" style={{flexShrink:0,marginTop:1}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{fontSize:12,color:C.warning,lineHeight:1.55}}>O link de acompanhamento é pessoal e não deve ser compartilhado. O compartilhamento é de responsabilidade do usuário.</span>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ fontSize:12, color:'#494C57', fontWeight:600 }}>Classificar por:</span>
-            <div style={{ position:'relative' }}>
-              <select value={filtroOrdem} onChange={e=>setFiltroOrdem(e.target.value)} style={{ height:32, border:'1px solid #CED2D7', borderRadius:5, padding:'0 26px 0 10px', fontSize:12, color:'#28272C', background:'#fff', outline:'none', appearance:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
-                <option value="recente">Atualização mais recente</option>
-                <option value="antigo">Data de criação</option>
-                <option value="protocolo">Protocolo</option>
-              </select>
-              <span style={{ position:'absolute', right:7, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:10, color:'#666' }}>▾</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Aba dinâmica: Órgão Público | Empresa */}
-        <div style={{ display:'flex', gap:0, borderBottom:'2px solid #E7E9EB', marginBottom:16 }}>
-          <button onClick={()=>setFiltroFase('')} style={{ padding:'8px 18px', border:'none', background:'none', fontSize:13, fontWeight:filtroFase===''?700:400, color:filtroFase===''?'#0034B7':'#494C57', cursor:'pointer', borderBottom:filtroFase===''?'2px solid #0034B7':'2px solid transparent', marginBottom:'-2px', fontFamily:"'Inter',sans-serif" }}>
-            {usuario.tipoLabel || 'Solicitante'} ({todasSolicitacoes.length})
-          </button>
-        </div>
-
-        {/* Grid + Lista expansível */}
-        {filtradas.length === 0 ? (
-          <div style={{ background:'#fff', border:'1px solid #E7E9EB', borderRadius:10, padding:'48px', textAlign:'center', color:'#888', fontSize:13 }}>Nenhuma solicitação encontrada para o filtro selecionado.</div>
-        ) : (
-          <div style={{ background:'#fff', border:'1px solid #E7E9EB', borderRadius:10, overflow:'hidden', marginBottom:10 }}>
-
-            {/* Cabeçalho da grid */}
-            <div style={{ display:'grid', gridTemplateColumns:'2fr 2.5fr 1.4fr 1.3fr 1fr', background:'#F8FAFC', borderBottom:'2px solid #E7E9EB', padding:'0 16px' }}>
-              {['Nº Protocolo','Nome da API','Data de Requisição','Fase',''].map((h,i)=>(
-                <div key={i} style={{ padding:'10px 8px 10px', fontSize:11, fontWeight:700, color:'#494C57', textTransform:'uppercase', letterSpacing:'0.5px', textAlign:i===4?'right':'left' }}>{h}</div>
-              ))}
-            </div>
-
-            {/* Linhas da grid */}
-            <div>
-            {filtradas.map(sol => {
-              const aberto = !!expandido[sol.id];
-              const cfg = statusCfg[sol.status] || {};
-              const msg = bannerMsg[sol.status] || '';
-              return (
-                <div key={sol.id} style={{ borderBottom:'1px solid #F0F2F5' }}>
-
-                  {/* Linha clicável */}
-                  <div
-                    style={{ display:'grid', gridTemplateColumns:'2fr 2.5fr 1.4fr 1.3fr 1fr', padding:'0 16px', alignItems:'center', cursor:'pointer', transition:'background 0.12s', background:aberto?'#F0F5FF':'#fff', minHeight:52 }}
-                    onClick={()=>toggleExpandir(sol.id)}
-                    onMouseEnter={e=>{ if(!aberto) e.currentTarget.style.background='#F8FAFC'; }}
-                    onMouseLeave={e=>{ if(!aberto) e.currentTarget.style.background='#fff'; }}>
-
-                    {/* Nº Protocolo */}
-                    <div style={{ padding:'12px 8px' }}>
-                      <code style={{ fontSize:11, fontFamily:'monospace', background:'#F4F5F7', padding:'2px 7px', borderRadius:4, color:'#444', display:'inline-block' }}>{sol.protocolo}</code>
+          <div>
+            <h3 style={{fontSize:22,fontWeight:800,color:'#063147',display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+              <IconeTituloHistorico/> Histórico <span style={{height:1,background:C.divider,flex:1}}/>
+            </h3>
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              {sol.historico.map((h,i)=>(
+                <div key={i} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+                  <IconeHistorico tipo={h.tipo}/>
+                  <div style={{background:'#fff',border:`1px solid ${C.border}`,borderRadius:8,padding:'13px 16px',minWidth:260,maxWidth:620}}>
+                    <div style={{display:'flex',gap:12,alignItems:'baseline',marginBottom:8}}>
+                      <strong style={{fontSize:13,color:'#063147'}}>{h.titulo}</strong>
+                      <span style={{fontSize:12,color:C.textSec}}>{h.data}</span>
                     </div>
-
-                    {/* Nome da API */}
-                    <div style={{ padding:'12px 8px' }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:'#001A7A', marginBottom:2 }}>{sol.api}</div>
-                      <span style={{ fontSize:10, fontWeight:700, background:'#E6F3FF', color:'#0034B7', padding:'1px 7px', borderRadius:100, border:'1px solid #99C6FF' }}>{sol.orgaoCedente}</span>
-                    </div>
-
-                    {/* Data de Requisição */}
-                    <div style={{ padding:'12px 8px', fontSize:12, color:'#28272C', fontWeight:500 }}>{sol.dataSolicitacao}</div>
-
-                    {/* Fase */}
-                    <div style={{ padding:'12px 8px' }}>
-                      <StatusBadge status={sol.status}/>
-                      <div style={{ fontSize:10, color:'#888', marginTop:3 }}>{sol.fase}</div>
-                    </div>
-
-                    {/* Ação */}
-                    <div style={{ padding:'12px 8px', textAlign:'right', display:'flex', alignItems:'center', justifyContent:'flex-end', gap:6 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0034B7" strokeWidth="2.5" strokeLinecap="round" style={{ transform:aberto?'rotate(180deg)':'none', transition:'transform 0.2s', flexShrink:0 }}><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
+                    <p style={{fontSize:13,color:'#063147',lineHeight:1.65,whiteSpace:'pre-line'}}>{h.texto}</p>
+                    {h.acao && <button style={{marginTop:10,height:32,padding:'0 18px',borderRadius:100,border:'none',background:'#1351B4',color:'#fff',fontSize:13,fontWeight:800,cursor:'pointer'}}>{h.acao}</button>}
                   </div>
-
-                  {/* Detalhes expandidos */}
-                  {aberto && (
-                    <div style={{ borderTop:'1px solid #F0F2F5', padding:'16px 20px' }} onClick={e=>e.stopPropagation()}>
-
-                      {/* Resumo */}
-                      <div style={{ background:'#F8FAFC', border:'1px solid #E7E9EB', borderRadius:8, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
-                        {[['Data da criação',sol.dataSolicitacao],['Última atualização',sol.dataAtualizacao],['Status',sol.status],['Protocolo',sol.protocolo.replace('SEI-PE ','')]].map(([k,v])=>(
-                          <div key={k}>
-                            <div style={{ fontSize:10, color:'#888', marginBottom:2 }}>{k}</div>
-                            <div style={{ fontSize:12, fontWeight:600, color:'#28272C', fontFamily:k==='Protocolo'?'monospace':'inherit' }}>{v}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Timeline */}
-                      <Timeline fase={sol.fase} status={sol.status}/>
-
-                      {/* Banner */}
-                      <div style={{ background:cfg.banner, border:`1px solid ${cfg.bannerBorder}`, borderRadius:6, padding:'10px 14px', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={cfg.bannerColor} strokeWidth="2" strokeLinecap="round" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span style={{ fontSize:13, color:cfg.bannerColor, fontWeight:500 }}>{msg}</span>
-                      </div>
-
-                      {/* Histórico */}
-                      <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:'#28272C', marginBottom:10 }}>Histórico</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                          {sol.historico.map((h, i) => (
-                            <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                              <div style={{ width:30, height:30, borderRadius:'50%', background:'#E6F3FF', border:'1px solid #99C6FF', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'#0034B7', flexShrink:0 }}>A</div>
-                              <div style={{ background:'#F8FAFC', border:'1px solid #E7E9EB', borderRadius:8, padding:'10px 14px', flex:1 }}>
-                                <div style={{ fontSize:11, fontWeight:700, color:'#444', marginBottom:5 }}>Atendimento · {h.data}</div>
-                                <p style={{ fontSize:12, color:'#494C57', lineHeight:1.65, whiteSpace:'pre-line' }}>{h.msg}</p>
-                                {h.avaliar && (
-                                  <button onClick={e=>e.stopPropagation()} style={{ marginTop:8, height:28, padding:'0 14px', borderRadius:100, background:'#1351B4', border:'none', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>Avaliar serviço</button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-
-                    </div>
-                  )}
                 </div>
-              );
-            })}
+              ))}
             </div>
           </div>
-        )}
-
-
-      </div>
-
-      {/* Footer */}
-      <div style={{ background:'#0034B7', padding:'20px 24px', marginTop:'auto' }}>
-        <div style={{ maxWidth:900, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'flex-end', gap:20 }}>
-          <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
-          <div style={{ width:1, height:32, background:'rgba(255,255,255,0.25)' }}/>
-          <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
         </div>
-        <div style={{ maxWidth:900, margin:'8px auto 0', borderTop:'1px solid rgba(255,255,255,0.15)', paddingTop:12 }}>
-          <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── App ─────────────────────────────────────────────────── */
-function App() {
-  const [page, setPage] = React.useState('Início');
-  const [showSsoModal, setShowSsoModal] = React.useState(false);
-  const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null);
-  const [detailApi, setDetailApi] = React.useState(null);
-  const [govbrUsuario, setGovbrUsuario] = React.useState(null);
-  const [usuariosCadastrados, setUsuariosCadastrados] = React.useState([...USUARIOS_AUTORIZADOS]);
-
-  const handleAdminClick = () => { setShowSsoModal(true); };
-
-  const handleAutenticar = (cpf) => {
-    const cpfLimpo = cpf.trim();
-    if(usuariosCadastrados.includes(cpfLimpo)){
-      try { window.location.href = '../gerenciar-apis/index.html'; }
-      catch(e) { alert('Acesso autorizado! Redirecionando para o backoffice...'); }
-    } else {
-      setUsuariosCadastrados(prev => prev.includes(cpfLimpo) ? prev : [...prev, cpfLimpo]);
-      setTelaAcessoNegado(cpfLimpo);
-    }
-  };
-
-  const handleGovBrAutenticar = (cpf) => {
-    const cpfLimpo = cpf.trim();
-    const usuario = GOVBR_USUARIOS[cpfLimpo];
-    if(usuario){
-      setGovbrUsuario(usuario);
-    } else {
-      setGovbrUsuario({ nome:'Cidadão', cpf:cpfLimpo, email:'', tipo:'orgao', tipoLabel:'Órgão Público' });
-    }
-    setShowSsoModal(false);
-  };
-
-  if(govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} onSair={()=>setGovbrUsuario(null)}/>;
-  if(telaAcessoNegado) return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
-
-  if(page === '__detail__') return (
-    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
-      <GovBar/>
-      <Header activePage="Catálogo de APIs" onNav={p=>{ setDetailApi(null); setPage(p); }} onAdminClick={handleAdminClick}/>
-      <main style={{ flex:1 }}>
-        <DetailPage api={detailApi} onBack={()=>{ setDetailApi(null); setPage('Catálogo de APIs'); }}/>
-      </main>
-      <Footer/>
-      {showSsoModal && <SsoModal onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>}
-    </div>
-  );
-
-  const pageContent = {
-    'Início':           (<><Hero onNav={setPage}/><Sobre/><Faq/></>),
-    'Como Acessar APIs':<ComoAcessar onNav={setPage}/>,
-    'Catálogo de APIs': <CatalogPage onSelectApi={api=>{ setDetailApi(api); setPage('__detail__'); }}/>,
-    'Interoperabilidade':<Interoperabilidade/>,
-    'Quem somos':       <QuemSomos/>,
-  };
-
-  return (
-    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
-      <GovBar/>
-      <Header activePage={page} onNav={setPage} onAdminClick={handleAdminClick}/>
-      <main style={{ flex:1, display:'flex', flexDirection:'column' }}>
-        {pageContent[page]}
-      </main>
-      <Footer/>
-      {showSsoModal && (
-        <SsoModal
-          onClose={()=>setShowSsoModal(false)}
-          onAcessoNegado={()=>{setShowSsoModal(false);}}
-          onAcessoAutorizado={handleAutenticar}
-          onGovBrAutenticado={handleGovBrAutenticar}
-        />
       )}
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+function MinhasSolicitacoes(){
+  const [fase,setFase]=React.useState('');
+  const [ordem,setOrdem]=React.useState('recente');
+  const fases = ['Em análise','Concluído','Cancelado'];
+
+  const lista = [...SOLICITACOES]
+    .filter(s=>!fase || s.fase===fase)
+    .sort((a,b)=>{
+      if(ordem==='antigo') return a.id-b.id;
+      if(ordem==='protocolo') return a.protocolo.localeCompare(b.protocolo);
+      return b.id-a.id;
+    });
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
+      <GovBar/>
+      <Header/>
+      <main style={{flex:1,padding:'32px 24px',maxWidth:1120,width:'100%',margin:'0 auto'}}>
+        <div style={{marginBottom:24}}>
+          <h1 style={{fontSize:28,fontWeight:800,color:C.brandDark,letterSpacing:'-.3px',marginBottom:4}}>Minhas solicitações</h1>
+          <p style={{fontSize:14,color:C.textSec}}>Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE.</p>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18,marginBottom:18}}>
+          <div>
+            <label style={{display:'block',fontSize:13,fontWeight:600,color:C.text,marginBottom:8}}>Fase</label>
+            <div style={{position:'relative'}}>
+              <select value={fase} onChange={e=>setFase(e.target.value)} style={{width:'100%',height:42,border:'none',borderBottom:`1px solid ${C.border}`,background:'transparent',fontSize:15,color:C.text,outline:'none',appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                <option value="">Todas as fases</option>
+                {fases.map(f=><option key={f} value={f}>{f}</option>)}
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',color:C.brand}}>⌄</span>
+            </div>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:13,fontWeight:600,color:C.text,marginBottom:8}}>Classificar por</label>
+            <div style={{position:'relative'}}>
+              <select value={ordem} onChange={e=>setOrdem(e.target.value)} style={{width:'100%',height:42,border:'none',borderBottom:`1px solid ${C.border}`,background:'transparent',fontSize:15,color:C.text,outline:'none',appearance:'none',paddingRight:28,cursor:'pointer'}}>
+                <option value="recente">Atualização mais recente</option>
+                <option value="antigo">Data de criação</option>
+                <option value="protocolo">Protocolo</option>
+              </select>
+              <span style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',color:C.brand}}>⌄</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{display:'flex',borderBottom:`1px solid ${C.border}`,margin:'8px 0 20px'}}>
+          <button onClick={()=>setFase('')} style={{padding:'11px 18px',border:'none',background:'transparent',fontSize:15,fontWeight:800,color:!fase?C.brand:C.text,borderBottom:!fase?`3px solid ${C.brand}`:'3px solid transparent',marginBottom:-1,cursor:'pointer'}}>
+            {usuario.tipoLabel} ({SOLICITACOES.length})
+          </button>
+        </div>
+
+        <section style={{background:'#fff',border:`1px solid ${C.divider}`,borderRadius:10,overflow:'hidden',boxShadow:'0 1px 5px rgba(0,0,0,.04)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 2.5fr 1.4fr 1.4fr 60px',background:'#F8FAFC',borderBottom:`1px solid ${C.divider}`,padding:'0 16px'}}>
+            {['Nº do protocolo','Solicitação','Data da requisição','Fase',''].map((h,i)=>(
+              <div key={h} style={{padding:'12px 8px',fontSize:12,fontWeight:800,color:C.textSec,textAlign:i===4?'right':'left'}}>{h}</div>
+            ))}
+          </div>
+          {lista.length ? lista.map(s=><LinhaSolicitacao key={s.id} sol={s}/>) : (
+            <div style={{padding:48,textAlign:'center',fontSize:14,color:C.textSec}}>Nenhuma solicitação encontrada para a fase selecionada.</div>
+          )}
+          <div style={{padding:'11px 16px',background:'#F8FAFC',borderTop:`1px solid ${C.divider}`,display:'flex',gap:8,alignItems:'center'}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{fontSize:12,color:'#777'}}>Dados somente leitura · Sincronizados com o Solicita/SEI · As solicitações são gerenciadas exclusivamente no SEI.</span>
+          </div>
+        </section>
+      </main>
+
+      <footer style={{background:C.brand,padding:'20px 24px',marginTop:'auto'}}>
+        <div style={{maxWidth:1120,margin:'0 auto',fontSize:12,color:'rgba(255,255,255,.72)'}}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<MinhasSolicitacoes/>);
 </script>
 </body>
 </html>
