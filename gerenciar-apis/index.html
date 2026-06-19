@@ -671,7 +671,6 @@ const Topbar = ({ breadcrumbs }) => (
 );
 
 
-
 /* ═══════════════════════════════════════════════════════════════
    OPERAÇÕES LIST (APIs)
 ══════════════════════════════════════════════════════════════ */
@@ -1435,6 +1434,22 @@ const SEI_SYNC_STATE = {
 const SEI_SOLICITACOES = SEI_STATUS;
 
 /* ═══════════════════════════════════════════════════════════════
+   DADOS DE SLA DAS SOLICITAÇÕES (novo KPI — Dashboard)
+   Prazo de SLA: 5 dias corridos a partir da data de abertura.
+   Apenas solicitações em aberto ("Em análise") entram no cálculo;
+   Aprovadas/Reprovadas já saíram do fluxo e não contam para o SLA.
+   Em produção: calculado no backend a partir de SEI_SOLICITACOES_RECENTES.
+══════════════════════════════════════════════════════════════ */
+const SLA_PRAZO_DIAS = 5;
+const SLA_DATA = {
+  aVencer:  52,
+  vencidos: 18,
+};
+const SLA_TOTAL = SLA_DATA.aVencer + SLA_DATA.vencidos;
+const SLA_PCT_A_VENCER  = SLA_TOTAL>0 ? Math.round((SLA_DATA.aVencer/SLA_TOTAL)*100)  : 0;
+const SLA_PCT_VENCIDOS  = SLA_TOTAL>0 ? Math.round((SLA_DATA.vencidos/SLA_TOTAL)*100) : 0;
+
+/* ═══════════════════════════════════════════════════════════════
    COMPONENTE: MINI GRÁFICO DE BARRAS (SVG puro — sem dependência)
 ══════════════════════════════════════════════════════════════ */
 function BarChart({ data, keys, colors, height=120, title }) {
@@ -1799,7 +1814,7 @@ function SeiPeSection({ orgaoFiltro }) {
 /* ═══════════════════════════════════════════════════════════════
    HU.03.01 — DASHBOARD GERAL DO PORTAL
    Indicadores reais para gestores: KPIs, gráficos, ranking,
-   evolução de cadastros, solicitações SEI-PE
+   evolução de cadastros, solicitações SEI-PE, SLA de solicitações
 ══════════════════════════════════════════════════════════════ */
 function Dashboard({ onNav }) {
   /* ── Dados base ── */
@@ -1937,6 +1952,61 @@ function Dashboard({ onNav }) {
     );
   };
 
+  /* ── NOVO: Card de SLA das Solicitações — gráfico de barras
+     "A vencer" x "Vencidos", com prazo de SLA de 5 dias corridos ── */
+  const SlaBarChartCard = () => {
+    const { aVencer, vencidos } = SLA_DATA;
+    const max = Math.max(aVencer, vencidos, 1);
+    const alturaVencer   = Math.max((aVencer  / max) * 94, aVencer  > 0 ? 18 : 0);
+    const alturaVencidos = Math.max((vencidos / max) * 94, vencidos > 0 ? 18 : 0);
+
+    const coluna = (titulo, valor, percentual, altura, cor, bgSuave) => (
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:128,minWidth:78}}>
+        <div style={{fontSize:13,fontWeight:700,color:cor,marginBottom:4,lineHeight:1}}>{valor}</div>
+        <div style={{height:98,display:'flex',alignItems:'flex-end'}}>
+          <div style={{width:46,height:altura,background:cor,borderRadius:'7px 7px 0 0',boxShadow:`0 6px 14px ${bgSuave}`}} />
+        </div>
+        <div style={{fontSize:12,fontWeight:600,color:'#28272C',marginTop:8}}>{titulo}</div>
+        <div style={{fontSize:10,color:'#888',marginTop:2}}>{percentual}%</div>
+      </div>
+    );
+
+    return (
+      <div style={{
+        background:'#fff',
+        border:'1px solid #E7E9EB',
+        borderRadius:8,
+        padding:'14px 16px',
+        minHeight:210,
+        boxShadow:'0 0 20px 0 rgba(231,233,235,0.75)',
+        cursor:'pointer',
+        transition:'box-shadow 0.15s',
+      }}
+        onMouseEnter={e=>{ e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
+        onMouseLeave={e=>{ e.currentTarget.style.boxShadow='0 0 20px 0 rgba(231,233,235,0.75)'; }}
+        onClick={()=>onNav('relatorios')}
+      >
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+          <div>
+            <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>SLA das Solicitações</div>
+            <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Prazo de {SLA_PRAZO_DIAS} dias · A vencer x Vencidos</div>
+          </div>
+          <div style={{fontSize:26,fontWeight:800,color:'#001A7A',lineHeight:1}}>{SLA_TOTAL}</div>
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:34,marginTop:8}}>
+          {coluna('A vencer', aVencer, SLA_PCT_A_VENCER, alturaVencer, C.brand, 'rgba(0,52,183,0.18)')}
+          {coluna('Vencidos', vencidos, SLA_PCT_VENCIDOS, alturaVencidos, C.danger, 'rgba(172,16,16,0.16)')}
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:8,borderTop:'1px solid #E7E9EB',paddingTop:10}}>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:C.brand}}/>A vencer</span>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:C.danger}}/>Vencidos</span>
+        </div>
+      </div>
+    );
+  };
+
   const PieChartSei = () => {
     const aprovPct = pct(seiAprovadas);
     const analisePct = pct(seiAnalise);
@@ -2011,7 +2081,7 @@ function Dashboard({ onNav }) {
         </div>
       </div>
 
-      {/* ── Linha 1: KPIs principais ajustados — removidos KPIs marcados ── */}
+      {/* ── Linha 1: KPIs principais ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:10}}>
         <KCard label="APIs Disponíveis" valor={apisAtivas}
           sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
@@ -2033,7 +2103,12 @@ function Dashboard({ onNav }) {
           sub="com ao menos 1 API cadastrada" cor={C.brand} nav="apis"/>
       </div>
 
-      {/* ── Linha 3: Solicitações de Acesso em formato de pizza ── */}
+      {/* ── Linha 3: NOVO — SLA das Solicitações (A vencer x Vencidos) ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+        <SlaBarChartCard/>
+      </div>
+
+      {/* ── Linha 4: Solicitações de Acesso em formato de pizza ── */}
       <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div>
@@ -2049,7 +2124,6 @@ function Dashboard({ onNav }) {
     </div>
   );
 }
-
 
 /* ═══════════════════════════════════════════════════════════════
    HU.03.03 + HU.03.04 — RELATÓRIOS
@@ -2708,266 +2782,6 @@ function App() {
     </div>
   );
 }
-
-function Dashboard({ onNav }) {
-  /* ── Dados base ── */
-  const totalApis    = INITIAL_APIS.length;
-  const apisAtivas   = INITIAL_APIS.filter(a=>a.status==='Ativo').length;
-  const apisInativas = INITIAL_APIS.filter(a=>a.status==='Inativo').length;
-  const totalCats    = INITIAL_CATS.length;
-  const catAtivas    = INITIAL_CATS.filter(c=>c.status==='Ativo').length;
-  const catInativas  = Math.max(totalCats - catAtivas, 0);
-  const totalOrgaos  = [...new Set(INITIAL_APIS.map(a=>a.orgaoId))].length;
-  const usrsAtivos   = INITIAL_USUARIOS.filter(u=>u.status==='Ativo').length;
-  const pendentes    = INITIAL_USUARIOS.filter(u=>u.status==='Pendente').length;
-
-  const seiTotal     = SEI_STATUS.reduce((s,i)=>s+i.qtd,0);
-  const seiAprovadas = SEI_STATUS.find(s=>s.key==='aprovadas')?.qtd||0;
-  const seiAnalise   = SEI_STATUS.find(s=>s.key==='analise')?.qtd||0;
-  const seiPendSEI   = SEI_STATUS.find(s=>s.key==='pendentes')?.qtd||0;
-  const seiReprov    = SEI_STATUS.find(s=>s.key==='reprovadas')?.qtd||0;
-
-  const [ts] = React.useState(new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-
-  const pct = (v) => seiTotal>0 ? Math.round((v/seiTotal)*100) : 0;
-
-  /* ── Mini sparkline SVG ── */
-  const Spark = ({vals, color}) => {
-    const W=80, H=32, max=Math.max(...vals), min=Math.min(...vals);
-    const range = max-min||1;
-    const pts = vals.map((v,i)=>({
-      x: (i/(vals.length-1))*(W-4)+2,
-      y: H-4 - ((v-min)/range)*(H-8)
-    }));
-    const d = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    return (
-      <svg width={W} height={H} style={{display:'block'}}>
-        <path d={d} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" opacity="0.6"/>
-        <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r="2.5" fill={color}/>
-      </svg>
-    );
-  };
-
-  /* ── Barra de progresso ── */
-  const ProgressBar = ({value, total, color}) => {
-    const percentual = total>0 ? Math.round((value/total)*100) : 0;
-    return (
-      <div style={{marginTop:6}}>
-        <div style={{height:4,background:'#E7E9EB',borderRadius:100,overflow:'hidden'}}>
-          <div style={{height:'100%',width:`${percentual}%`,background:color,borderRadius:100,transition:'width 0.5s'}}/>
-        </div>
-        <div style={{fontSize:10,color:'#888',marginTop:3}}>{percentual}% do total</div>
-      </div>
-    );
-  };
-
-  const KCard = ({label, valor, sub, cor, bg, border, nav, spark, sparkColor, progress, progressTotal}) => (
-    <div style={{
-      background:bg||'#fff',
-      border:`1px solid ${border||'#E7E9EB'}`,
-      borderRadius:8,
-      padding:'14px 16px',
-      display:'flex',
-      flexDirection:'column',
-      gap:2,
-      minHeight:110,
-      position:'relative',
-      overflow:'hidden',
-      transition:'box-shadow 0.15s',
-      cursor:nav?'pointer':'default',
-    }}
-      onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
-      onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}
-      onClick={nav?()=>onNav(nav):undefined}
-    >
-      <div style={{fontSize:11,color:'#888',fontWeight:500,lineHeight:1.2}}>{label}</div>
-      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:2}}>
-        <div style={{fontSize:32,fontWeight:700,color:cor||'#28272C',lineHeight:1}}>{valor}</div>
-        {spark && <Spark vals={spark} color={sparkColor||cor||C.brand}/>}
-      </div>
-      {sub && <div style={{fontSize:11,color:'#aaa',marginTop:2}}>{sub}</div>}
-      {progress!==undefined && <ProgressBar value={progress} total={progressTotal} color={cor||C.brand}/>}
-    </div>
-  );
-
-
-  const ColumnChartCard = ({label, total, ativo, inativo, corAtivo, nav}) => {
-    const max = Math.max(ativo, inativo, 1);
-    const alturaAtivo = Math.max((ativo / max) * 94, ativo > 0 ? 18 : 0);
-    const alturaInativo = Math.max((inativo / max) * 94, inativo > 0 ? 18 : 0);
-    const pctAtivo = total > 0 ? Math.round((ativo / total) * 100) : 0;
-    const pctInativo = total > 0 ? Math.round((inativo / total) * 100) : 0;
-
-    const coluna = (titulo, valor, percentual, altura, cor, bgSuave) => (
-      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:128,minWidth:78}}>
-        <div style={{fontSize:13,fontWeight:700,color:cor,marginBottom:4,lineHeight:1}}>{valor}</div>
-        <div style={{height:98,display:'flex',alignItems:'flex-end'}}>
-          <div style={{width:46,height:altura,background:cor,borderRadius:'7px 7px 0 0',boxShadow:`0 6px 14px ${bgSuave}`}} />
-        </div>
-        <div style={{fontSize:12,fontWeight:600,color:'#28272C',marginTop:8}}>{titulo}</div>
-        <div style={{fontSize:10,color:'#888',marginTop:2}}>{percentual}%</div>
-      </div>
-    );
-
-    return (
-      <div style={{
-        background:'#fff',
-        border:'1px solid #E7E9EB',
-        borderRadius:8,
-        padding:'14px 16px',
-        minHeight:210,
-        boxShadow:'0 0 20px 0 rgba(231,233,235,0.75)',
-        cursor:nav?'pointer':'default',
-        transition:'box-shadow 0.15s',
-      }}
-        onMouseEnter={e=>{ if(nav) e.currentTarget.style.boxShadow='0 4px 16px rgba(0,52,183,0.12)'; }}
-        onMouseLeave={e=>{ e.currentTarget.style.boxShadow='0 0 20px 0 rgba(231,233,235,0.75)'; }}
-        onClick={nav?()=>onNav(nav):undefined}
-      >
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-          <div>
-            <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
-            <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Ativas x Inativas</div>
-          </div>
-          <div style={{fontSize:26,fontWeight:800,color:'#001A7A',lineHeight:1}}>{total}</div>
-        </div>
-
-        <div style={{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:34,marginTop:8}}>
-          {coluna('Ativas', ativo, pctAtivo, alturaAtivo, corAtivo || '#2B6418', 'rgba(43,100,24,0.18)')}
-          {coluna('Inativas', inativo, pctInativo, alturaInativo, '#AC1010', 'rgba(172,16,16,0.16)')}
-        </div>
-
-        <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:8,borderTop:'1px solid #E7E9EB',paddingTop:10}}>
-          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:corAtivo||'#2B6418'}}/>Ativas</span>
-          <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:11,color:'#494C57'}}><span style={{width:9,height:9,borderRadius:2,background:'#AC1010'}}/>Inativas</span>
-        </div>
-      </div>
-    );
-  };
-
-  const PieChartSei = () => {
-    const aprovPct = pct(seiAprovadas);
-    const analisePct = pct(seiAnalise);
-    const pendPct = pct(seiPendSEI);
-    const reproPct = pct(seiReprov);
-
-    const itens = [
-      {label:'Aprovadas',  valor:seiAprovadas, pct:aprovPct,  cor:'#6BBF45'},
-      {label:'Em análise', valor:seiAnalise,   pct:analisePct, cor:'#FFCD37'},
-      {label:'Pendentes',  valor:seiPendSEI,   pct:pendPct,    cor:'#4B8BFF'},
-      {label:'Reprovadas', valor:seiReprov,    pct:reproPct,   cor:'#E45F5F'},
-    ];
-
-    return (
-      <div style={{display:'flex',alignItems:'center',gap:34,marginTop:8,flexWrap:'wrap'}}>
-        <div style={{
-          width:190,
-          height:190,
-          borderRadius:'50%',
-          background:`conic-gradient(
-            #6BBF45 0% ${aprovPct}%,
-            #FFCD37 ${aprovPct}% ${aprovPct+analisePct}%,
-            #4B8BFF ${aprovPct+analisePct}% ${aprovPct+analisePct+pendPct}%,
-            #E45F5F ${aprovPct+analisePct+pendPct}% 100%
-          )`,
-          position:'relative',
-          flexShrink:0
-        }}>
-          <div style={{
-            position:'absolute',
-            inset:48,
-            background:'#fff',
-            borderRadius:'50%',
-            display:'flex',
-            flexDirection:'column',
-            alignItems:'center',
-            justifyContent:'center',
-            boxShadow:'0 0 0 1px #E7E9EB inset'
-          }}>
-            <div style={{fontSize:26,fontWeight:700,color:'#28272C',lineHeight:1}}>{seiTotal}</div>
-            <div style={{fontSize:12,color:'#888',marginTop:4}}>total</div>
-          </div>
-        </div>
-
-        <div style={{display:'grid',gap:14,minWidth:360}}>
-          {itens.map(item=>(
-            <div key={item.label} style={{display:'grid',gridTemplateColumns:'18px 110px 130px 50px',alignItems:'center',gap:10}}>
-              <span style={{width:14,height:14,borderRadius:'50%',background:item.cor}}/>
-              <strong style={{fontSize:13,color:'#28272C'}}>{item.label}</strong>
-              <span style={{fontSize:12,color:'#888'}}>{item.valor} solicitações</span>
-              <strong style={{fontSize:12,color:'#28272C'}}>{item.pct}%</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const sparkApis    = [3,3,5,6,7,8,apisAtivas];
-  const sparkUsrs    = [2,3,3,4,5,6,usrsAtivos];
-  const sparkSolicit = [14,16,17,19,21,23,seiTotal];
-
-  return (
-    <div style={{flex:1,overflowY:'auto',padding:'20px 22px',background:'#F8FAFC'}}>
-
-      {/* ── Cabeçalho ── */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}>
-        <div>
-          <div style={{fontSize:11,color:'#888',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>BACKOFFICE</div>
-          <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',letterSpacing:'-0.3px',marginBottom:1}}>Dashboard — Conecta Gov.PE</h1>
-          <div style={{fontSize:12,color:'#888'}}>Atualizado em {new Date().toLocaleDateString('pt-BR')} às {ts} · Perfil: ADM</div>
-        </div>
-      </div>
-
-      {/* ── Linha 1: KPIs principais ajustados — removidos KPIs marcados ── */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:10}}>
-        <KCard label="APIs Disponíveis" valor={apisAtivas}
-          sub={`de ${totalApis} cadastradas — ${apisInativas} inativas`}
-          cor="#2B6418" nav="apis" spark={sparkApis} sparkColor="#2B6418"/>
-        <KCard label="Solicitações SEI-PE" valor={seiTotal}
-          sub="no período"
-          cor={C.brand} nav="relatorios" spark={sparkSolicit} sparkColor={C.brand}/>
-      </div>
-
-      {/* ── Linha 2: Cards de detalhe com gráficos de coluna ── */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
-        <ColumnChartCard label="APIs no Catálogo"
-          total={totalApis} ativo={apisAtivas} inativo={apisInativas}
-          corAtivo="#2B6418" nav="apis"/>
-        <ColumnChartCard label="Categorias"
-          total={totalCats} ativo={catAtivas} inativo={catInativas}
-          corAtivo={C.brand} nav="categorias"/>
-        <KCard label="Órgãos com APIs" valor={totalOrgaos}
-          sub="com ao menos 1 API cadastrada" cor={C.brand} nav="apis"/>
-      </div>
-
-      {/* ── Linha 3: Solicitações de Acesso em formato de pizza ── */}
-      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:8,padding:'14px 16px',boxShadow:'0 0 20px 0 #E7E9EB'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-          <div>
-            <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Solicitações de Acesso — SEI-PE</div>
-            <div style={{fontSize:11,color:'#aaa',marginTop:2}}>Dados somente leitura · sync a cada 15 min</div>
-          </div>
-          <span style={{fontSize:10,background:'#EAFBD7',color:'#2B6418',padding:'2px 8px',borderRadius:100,fontWeight:600,border:'1px solid #86D562',flexShrink:0}}>● Online</span>
-        </div>
-
-        <PieChartSei/>
-      </div>
-
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   HU.03.03 + HU.03.04 — RELATÓRIOS
-   Aba 1: Relatório de APIs Cadastradas (HU.03.03)
-   Aba 2: Relatório de Uso / Consumo das APIs (HU.03.04)
-   - Exportação PDF e Excel com dados gerenciais reais
-   - Cabeçalho com data, usuário e filtros aplicados
-══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   HU.03.03 — Relatório de APIs Cadastradas
-══════════════════════════════════════════════════════════════ */
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
