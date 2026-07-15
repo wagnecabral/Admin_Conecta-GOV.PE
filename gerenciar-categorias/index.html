@@ -2375,27 +2375,26 @@ function RelCadastradas({ showToast }) {
    Cada linha = um órgão/empresa que solicitou acesso a uma API
    Em produção: consumido via GET /v1/reports/usage */
 const DADOS_USO_APIS = [
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'03/01/2025', status:'Ativo'    },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'10/01/2025', status:'Ativo'    },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'15/01/2025', status:'Ativo'    },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'22/01/2025', status:'Ativo'    },
-  { api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'08/01/2025', status:'Ativo'    },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'14/01/2025', status:'Ativo'    },
-  { api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'20/02/2025', status:'Pendente' },
-  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'12/02/2025', status:'Ativo'    },
-  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'SERES',            tipo:'Órgão público',   dataSolicitacao:'18/02/2025', status:'Ativo'    },
-  { api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'DataPE Soluções',  tipo:'Empresa privada', dataSolicitacao:'01/03/2025', status:'Ativo'    },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'10/02/2025', status:'Ativo'    },
-  { api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'Univ. Federal PE', tipo:'Empresa privada', dataSolicitacao:'28/02/2025', status:'Pendente' },
-  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'15/03/2025', status:'Ativo'    },
-  { api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'22/03/2025', status:'Ativo'    },
-  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'01/04/2025', status:'Ativo'    },
-  { api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'HealthPE Tech',    tipo:'Empresa privada', dataSolicitacao:'08/04/2025', status:'Pendente' },
-  { api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', status:'Ativo'    },
-  { api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', status:'Ativo'    },
-];
+  { protocolo:'2025.000001-1', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'03/01/2025', status:'Ativo'    },
+  { protocolo:'2025.000002-2', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'10/01/2025', status:'Ativo'    },
+  { protocolo:'2025.000003-3', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'15/01/2025', status:'Ativo'    },
+  { protocolo:'2025.000004-4', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'22/01/2025', status:'Ativo'    },
+  { protocolo:'2025.000005-5', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
+  { protocolo:'2025.000006-6', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'08/01/2025', status:'Ativo'    },
+  { protocolo:'2025.000007-7', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'14/01/2025', status:'Ativo'    },
+  { protocolo:'2025.000008-8', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'20/02/2025', status:'Pendente' },
+  { protocolo:'2025.000009-9', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'12/02/2025', status:'Ativo'    },
+  { protocolo:'2025.000010-0', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'SERES',            tipo:'Órgão público',   dataSolicitacao:'18/02/2025', status:'Ativo'    },
+  { protocolo:'2025.000011-1', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'DataPE Soluções',  tipo:'Empresa privada', dataSolicitacao:'01/03/2025', status:'Ativo'    },
+  { protocolo:'2025.000012-2', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
+  { protocolo:'2025.000013-3', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'10/02/2025', status:'Ativo'    },
+  { protocolo:'2025.000014-4', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'Univ. Federal PE', tipo:'Empresa privada', dataSolicitacao:'28/02/2025', status:'Pendente' },
+  { protocolo:'2025.000015-5', api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'15/03/2025', status:'Ativo'    },
+  { protocolo:'2025.000016-6', api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'22/03/2025', status:'Ativo'    },
+  { protocolo:'2025.000017-7', api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'01/04/2025', status:'Ativo'    },
+  { protocolo:'2025.000018-8', api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'HealthPE Tech',    tipo:'Empresa privada', dataSolicitacao:'08/04/2025', status:'Pendente' },
+  { protocolo:'2025.000019-9', api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', status:'Ativo'    },
+  { protocolo:'2025.000020-0', api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', status:'Ativo'    },];
 
 function RelUso({ showToast }) {
   const [loading,   setLoading]   = React.useState(false);
@@ -2403,6 +2402,7 @@ function RelUso({ showToast }) {
   const [resultado, setResultado] = React.useState([]);
   const [f, setF] = React.useState({
     apiNome:    '',
+    protocolo:  '',
     tipo:       '',   /* 'Órgão público' | 'Empresa privada' | '' */
     dataInicio: '',
     dataFim:    '',
@@ -2422,6 +2422,7 @@ function RelUso({ showToast }) {
 
   const getDados = () => DADOS_USO_APIS.filter(d=>{
     if(f.apiNome && d.api  !== f.apiNome) return false;
+    if(f.protocolo && !d.protocolo.toLowerCase().includes(f.protocolo.trim().toLowerCase())) return false;
     if(f.tipo    && d.tipo !== f.tipo)    return false;
     if(f.dataInicio){
       const ini = new Date(f.dataInicio);
@@ -2439,6 +2440,7 @@ function RelUso({ showToast }) {
   const filtrosLabel = () => {
     const p=[];
     if(f.apiNome)    p.push('API: '+f.apiNome);
+    if(f.protocolo)  p.push('Nº de Protocolo: '+f.protocolo);
     if(f.tipo)       p.push('Tipo: '+f.tipo);
     if(f.dataInicio) p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
     if(f.dataFim)    p.push('Até: '+f.dataFim.split('-').reverse().join('/'));
@@ -2456,7 +2458,7 @@ function RelUso({ showToast }) {
 
   const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
   const handleLimpar = () => {
-    setF({apiNome:'',tipo:'',dataInicio:'',dataFim:''});
+    setF({apiNome:'',protocolo:'',tipo:'',dataInicio:'',dataFim:''});
     setResultado([]); setBuscado(false);
   };
 
@@ -2500,19 +2502,19 @@ function RelUso({ showToast }) {
     doc.text(`Filtros: ${filtrosLabel()}`,14,24);
     doc.text(`Total: ${dados.length} solicitação(ões)`,14,29);
     doc.autoTable({
-      head:[['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação']],
-      body:dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao]),
+      head:[['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação']],
+      body:dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao]),
       startY:33,
       styles:{fontSize:9,cellPadding:3},
       headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
       alternateRowStyles:{fillColor:[230,243,255]},
       columnStyles:{
         0:{cellWidth:10},
-        1:{cellWidth:58},
-        2:{cellWidth:42},
-        3:{cellWidth:32},
-        4:{cellWidth:30},
-        5:{cellWidth:20},
+        1:{cellWidth:34},
+        2:{cellWidth:58},
+        3:{cellWidth:42},
+        4:{cellWidth:32},
+        5:{cellWidth:30},
       },
       didDrawPage:()=>{
         doc.setFontSize(7); doc.setTextColor(120);
@@ -2533,11 +2535,11 @@ function RelUso({ showToast }) {
       [`Filtros: ${filtrosLabel()}`],
       [`Total: ${dados.length} solicitação(ões)`],
       [],
-      ['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação'],
+      ['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação'],
     ];
-    const linhas=dados.map((d,i)=>[i+1,d.api,d.solicitante,d.tipo,d.dataSolicitacao]);
+    const linhas=dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:42},{wch:32},{wch:20},{wch:22},{wch:12}];
+    ws['!cols']=[{wch:4},{wch:22},{wch:42},{wch:32},{wch:20},{wch:22}];
     const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso das APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2586,14 +2588,21 @@ function RelUso({ showToast }) {
       {/* Card filtros */}
       <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
-        {/* Linha 1: API + Tipo */}
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:16,marginBottom:14}}>
+        {/* Linha 1: API + Nº de Protocolo + Tipo */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>API</label>
             <Sel value={f.apiNome} onChange={v=>setFil('apiNome',v)}>
               <option value="">Todas as APIs</option>
               {apisUnicas.map(a=><option key={a} value={a}>{a}</option>)}
             </Sel>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Nº de Protocolo</label>
+            <input type="text" value={f.protocolo}
+              onChange={e=>setFil('protocolo',e.target.value)}
+              placeholder="Ex.: 2025.000001-1"
+              style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Tipo de Solicitante</label>
@@ -2669,7 +2678,7 @@ function RelUso({ showToast }) {
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr>
-                    {['#','API','Solicitante','Tipo de Solicitante','Data da Solicitação'].map(h=>(
+                    {['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação'].map(h=>(
                       <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
                         {h}
                       </th>
@@ -2683,6 +2692,7 @@ function RelUso({ showToast }) {
                       onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
                       onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{i+1}</td>
+                      <td style={{padding:'9px 14px',fontSize:12,fontFamily:'monospace',fontWeight:600,color:'#0034B7',whiteSpace:'nowrap'}}>{d.protocolo}</td>
                       <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{d.api}</td>
                       <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
                       <td style={{padding:'9px 14px'}}><TipoBadge tipo={d.tipo}/></td>
