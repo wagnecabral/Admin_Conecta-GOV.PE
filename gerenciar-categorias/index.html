@@ -298,7 +298,7 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
       hasDropdown:true,
       subItems:[
         {label:'APIs Cadastradas', key:'rel_cadastradas'},
-        {label:'Uso e Consumo',    key:'rel_uso'},
+        {label:"Solicitação de API's", key:'rel_uso'},
       ]
     },
     { label:'Auditoria',           key:'auditoria',  icon:'audit' },
@@ -2122,7 +2122,7 @@ function Dashboard({ onNav }) {
 /* ═══════════════════════════════════════════════════════════════
    HU.03.03 + HU.03.04 — RELATÓRIOS
    Aba 1: Relatório de APIs Cadastradas (HU.03.03)
-   Aba 2: Relatório de Uso / Consumo das APIs (HU.03.04)
+   Aba 2: Relatório de Solicitação de APIs (HU.03.04)
    - Exportação PDF e Excel com dados gerenciais reais
    - Cabeçalho com data, usuário e filtros aplicados
 ══════════════════════════════════════════════════════════════ */
@@ -2362,12 +2362,12 @@ function RelCadastradas({ showToast }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   HU.03.04 — Relatório de Uso e Consumo das APIs
+   HU.03.04 — Relatório de Solicitação de APIs
 ══════════════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════
-   HU.03.04 — Relatório de Uso das APIs
-   Responde: quais órgãos estão consumindo quais APIs?
-   Colunas: API | Órgão responsável | Qtd. chamadas | Período | Órgão consumidor
+   HU.03.04 — Relatório de Solicitação de APIs
+   Responde: quais órgãos ou empresas solicitaram acesso a quais APIs?
+   Colunas: Protocolo | API | Solicitante | Tipo | Data | Situação
    ADM vê todas as APIs. Cedente vê apenas APIs do seu órgão.
 ══════════════════════════════════════════════════════════════ */
 
@@ -2375,26 +2375,26 @@ function RelCadastradas({ showToast }) {
    Cada linha = um órgão/empresa que solicitou acesso a uma API
    Em produção: consumido via GET /v1/reports/usage */
 const DADOS_USO_APIS = [
-  { protocolo:'2025.000001-1', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'03/01/2025', status:'Ativo'    },
-  { protocolo:'2025.000002-2', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'10/01/2025', status:'Ativo'    },
-  { protocolo:'2025.000003-3', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'15/01/2025', status:'Ativo'    },
-  { protocolo:'2025.000004-4', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'22/01/2025', status:'Ativo'    },
-  { protocolo:'2025.000005-5', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
-  { protocolo:'2025.000006-6', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'08/01/2025', status:'Ativo'    },
-  { protocolo:'2025.000007-7', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'14/01/2025', status:'Ativo'    },
-  { protocolo:'2025.000008-8', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'20/02/2025', status:'Pendente' },
-  { protocolo:'2025.000009-9', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'12/02/2025', status:'Ativo'    },
-  { protocolo:'2025.000010-0', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'SERES',            tipo:'Órgão público',   dataSolicitacao:'18/02/2025', status:'Ativo'    },
-  { protocolo:'2025.000011-1', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'DataPE Soluções',  tipo:'Empresa privada', dataSolicitacao:'01/03/2025', status:'Ativo'    },
-  { protocolo:'2025.000012-2', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'05/02/2025', status:'Ativo'    },
-  { protocolo:'2025.000013-3', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'10/02/2025', status:'Ativo'    },
-  { protocolo:'2025.000014-4', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'Univ. Federal PE', tipo:'Empresa privada', dataSolicitacao:'28/02/2025', status:'Pendente' },
-  { protocolo:'2025.000015-5', api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'15/03/2025', status:'Ativo'    },
-  { protocolo:'2025.000016-6', api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'22/03/2025', status:'Ativo'    },
-  { protocolo:'2025.000017-7', api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'01/04/2025', status:'Ativo'    },
-  { protocolo:'2025.000018-8', api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'HealthPE Tech',    tipo:'Empresa privada', dataSolicitacao:'08/04/2025', status:'Pendente' },
-  { protocolo:'2025.000019-9', api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', status:'Ativo'    },
-  { protocolo:'2025.000020-0', api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', status:'Ativo'    },];
+  { protocolo:'2025.000001-1', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'03/01/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000002-2', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'10/01/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000003-3', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'15/01/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000004-4', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'22/01/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000005-5', api:'Catálogo de Serviços',    orgaoResponsavel:'ATI',    solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'05/02/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000006-6', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'08/01/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000007-7', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'14/01/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000008-8', api:'Consulta de CPF',         orgaoResponsavel:'SEFAZ',  solicitante:'SEDS',             tipo:'Órgão público',   dataSolicitacao:'20/02/2025', situacao:'Em análise' },
+  { protocolo:'2025.000009-9', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'12/02/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000010-0', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'SERES',            tipo:'Órgão público',   dataSolicitacao:'18/02/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000011-1', api:'Emissão de Certidões',    orgaoResponsavel:'SEFAZ',  solicitante:'DataPE Soluções',  tipo:'Empresa privada', dataSolicitacao:'01/03/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000012-2', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SES',              tipo:'Órgão público',   dataSolicitacao:'05/02/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000013-3', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'SEE',              tipo:'Órgão público',   dataSolicitacao:'10/02/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000014-4', api:'Boletim de Ocorrência',   orgaoResponsavel:'SEPLAG', solicitante:'Univ. Federal PE', tipo:'Empresa privada', dataSolicitacao:'28/02/2025', situacao:'Em análise' },
+  { protocolo:'2025.000015-5', api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'SEPLAG',           tipo:'Órgão público',   dataSolicitacao:'15/03/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000016-6', api:'Programas Habitacionais', orgaoResponsavel:'SEDS',   solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'22/03/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000017-7', api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'ATI',              tipo:'Órgão público',   dataSolicitacao:'01/04/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000018-8', api:'Agendamento de Saúde',    orgaoResponsavel:'SES',    solicitante:'HealthPE Tech',    tipo:'Empresa privada', dataSolicitacao:'08/04/2025', situacao:'Em análise' },
+  { protocolo:'2025.000019-9', api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', situacao:'Concluída'  },
+  { protocolo:'2025.000020-0', api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', situacao:'Concluída'  },];
 
 function RelUso({ showToast }) {
   const [loading,   setLoading]   = React.useState(false);
@@ -2476,15 +2476,15 @@ function RelUso({ showToast }) {
     );
   };
 
-  /* Badge status */
-  const StatusBadge = ({status}) => {
-    const cfg = status==='Ativo'
+  /* Badge de situação */
+  const SituacaoBadge = ({situacao}) => {
+    const cfg = situacao==='Concluída'
       ? {bg:'#EAFBD7',color:'#2B6418',border:'#86D562'}
       : {bg:'#FFF6CE',color:'#B77706',border:'#FFE082'};
     return (
       <span style={{fontSize:11,fontWeight:600,background:cfg.bg,color:cfg.color,
         padding:'2px 8px',borderRadius:100,border:`1px solid ${cfg.border}`}}>
-        {status}
+        {situacao}
       </span>
     );
   };
@@ -2496,14 +2496,14 @@ function RelUso({ showToast }) {
     const W=doc.internal.pageSize.getWidth();
     doc.setFillColor(0,26,122); doc.rect(0,0,W,30,'F');
     doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-    doc.text('Conecta Gov.PE — Relatório de Uso das APIs',14,12);
+    doc.text("Conecta Gov.PE — Relatório de Solicitação de API's",14,12);
     doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text(`Gerado em: ${data} às ${hora}  |  Usuário: João Silva (ADM)`,14,19);
     doc.text(`Filtros: ${filtrosLabel()}`,14,24);
     doc.text(`Total: ${dados.length} solicitação(ões)`,14,29);
     doc.autoTable({
-      head:[['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação']],
-      body:dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao]),
+      head:[['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação']],
+      body:dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.situacao]),
       startY:33,
       styles:{fontSize:9,cellPadding:3},
       headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
@@ -2515,6 +2515,7 @@ function RelUso({ showToast }) {
         3:{cellWidth:42},
         4:{cellWidth:32},
         5:{cellWidth:30},
+        6:{cellWidth:25},
       },
       didDrawPage:()=>{
         doc.setFontSize(7); doc.setTextColor(120);
@@ -2522,29 +2523,29 @@ function RelUso({ showToast }) {
           14, doc.internal.pageSize.getHeight()-5);
       },
     });
-    doc.save(`relatorio-uso-apis_${slug}.pdf`);
+    doc.save(`relatorio-solicitacao-apis_${slug}.pdf`);
   };
 
   /* ── Excel ── */
   const gerarXLSX = (dados) => {
     const {utils,write}=window.XLSX; const {data,hora,slug}=now();
     const cab=[
-      ['Conecta Gov.PE — Relatório de Uso das APIs'],
+      ["Conecta Gov.PE — Relatório de Solicitação de API's"],
       [`Gerado em: ${data} às ${hora}`],
       [`Usuário: João Silva (ADM)`],
       [`Filtros: ${filtrosLabel()}`],
       [`Total: ${dados.length} solicitação(ões)`],
       [],
-      ['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação'],
+      ['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação'],
     ];
-    const linhas=dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao]);
+    const linhas=dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.situacao]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:22},{wch:42},{wch:32},{wch:20},{wch:22}];
-    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Uso das APIs');
+    ws['!cols']=[{wch:4},{wch:22},{wch:42},{wch:32},{wch:20},{wch:22},{wch:16}];
+    const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Solicitação de APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url; a.download=`relatorio-uso-apis_${slug}.xlsx`; a.click();
+    const a=document.createElement('a'); a.href=url; a.download=`relatorio-solicitacao-apis_${slug}.xlsx`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -2582,7 +2583,7 @@ function RelUso({ showToast }) {
       {/* Título */}
       <div style={{marginBottom:16}}>
         <div style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>Relatórios</div>
-        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>Uso das APIs</h1>
+        <h1 style={{fontSize:20,fontWeight:700,color:'#001A7A',marginBottom:0}}>Solicitação de API's</h1>
       </div>
 
       {/* Card filtros */}
@@ -2678,7 +2679,7 @@ function RelUso({ showToast }) {
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr>
-                    {['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação'].map(h=>(
+                    {['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação'].map(h=>(
                       <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
                         {h}
                       </th>
@@ -2697,6 +2698,7 @@ function RelUso({ showToast }) {
                       <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
                       <td style={{padding:'9px 14px'}}><TipoBadge tipo={d.tipo}/></td>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.dataSolicitacao}</td>
+                      <td style={{padding:'9px 14px'}}><SituacaoBadge situacao={d.situacao}/></td>
                     </tr>
                   ))}
                 </tbody>
@@ -2746,6 +2748,7 @@ function App() {
     'categorias':['Início','Catálogo de APIs','Gerenciar Categorias'],
     'usuarios':  ['Início','Controle de Acesso'],
     'relatorios':['Início','Relatórios'],
+    'rel_uso':   ["Início","Relatórios","Solicitação de API's"],
     'auditoria': ['Início','Auditoria'],
     'dashboard': ['Início'],
     'config':    ['Início','Configurações'],
@@ -3023,7 +3026,7 @@ function Dashboard({ onNav }) {
 /* ═══════════════════════════════════════════════════════════════
    HU.03.03 + HU.03.04 — RELATÓRIOS
    Aba 1: Relatório de APIs Cadastradas (HU.03.03)
-   Aba 2: Relatório de Uso / Consumo das APIs (HU.03.04)
+   Aba 2: Relatório de Solicitação de APIs (HU.03.04)
    - Exportação PDF e Excel com dados gerenciais reais
    - Cabeçalho com data, usuário e filtros aplicados
 ══════════════════════════════════════════════════════════════ */
