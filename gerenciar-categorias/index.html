@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gerenciar APIs — Padrão Digital PE</title>
+<title>Gerenciar APIs — Protótipo HU.09</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -16,6 +16,24 @@ body { font-family:'Inter',sans-serif; background:#F8FAFC; color:#28272C; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:#CED2D7; border-radius:3px; }
 input,select,textarea,button { font-family:'Inter',sans-serif; }
+.operation-fields-grid { display:grid; grid-template-columns:100px minmax(180px,1fr) minmax(180px,1fr) 36px; gap:8px; align-items:end; }
+.operation-params-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
+.rich-toolbar { display:flex; align-items:center; gap:3px; flex-wrap:wrap; padding:6px 7px; border-bottom:1px solid #E7E9EB; background:#F8FAFC; }
+.rich-toolbar button { width:30px; height:28px; border:1px solid transparent; border-radius:4px; background:transparent; color:#494C57; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; }
+.rich-toolbar button:hover { color:#0034B7; background:#E6F3FF; border-color:#99C6FF; }
+.rich-toolbar button:focus-visible { outline:2px solid #0034B7; outline-offset:1px; }
+.rich-editor { min-height:132px; max-height:240px; overflow-y:auto; padding:10px 12px; outline:none; font-size:13px; line-height:1.55; color:#28272C; background:#fff; }
+.rich-editor:empty::before { content:attr(data-placeholder); color:#8A8E98; pointer-events:none; }
+.rich-editor ul,.rich-editor ol,.rich-viewer ul,.rich-viewer ol { margin:5px 0 5px 20px; }
+.rich-editor p,.rich-viewer p { margin:0 0 6px; }
+.rich-editor pre,.rich-viewer pre { margin:6px 0; padding:8px 10px; border-radius:4px; background:#F0F3F8; color:#28272C; white-space:pre-wrap; font-family:monospace; }
+.rich-editor code,.rich-viewer code { padding:1px 4px; border-radius:3px; background:#F0F3F8; font-family:monospace; }
+.rich-editor a,.rich-viewer a { color:#0034B7; text-decoration:underline; }
+@media (max-width:720px) {
+  .operation-fields-grid { grid-template-columns:1fr; }
+  .operation-fields-grid .operation-delete { width:100% !important; }
+  .operation-params-grid { grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
@@ -57,7 +75,7 @@ const CATEGORIAS = [
   { id:'4', nome:'Educação' }, { id:'5', nome:'Habitação Social' }, { id:'6', nome:'Meio Ambiente' }, { id:'7', nome:'Serviços ao Cidadão' },
 ];
 
-const EMPTY_OPS = [{ metodo:'GET', endpoint:'', descricao:'' }];
+const EMPTY_OPS = [{ metodo:'GET', endpoint:'', descricao:'', parametrosEntrada:'', parametrosSaida:'' }];
 
 const INITIAL_APIS = [
   { id:1, nome:'Catálogo de Serviços', orgaoId:'1', categoriaId:'7', versao:'v2.1', status:'Ativo', descricao:'API pública de catálogo de serviços do estado.', operacoes:[{metodo:'GET',endpoint:'/servicos',descricao:'Lista todos os serviços'},{metodo:'GET',endpoint:'/servicos/{id}',descricao:'Detalhe do serviço'}], baseSistema:'ATI — Portal de Serviços PE', comoAcessar:'Solicitar credenciais via portal ATI. Autenticar via Bearer Token.', detalhamento:'Protocolo HTTPS. Retorna JSON com campos: id, nome, orgao, descricao, status.', contatos:[{nome:'Time ATI', funcao:'Suporte', email:'api@ati.pe.gov.br'}], criado:'15/01/2025', atualizado:'10/04/2025', autor:'João Silva' },
@@ -143,6 +161,8 @@ const Icon = ({ name, size=16, color='currentColor' }) => {
     lock:     <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
     relatorio:<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,
     audit:    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
+    paramInput:<><path d="M19 4h-5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/><line x1="3" y1="12" x2="15" y2="12"/><polyline points="11 8 15 12 11 16"/></>,
+    paramOutput:<><path d="M5 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5"/><line x1="9" y1="12" x2="21" y2="12"/><polyline points="17 8 21 12 17 16"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -684,37 +704,186 @@ const METHOD_COLORS = {
   DELETE: { bg:'#FFE4E4', color:'#AC1010', border:'#E45F5F' },
 };
 
+const RICH_ALLOWED_TAGS = new Set(['b','strong','i','em','u','ul','ol','li','p','div','br','a','pre','code']);
+
+const sanitizeRichText = (value='') => {
+  const template = document.createElement('template');
+  template.innerHTML = value;
+  template.content.querySelectorAll('script,style,iframe,object,embed,svg,form,input,button').forEach(node=>node.remove());
+  Array.from(template.content.querySelectorAll('*')).forEach(node=>{
+    const tag = node.tagName.toLowerCase();
+    if(!RICH_ALLOWED_TAGS.has(tag)){
+      node.replaceWith(...Array.from(node.childNodes));
+      return;
+    }
+    const href = tag==='a' ? (node.getAttribute('href')||'') : '';
+    Array.from(node.attributes).forEach(attr=>node.removeAttribute(attr.name));
+    if(tag==='a' && /^(https?:|mailto:|#|\/)/i.test(href)){
+      node.setAttribute('href',href);
+      node.setAttribute('target','_blank');
+      node.setAttribute('rel','noopener noreferrer');
+    }
+  });
+  return template.innerHTML;
+};
+
+const richTextHasContent = (value='') => {
+  const container = document.createElement('div');
+  container.innerHTML = sanitizeRichText(value);
+  return Boolean((container.textContent||'').replace(/\u00a0/g,' ').trim());
+};
+
+function RichTextEditor({ value='', onChange, placeholder, ariaLabel }) {
+  const editorRef = React.useRef(null);
+
+  React.useEffect(()=>{
+    const editor = editorRef.current;
+    if(editor && document.activeElement!==editor && editor.innerHTML!==value){
+      editor.innerHTML=value||'';
+    }
+  },[value]);
+
+  const sync=()=>{
+    const editor=editorRef.current;
+    if(editor) onChange(editor.innerHTML);
+  };
+
+  const command=(name,arg=null)=>{
+    const editor=editorRef.current;
+    if(!editor) return;
+    editor.focus();
+    document.execCommand(name,false,arg);
+    sync();
+  };
+
+  const addLink=()=>{
+    const url=window.prompt('Informe o endereço do link:','https://');
+    if(url) command('createLink',url.trim());
+  };
+
+  const toolbarButton=(label,title,onAction,style={})=>(
+    <button type="button" title={title} aria-label={title} onMouseDown={e=>{ e.preventDefault(); onAction(); }} style={style}>{label}</button>
+  );
+
+  return (
+    <div style={{ border:`1px solid ${C.border}`, borderRadius:5, overflow:'hidden', background:'#fff' }}>
+      <div className="rich-toolbar" role="toolbar" aria-label={`Formatação de ${ariaLabel}`}>
+        {toolbarButton('B','Negrito',()=>command('bold'),{fontWeight:800})}
+        {toolbarButton('I','Itálico',()=>command('italic'),{fontStyle:'italic'})}
+        {toolbarButton('U','Sublinhado',()=>command('underline'),{textDecoration:'underline'})}
+        <span aria-hidden="true" style={{width:1,height:20,background:C.divider,margin:'0 2px'}}/>
+        {toolbarButton('•','Lista com marcadores',()=>command('insertUnorderedList'),{fontSize:19})}
+        {toolbarButton('1.','Lista numerada',()=>command('insertOrderedList'),{fontSize:12})}
+        {toolbarButton('↗','Inserir hiperlink',addLink,{fontSize:16})}
+        {toolbarButton('</>','Trecho de código',()=>command('formatBlock','pre'),{fontFamily:'monospace',fontSize:11})}
+      </div>
+      <div
+        ref={editorRef}
+        className="rich-editor"
+        contentEditable
+        suppressContentEditableWarning
+        role="textbox"
+        aria-label={ariaLabel}
+        aria-multiline="true"
+        data-placeholder={placeholder}
+        onInput={sync}
+        onBlur={()=>{
+          const editor=editorRef.current;
+          if(!editor) return;
+          const clean=sanitizeRichText(editor.innerHTML);
+          if(editor.innerHTML!==clean) editor.innerHTML=clean;
+          onChange(clean);
+        }}
+      />
+    </div>
+  );
+}
+
+const RichTextViewer = ({ html }) => (
+  <div className="rich-viewer" style={{ fontSize:13, lineHeight:1.55, color:C.textPrimary }} dangerouslySetInnerHTML={{__html:sanitizeRichText(html)}}/>
+);
+
+const ParameterTitle = ({ type }) => {
+  const isInput=type==='entrada';
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:7, fontSize:13, fontWeight:600, color:C.textPrimary }}>
+      <Icon name={isInput?'paramInput':'paramOutput'} size={18} color={C.brand}/>
+      {isInput?'Parâmetros de Entrada':'Parâmetros de Saída'}
+      <span style={{ fontSize:11, fontWeight:400, color:C.textSecondary }}>(Opcional)</span>
+    </div>
+  );
+};
+
 function OperacoesList({ operacoes, onChange, readOnly, error }) {
   const ops = operacoes&&operacoes.length ? operacoes : EMPTY_OPS;
   const updateOp=(i,field,val)=>onChange(ops.map((o,idx)=>idx===i?{...o,[field]:val}:o));
-  const addOp=()=>onChange([...ops,{metodo:'GET',endpoint:'',descricao:''}]);
+  const addOp=()=>onChange([...ops,{metodo:'GET',endpoint:'',descricao:'',parametrosEntrada:'',parametrosSaida:''}]);
   const removeOp=(i)=>{ const next=ops.filter((_,idx)=>idx!==i); onChange(next.length?next:EMPTY_OPS); };
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
       <label style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>Principais Operações <span style={{ color:C.danger }}>*</span></label>
       {readOnly ? (
-        <div style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:5, padding:'10px 14px', display:'flex', flexDirection:'column', gap:8 }}>
-          {ops.map((op,i)=>{ const mc=METHOD_COLORS[op.metodo]||METHOD_COLORS.GET; return (<div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:13 }}><span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:4, fontSize:12, fontWeight:700, background:mc.bg, color:mc.color, border:`1px solid ${mc.border}`, minWidth:56, justifyContent:'center', flexShrink:0 }}>{op.metodo}</span><code style={{ fontSize:13, background:'#F0F3F8', padding:'2px 6px', borderRadius:3, color:C.textPrimary, flexShrink:0 }}>{op.endpoint}</code>{op.descricao&&<><span style={{ color:C.border }}>—</span><span style={{ color:C.textSecondary }}>{op.descricao}</span></>}</div>); })}
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {ops.map((op,i)=>{
+            const mc=METHOD_COLORS[op.metodo]||METHOD_COLORS.GET;
+            const showInput=richTextHasContent(op.parametrosEntrada||'');
+            const showOutput=richTextHasContent(op.parametrosSaida||'');
+            return (
+              <div key={i} style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:6, padding:'12px 14px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, fontSize:13, flexWrap:'wrap' }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:4, fontSize:12, fontWeight:700, background:mc.bg, color:mc.color, border:`1px solid ${mc.border}`, minWidth:56, justifyContent:'center', flexShrink:0 }}>{op.metodo}</span>
+                  <code style={{ fontSize:13, background:'#F0F3F8', padding:'2px 6px', borderRadius:3, color:C.textPrimary }}>{op.endpoint}</code>
+                  {op.descricao&&<><span style={{ color:C.border }}>—</span><span style={{ color:C.textSecondary }}>{op.descricao}</span></>}
+                </div>
+                {(showInput||showOutput)&&(
+                  <div className="operation-params-grid" style={{ marginTop:12, paddingTop:12, borderTop:`1px solid ${C.divider}` }}>
+                    {showInput&&<div><ParameterTitle type="entrada"/><RichTextViewer html={op.parametrosEntrada}/></div>}
+                    {showOutput&&<div><ParameterTitle type="saida"/><RichTextViewer html={op.parametrosSaida}/></div>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ):(
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8 }}>
-            {['Método','Endpoint','Descrição',''].map((h,i)=>(<span key={i} style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px' }}>{h}</span>))}
-          </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           {ops.map((op,i)=>(
-            <div key={i} style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr 36px', gap:8, alignItems:'center' }}>
-              <div style={{ position:'relative' }}>
-                <select value={op.metodo} onChange={e=>updateOp(i,'metodo',e.target.value)} style={{ height:42, borderRadius:5, border:`1px solid ${C.border}`, padding:'0 28px 0 10px', fontSize:13, fontWeight:700, color:METHOD_COLORS[op.metodo]?.color||C.textPrimary, background:METHOD_COLORS[op.metodo]?.bg||'#fff', outline:'none', width:'100%', appearance:'none', cursor:'pointer' }}>
-                  {HTTP_METHODS.map(m=><option key={m} value={m}>{m}</option>)}
-                </select>
-                <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><Icon name="chevDown" size={12} color={METHOD_COLORS[op.metodo]?.color||C.textSecondary}/></span>
+            <div key={i} style={{ background:C.bg, border:`1px solid ${C.divider}`, borderRadius:7, padding:14 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px', marginBottom:9 }}>Operação {i+1}</div>
+              <div className="operation-fields-grid">
+                <div>
+                  <div style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px', marginBottom:5 }}>Método</div>
+                  <div style={{ position:'relative' }}>
+                    <select value={op.metodo} onChange={e=>updateOp(i,'metodo',e.target.value)} style={{ height:42, borderRadius:5, border:`1px solid ${C.border}`, padding:'0 28px 0 10px', fontSize:13, fontWeight:700, color:METHOD_COLORS[op.metodo]?.color||C.textPrimary, background:METHOD_COLORS[op.metodo]?.bg||'#fff', outline:'none', width:'100%', appearance:'none', cursor:'pointer' }}>
+                      {HTTP_METHODS.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><Icon name="chevDown" size={12} color={METHOD_COLORS[op.metodo]?.color||C.textSecondary}/></span>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px', marginBottom:5 }}>Endpoint</div>
+                  <input value={op.endpoint} onChange={e=>updateOp(i,'endpoint',e.target.value)} placeholder="/api/v1/endpoint" style={{ ...inputStyle(false), fontFamily:'monospace', fontSize:13 }} onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }} onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:'0.4px', marginBottom:5 }}>Descrição</div>
+                  <input value={op.descricao||''} maxLength={100} onChange={e=>updateOp(i,'descricao',e.target.value)} placeholder="Descrição da operação" style={{ ...inputStyle(false), fontSize:13 }} onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }} onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}/>
+                  <div style={{ fontSize:10, color:(op.descricao||'').length>=100?C.danger:C.textSecondary, marginTop:3 }}>{(op.descricao||'').length}/100 caracteres</div>
+                </div>
+                <button type="button" className="operation-delete" title="Excluir operação" aria-label={`Excluir operação ${i+1}`} onClick={()=>removeOp(i)} style={{ width:36, height:42, borderRadius:5, border:`1px solid ${C.dangerBorder}`, background:C.dangerBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Icon name="x" size={13} color={C.danger}/></button>
               </div>
-              <input value={op.endpoint} onChange={e=>updateOp(i,'endpoint',e.target.value)} placeholder="/api/v1/endpoint" style={{ ...inputStyle(false), fontFamily:'monospace', fontSize:13 }} onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }} onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}/>
-              <input value={op.descricao} onChange={e=>updateOp(i,'descricao',e.target.value)} placeholder="Descrição da operação" style={{ ...inputStyle(false), fontSize:13 }} onFocus={e=>{ e.target.style.borderColor=C.brand; e.target.style.boxShadow=`0 0 0 3px rgba(0,52,183,0.1)`; }} onBlur={e=>{ e.target.style.borderColor=C.border; e.target.style.boxShadow='none'; }}/>
-              <button onClick={()=>removeOp(i)} style={{ width:36, height:42, borderRadius:5, border:`1px solid ${C.dangerBorder}`, background:C.dangerBg, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Icon name="x" size={13} color={C.danger}/></button>
+              <div className="operation-params-grid" style={{ marginTop:14, paddingTop:14, borderTop:`1px solid ${C.divider}` }}>
+                <div>
+                  <ParameterTitle type="entrada"/>
+                  <RichTextEditor value={op.parametrosEntrada||''} onChange={v=>updateOp(i,'parametrosEntrada',v)} placeholder="Informe os parâmetros de entrada da operação" ariaLabel={`Parâmetros de Entrada da operação ${i+1}`}/>
+                </div>
+                <div>
+                  <ParameterTitle type="saida"/>
+                  <RichTextEditor value={op.parametrosSaida||''} onChange={v=>updateOp(i,'parametrosSaida',v)} placeholder="Informe os parâmetros de saída da operação" ariaLabel={`Parâmetros de Saída da operação ${i+1}`}/>
+                </div>
+              </div>
             </div>
           ))}
-          <button onClick={addOp} style={{ alignSelf:'flex-start', height:34, padding:'0 14px', borderRadius:5, border:`1.5px solid ${C.brand}`, background:'#fff', color:C.brand, fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, marginTop:4 }}><Icon name="plus" size={13} color={C.brand}/>Adicionar operação</button>
+          <button type="button" onClick={addOp} style={{ alignSelf:'flex-start', height:34, padding:'0 14px', borderRadius:5, border:`1.5px solid ${C.brand}`, background:'#fff', color:C.brand, fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, marginTop:4 }}><Icon name="plus" size={13} color={C.brand}/>Adicionar operação</button>
         </div>
       )}
       {error && <span style={{ fontSize:11, color:C.danger }}>{error}</span>}
