@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Conecta Gov.PE — Acompanhamento CSATI atualizado</title>
+<title>Admin Conecta Gov.PE — Acompanhamento CSATI v5</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -29,7 +29,7 @@ input,select,textarea,button { font-family:'Inter',sans-serif; }
 .rich-editor pre,.rich-viewer pre { margin:6px 0; padding:8px 10px; border-radius:4px; background:#F0F3F8; color:#28272C; white-space:pre-wrap; font-family:monospace; }
 .rich-editor code,.rich-viewer code { padding:1px 4px; border-radius:3px; background:#F0F3F8; font-family:monospace; }
 .rich-editor a,.rich-viewer a { color:#0034B7; text-decoration:underline; }
-.csati-filter-primary { display:grid; grid-template-columns:minmax(240px,1.5fr) minmax(210px,1.25fr) minmax(150px,.8fr) minmax(170px,.95fr); gap:16px; margin-bottom:14px; }
+.csati-filter-primary { display:grid; grid-template-columns:minmax(260px,1.35fr) minmax(260px,1.15fr) minmax(190px,.8fr); gap:16px; margin-bottom:14px; }
 .csati-filter-secondary { display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)) auto; gap:16px; align-items:end; }
 .csati-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .csati-detail-lower { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:12px; }
@@ -2963,21 +2963,7 @@ const DADOS_CSATI = [
     ],
   },
   {
-    id:4, idSolicita:'SOL-API-2026-0004', protocolo:'0030409428.001701/2026-05', api:'API de Serviços Públicos Exemplo',
-    solicitante:'Carlos Souza', orgao:'Órgão solicitante D', dataSolicitacao:'27/08/2026 14:10', dataISO:'2026-08-27',
-    chamado:'', prioridade:'—', criadaEm:'—', tarefa:'—', grupo:'Não definido', responsavel:'Não definido',
-    capturado:false, delegado:false, delegadoEm:'', situacao:'—', sla:'—',
-    dataLimiteTarefa:'—', dataLimite:'—', statusSla:'Não iniciado', ultimaSync:'27/08/2026 14:10',
-    portfolio:'Portfólio de APIs (exemplo)', servico:'Solicitação de acesso às APIs',
-    atividade:'Atender solicitação de acesso', contrato:'—', impacto:'—', urgencia:'—',
-    descricaoSolicita:'Solicitação de uso da API registrada no catálogo de serviços do Solicita/SEI.',
-    descricao:'Aguardando criação do chamado no CSATI.', solucaoResposta:'',
-    observacao:'O protocolo já existe no Solicita/SEI, mas o chamado do CSATI ainda não foi gerado e vinculado.', interacoesSolicita:[
-      {data:'27/08/2026 14:10',responsavel:'Solicita/SEI',tipo:'Solicitação registrada',detalhes:'Protocolo gerado a partir do catálogo de serviços; vínculo com o CSATI pendente.'},
-    ], historicoCsati:[],
-  },
-  {
-    id:5, idSolicita:'SOL-API-2026-0005', protocolo:'0030409428.001689/2026-21', api:'API de Benefícios Exemplo',
+    id:4, idSolicita:'SOL-API-2026-0004', protocolo:'0030409428.001689/2026-21', api:'API de Benefícios Exemplo',
     solicitante:'Fernanda Lima', orgao:'Órgão solicitante E', dataSolicitacao:'26/08/2026 15:49', dataISO:'2026-08-26',
     chamado:'20000004', prioridade:'Baixa', criadaEm:'26/08/2026 16:05:00',
     tarefa:'Atender Solicitação', grupo:'GAS — Gerência de Arquitetura e Soluções',
@@ -3001,7 +2987,7 @@ const DADOS_CSATI = [
 ];
 
 function RelCsati({ showToast }) {
-  const filtrosIniciais = {api:'',protocolo:'',chamado:'',vinculo:'',situacao:'',responsavel:'',dataInicio:'',dataFim:''};
+  const filtrosIniciais = {api:'',protocolo:'',chamado:'',situacao:'',responsavel:'',dataInicio:'',dataFim:''};
   const [f, setF] = React.useState(filtrosIniciais);
   const [resultado, setResultado] = React.useState(DADOS_CSATI);
   const [expandedId, setExpandedId] = React.useState(null);
@@ -3016,8 +3002,6 @@ function RelCsati({ showToast }) {
       if(f.api && d.api!==f.api) return false;
       if(f.protocolo && !d.protocolo.toLowerCase().includes(f.protocolo.trim().toLowerCase())) return false;
       if(f.chamado && !d.chamado.toLowerCase().includes(f.chamado.trim().toLowerCase())) return false;
-      if(f.vinculo==='vinculado' && !d.chamado) return false;
-      if(f.vinculo==='pendente' && d.chamado) return false;
       if(f.situacao && d.situacao!==f.situacao) return false;
       if(f.responsavel && d.responsavel!==f.responsavel) return false;
       if(f.dataInicio && d.dataISO<f.dataInicio) return false;
@@ -3039,14 +3023,9 @@ function RelCsati({ showToast }) {
         'Normal':{bg:C.successBg,color:C.success,border:C.successBorder,dot:'#58A13E'},
         'Vencido':{bg:C.dangerBg,color:C.danger,border:C.dangerBorder,dot:C.danger},
         'Encerrado':{bg:'#EEF0F3',color:'#494C57',border:'#CED2D7',dot:'#7A7E87'},
-        'Não iniciado':{bg:'#EEF0F3',color:'#494C57',border:'#CED2D7',dot:'#7A7E87'},
       },
       prioridade:{
         'Baixa':{bg:C.successBg,color:C.success,border:C.successBorder,dot:'#58A13E'},
-      },
-      vinculo:{
-        'Vinculado':{bg:C.successBg,color:C.success,border:C.successBorder,dot:'#58A13E'},
-        'Pendente de vinculação':{bg:C.warningBg,color:C.warning,border:C.warningBorder,dot:'#FFB700'},
       },
     };
     return mapas[tipo][valor] || {bg:'#EEF0F3',color:'#494C57',border:'#CED2D7',dot:'#7A7E87'};
@@ -3074,7 +3053,6 @@ function RelCsati({ showToast }) {
     const p=[];
     if(f.api)p.push('API: '+f.api); if(f.protocolo)p.push('Protocolo Solicita/SEI: '+f.protocolo);
     if(f.chamado)p.push('Chamado CSATI: '+f.chamado);
-    if(f.vinculo)p.push('Vínculo: '+(f.vinculo==='vinculado'?'Vinculado':'Pendente de vinculação'));
     if(f.situacao)p.push('Situação da abertura: '+f.situacao);
     if(f.responsavel)p.push('Responsável: '+f.responsavel);
     if(f.dataInicio)p.push('De: '+f.dataInicio.split('-').reverse().join('/'));
@@ -3090,8 +3068,8 @@ function RelCsati({ showToast }) {
     doc.text('Conecta Gov.PE — Acompanhamento CSATI',14,12);doc.setFont('helvetica','normal');doc.setFontSize(8);
     doc.text(`Gerado em: ${data} às ${hora}  |  Perfil: ADM`,14,19);doc.text(`Filtros: ${filtrosLabel()}`,14,24);doc.text(`Total: ${dados.length} registro(s)`,14,29);
     doc.autoTable({
-      head:[['Protocolo Solicita/SEI','Chamado CSATI','Vínculo','API','Solicitante / Órgão','Data da solicitação','Situação da abertura','Grupo Executor','Responsável','Delegado','SLA','Última sincronização']],
-      body:dados.map(d=>[d.protocolo,d.chamado||'Não gerado',d.chamado?'Vinculado':'Pendente de vinculação',d.api,`${d.solicitante} / ${d.orgao}`,d.dataSolicitacao,d.situacao,d.grupo,d.responsavel,d.delegado?'Sim':'Não',`${d.sla} - ${d.statusSla}`,d.ultimaSync]),startY:33,
+      head:[['Protocolo Solicita/SEI','Chamado CSATI','API','Solicitante / Órgão','Data da solicitação','Situação da abertura','Grupo Executor','Responsável','Delegado','SLA','Última sincronização']],
+      body:dados.map(d=>[d.protocolo,d.chamado,d.api,`${d.solicitante} / ${d.orgao}`,d.dataSolicitacao,d.situacao,d.grupo,d.responsavel,d.delegado?'Sim':'Não',`${d.sla} - ${d.statusSla}`,d.ultimaSync]),startY:33,
       styles:{fontSize:6.6,cellPadding:2},headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},
     });
     doc.save(`acompanhamento_csati_${slug}.pdf`);
@@ -3099,12 +3077,12 @@ function RelCsati({ showToast }) {
   const gerarXLSX=dados=>{
     if(!window.XLSX) throw new Error('Biblioteca Excel indisponível');
     const {utils,write}=window.XLSX,{data,hora,slug}=now();
-    const linhas=dados.map(d=>[d.protocolo,d.chamado||'Não gerado',d.chamado?'Vinculado':'Pendente de vinculação',d.api,d.solicitante,d.orgao,d.dataSolicitacao,d.situacao,d.grupo,d.responsavel,d.delegado?'Sim':'Não',d.sla,d.statusSla,d.ultimaSync]);
+    const linhas=dados.map(d=>[d.protocolo,d.chamado,d.api,d.solicitante,d.orgao,d.dataSolicitacao,d.situacao,d.grupo,d.responsavel,d.delegado?'Sim':'Não',d.sla,d.statusSla,d.ultimaSync]);
     const ws=utils.aoa_to_sheet([
       ['Conecta Gov.PE — Acompanhamento CSATI'],[`Gerado em: ${data} às ${hora}`],[`Filtros: ${filtrosLabel()}`],[`Total: ${dados.length} registro(s)`],[],
-      ['Protocolo Solicita/SEI','Chamado CSATI','Vínculo Solicita/SEI x CSATI','API','Solicitante','Órgão solicitante','Data da solicitação','Situação da abertura','Grupo Executor','Responsável atual','Delegado','Prazo de atendimento','Situação do SLA','Última sincronização'],...linhas,
+      ['Protocolo Solicita/SEI','Chamado CSATI','API','Solicitante','Órgão solicitante','Data da solicitação','Situação da abertura','Grupo Executor','Responsável atual','Delegado','Prazo de atendimento','Situação do SLA','Última sincronização'],...linhas,
     ]);
-    ws['!cols']=[{wch:31},{wch:18},{wch:28},{wch:40},{wch:25},{wch:29},{wch:21},{wch:22},{wch:38},{wch:25},{wch:12},{wch:22},{wch:18},{wch:22}];
+    ws['!cols']=[{wch:31},{wch:18},{wch:40},{wch:25},{wch:29},{wch:21},{wch:22},{wch:38},{wch:25},{wch:12},{wch:22},{wch:18},{wch:22}];
     const wb=utils.book_new();utils.book_append_sheet(wb,ws,'Acompanhamento CSATI');
     const blob=new Blob([write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`acompanhamento_csati_${slug}.xlsx`;a.click();URL.revokeObjectURL(url);
@@ -3137,17 +3115,11 @@ function RelCsati({ showToast }) {
       <p style={{fontSize:12.5,color:C.textSecondary}}>Visão interna para gestores acompanharem a solicitação originada no Solicita/SEI, seu vínculo com o chamado do CSATI e a evolução operacional do atendimento.</p>
     </div>
 
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap',padding:'12px 15px',marginBottom:16,border:`1px solid ${C.infoBorder}`,borderRadius:6,background:C.infoBg}}>
-      <div><div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.45px',color:C.brandDark,marginBottom:4}}>Fluxo de origem e integração</div><div style={{fontSize:12.5,fontWeight:600,color:C.textPrimary}}>Solicita/SEI <span style={{margin:'0 7px',color:C.brand}}>→</span> Integração Conecta Gov.PE <span style={{margin:'0 7px',color:C.brand}}>→</span> CSATI</div></div>
-      <div style={{fontSize:11.5,color:C.textSecondary,maxWidth:640,lineHeight:1.45}}>O Solicita/SEI gera o protocolo e mantém as interações da solicitação. O CSATI gera um chamado próprio iniciado por <strong>200</strong>, que deve permanecer vinculado ao protocolo de origem.</div>
-    </div>
-
     <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
       <div className="csati-filter-primary">
         <div><Label>API</Label><Sel value={f.api} onChange={v=>setFil('api',v)}><option value="">Todas as APIs</option>{apis.map(a=><option key={a}>{a}</option>)}</Sel></div>
         <div><Label>Protocolo Solicita/SEI</Label><input value={f.protocolo} onChange={e=>setFil('protocolo',e.target.value)} placeholder="Ex.: 0030409428.001674/2026-90" style={iSt} onFocus={onFocus} onBlur={onBlur}/></div>
         <div><Label>Chamado CSATI</Label><input value={f.chamado} onChange={e=>setFil('chamado',e.target.value)} placeholder="Ex.: 20000001" style={iSt} onFocus={onFocus} onBlur={onBlur}/></div>
-        <div><Label>Vínculo com o CSATI</Label><Sel value={f.vinculo} onChange={v=>setFil('vinculo',v)}><option value="">Todos</option><option value="vinculado">Vinculado</option><option value="pendente">Pendente de vinculação</option></Sel></div>
       </div>
       <div className="csati-filter-secondary">
         <div><Label>Situação da abertura</Label><Sel value={f.situacao} onChange={v=>setFil('situacao',v)}><option value="">Todas</option>{['Em Andamento','Resolvida','Cancelada'].map(s=><option key={s}>{s}</option>)}</Sel></div>
@@ -3172,33 +3144,31 @@ function RelCsati({ showToast }) {
 
       {!resultado.length?<div style={{padding:40,textAlign:'center',color:'#888',fontSize:13}}>Nenhum registro encontrado com os filtros aplicados.</div>:
       <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse',minWidth:1500}}>
-        <thead><tr>{['Vínculo Solicita/SEI ↔ CSATI','Solicitação / API','Prioridade','Tarefa','Grupo atual / Responsável','Situação da abertura','SLA','Ações'].map(h=><th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+        <thead><tr>{['Protocolo Solicita/SEI ↔ Chamado CSATI','Solicitação / API','Prioridade','Tarefa','Grupo atual / Responsável','Situação da abertura','SLA','Ações'].map(h=><th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:C.textSecondary,borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
         <tbody>{resultado.map(d=><React.Fragment key={d.id}>
           <tr style={{borderBottom:'1px solid #E7E9EB',background:expandedId===d.id?'#F5F8FF':'#fff'}}>
             <td style={{padding:'10px 12px',minWidth:285}}>
               <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11.5,whiteSpace:'nowrap'}}><span style={{fontSize:8.5,fontWeight:700,color:'#fff',background:C.brandDark,borderRadius:3,padding:'2px 5px'}}>SOLICITA/SEI</span><span style={{fontFamily:'monospace',fontWeight:600,color:C.brand}}>{d.protocolo}</span></div>
-              <div style={{margin:'4px 0 4px 12px',paddingLeft:10,borderLeft:`2px solid ${d.chamado?C.successBorder:C.border}`,fontSize:10,color:'#7A7E87'}}>relacionado a</div>
-              <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11.5,whiteSpace:'nowrap'}}><span style={{fontSize:9.5,fontWeight:700,color:'#fff',background:d.chamado?C.success:'#7A7E87',borderRadius:3,padding:'2px 5px'}}>CSATI</span>{d.chamado?<button onClick={()=>showToast(`Protótipo: acesso ao chamado ${d.chamado} no CSATI.`, 'success')} style={{padding:0,border:'none',background:'transparent',color:C.brand,textDecoration:'underline',fontSize:12,fontWeight:700,cursor:'pointer'}} title="Simular abertura do chamado no CSATI">{d.chamado}</button>:<span style={{color:'#7A7E87',fontWeight:600}}>Não gerado</span>}</div>
-              <div style={{fontSize:10,fontWeight:600,color:d.chamado?C.success:C.warning,marginTop:5}}>{d.chamado?'Vinculado':'Pendente de vinculação'}</div>
+              <div style={{margin:'4px 0 4px 12px',paddingLeft:10,borderLeft:`2px solid ${C.successBorder}`,fontSize:10,color:'#7A7E87'}}>relacionado a</div>
+              <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11.5,whiteSpace:'nowrap'}}><span style={{fontSize:9.5,fontWeight:700,color:'#fff',background:C.success,borderRadius:3,padding:'2px 5px'}}>CSATI</span><button onClick={()=>showToast(`Protótipo: consulta ao chamado ${d.chamado}.`, 'success')} style={{padding:0,border:'none',background:'transparent',color:C.brand,textDecoration:'underline',fontSize:12,fontWeight:700,cursor:'pointer'}}>{d.chamado}</button></div>
             </td>
-            <td style={{padding:'10px 12px',fontSize:12.5,fontWeight:500,maxWidth:240}}><div>{d.api}</div><div style={{fontSize:10.5,color:'#7A7E87',marginTop:3}}>Solicita/SEI: {d.dataSolicitacao}</div><div style={{fontSize:10.5,color:'#7A7E87',marginTop:2}}>CSATI: {d.chamado?d.criadaEm:'Não gerado'}</div></td>
+            <td style={{padding:'10px 12px',fontSize:12.5,fontWeight:500,maxWidth:240}}><div>{d.api}</div><div style={{fontSize:10.5,color:'#7A7E87',marginTop:3}}>Solicita/SEI: {d.dataSolicitacao}</div><div style={{fontSize:10.5,color:'#7A7E87',marginTop:2}}>CSATI: {d.criadaEm}</div></td>
             <td style={{padding:'10px 12px'}}><StatusBadge valor={d.prioridade} tipo="prioridade"/></td>
             <td style={{padding:'10px 12px',fontSize:12.5}}><div style={{fontWeight:500}}>{d.tarefa}</div><div style={{fontSize:10.5,color:'#7A7E87',marginTop:3}}>Limite: {d.dataLimiteTarefa}</div></td>
-            <td style={{padding:'10px 12px',fontSize:12.2,maxWidth:245}}><div style={{fontWeight:500}}>{d.grupo}</div><div style={{marginTop:4}}>{d.responsavel}</div>{d.chamado&&!['—','Não definido'].includes(d.responsavel)&&<div style={{fontSize:10.5,color:d.delegado?C.brand:C.success,marginTop:2}}>{d.delegado?`Delegado em ${d.delegadoEm}`:(d.capturado?'Solicitação capturada':'Sem captura')}</div>}</td>
-            <td style={{padding:'10px 12px'}}>{d.situacao==='—'?<span style={{color:'#888'}}>—</span>:<StatusBadge valor={d.situacao} tipo="situacao"/>}</td>
+            <td style={{padding:'10px 12px',fontSize:12.2,maxWidth:245}}><div style={{fontWeight:500}}>{d.grupo}</div><div style={{marginTop:4}}>{d.responsavel}</div><div style={{fontSize:10.5,color:d.delegado?C.brand:C.success,marginTop:2}}>{d.delegado?`Delegado em ${d.delegadoEm}`:(d.capturado?'Solicitação capturada':'Sem captura')}</div></td>
+            <td style={{padding:'10px 12px'}}><StatusBadge valor={d.situacao} tipo="situacao"/></td>
             <td style={{padding:'10px 12px',fontSize:11.5,whiteSpace:'nowrap'}}><div style={{fontWeight:600,color:C.textPrimary}}>{d.sla}</div><div style={{color:'#7A7E87',margin:'3px 0 5px'}}>Limite: {d.dataLimite}</div><StatusBadge valor={d.statusSla} tipo="sla"/></td>
-            <td style={{padding:'10px 12px'}}><div style={{display:'flex',flexDirection:'column',gap:5,alignItems:'stretch'}}>{d.chamado&&<button onClick={()=>showToast(`Protótipo: acesso ao chamado ${d.chamado} no CSATI.`, 'success')} style={{height:28,padding:'0 9px',borderRadius:4,border:`1px solid ${C.brand}`,background:C.brand,color:'#fff',fontSize:10.5,fontWeight:600,cursor:'pointer'}}>Abrir no CSATI</button>}<button onClick={()=>setExpandedId(expandedId===d.id?null:d.id)} style={{height:28,padding:'0 9px',borderRadius:4,border:`1px solid ${C.brand}`,background:expandedId===d.id?C.infoBg:'#fff',color:C.brand,fontSize:10.5,fontWeight:600,cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:5}}><Icon name={expandedId===d.id?'chevUp':'eye'} size={12} color={C.brand}/>{expandedId===d.id?'Fechar':'Detalhar'}</button></div></td>
+            <td style={{padding:'10px 12px'}}><button onClick={()=>setExpandedId(expandedId===d.id?null:d.id)} style={{height:28,padding:'0 9px',borderRadius:4,border:`1px solid ${C.brand}`,background:expandedId===d.id?C.infoBg:'#fff',color:C.brand,fontSize:10.5,fontWeight:600,cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:5}}><Icon name={expandedId===d.id?'chevUp':'eye'} size={12} color={C.brand}/>{expandedId===d.id?'Fechar':'Detalhar'}</button></td>
           </tr>
           {expandedId===d.id&&<tr><td colSpan="8" style={{padding:'14px 16px 18px',background:'#F5F8FF',borderBottom:'1px solid #C8D7F0'}}>
-            <div style={{marginBottom:12,padding:'11px 14px',borderRadius:5,border:`1px solid ${d.chamado?C.successBorder:C.warningBorder}`,background:d.chamado?C.successBg:C.warningBg,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap'}}>
-              <div><div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.4px',color:d.chamado?C.success:C.warning,marginBottom:3}}>Vínculo Solicita/SEI ↔ CSATI</div><div style={{fontSize:13,fontWeight:600,color:C.textPrimary}}>{d.chamado?<><span style={{fontFamily:'monospace',color:C.brand}}>{d.protocolo}</span><span style={{margin:'0 8px',color:'#7A7E87'}}>↔</span><span style={{fontFamily:'monospace',color:C.brand}}>{d.chamado}</span></>:<>Protocolo Solicita/SEI <span style={{fontFamily:'monospace',color:C.brand}}>{d.protocolo}</span> — chamado CSATI ainda não gerado</>}</div></div>
-              <div style={{display:'flex',alignItems:'center',gap:8}}><StatusBadge valor={d.chamado?'Vinculado':'Pendente de vinculação'} tipo="vinculo"/>{d.chamado&&<button onClick={()=>showToast(`Protótipo: acesso ao chamado ${d.chamado} no CSATI.`, 'success')} style={{height:30,padding:'0 10px',borderRadius:4,border:`1px solid ${C.brand}`,background:'#fff',color:C.brand,fontSize:11,fontWeight:600,cursor:'pointer'}}>Abrir no CSATI</button>}</div>
+            <div style={{marginBottom:12,padding:'11px 14px',borderRadius:5,border:`1px solid ${C.successBorder}`,background:C.successBg}}>
+              <div><div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.4px',color:C.success,marginBottom:3}}>Protocolo Solicita/SEI ↔ Chamado CSATI</div><div style={{fontSize:13,fontWeight:600,color:C.textPrimary}}><span style={{fontFamily:'monospace',color:C.brand}}>{d.protocolo}</span><span style={{margin:'0 8px',color:'#7A7E87'}}>↔</span><span style={{fontFamily:'monospace',color:C.brand}}>{d.chamado}</span></div></div>
             </div>
             {d.observacao&&<div style={{marginBottom:12}}><Alert type="info" msg={d.observacao}/></div>}
             <div className="csati-detail-grid">
               <DetailCard title="Solicitação de origem — Solicita/SEI"><InfoRow label="Protocolo Solicita/SEI" value={d.protocolo} mono/><InfoRow label="Identificador interno" value={d.idSolicita} mono/><InfoRow label="API" value={d.api}/><InfoRow label="Solicitante" value={d.solicitante}/><InfoRow label="Órgão solicitante" value={d.orgao}/><InfoRow label="Data e hora da solicitação" value={d.dataSolicitacao}/><InfoRow label="Descrição da solicitação" value={d.descricaoSolicita}/></DetailCard>
-              <DetailCard title="Vínculo e chamado no CSATI"><InfoRow label="Vínculo" value={d.chamado?'Vinculado':'Pendente de vinculação'}/><InfoRow label="Número do chamado" value={d.chamado||'Não gerado'} mono/><InfoRow label="Criado em" value={d.criadaEm}/><InfoRow label="Prioridade" value={d.prioridade}/><InfoRow label="Tarefa" value={d.tarefa}/><InfoRow label="Situação da abertura" value={d.situacao}/><InfoRow label="Última sincronização" value={d.ultimaSync}/></DetailCard>
-              <DetailCard title="Grupo, responsável e SLA"><InfoRow label="Grupo atual" value={d.grupo}/><InfoRow label="Responsável" value={d.responsavel}/><InfoRow label="Atribuição" value={!d.chamado?'Não se aplica — chamado não gerado':(d.delegado?`Delegada — ${d.delegadoEm}`:(d.capturado?'Solicitação capturada':'Não capturada'))}/><InfoRow label="SLA" value={d.sla}/><InfoRow label="Data limite" value={d.dataLimite}/><InfoRow label="Status do SLA" value={d.statusSla}/></DetailCard>
+              <DetailCard title="Chamado no CSATI"><InfoRow label="Número do chamado" value={d.chamado} mono/><InfoRow label="Criado em" value={d.criadaEm}/><InfoRow label="Prioridade" value={d.prioridade}/><InfoRow label="Tarefa" value={d.tarefa}/><InfoRow label="Situação da abertura" value={d.situacao}/><InfoRow label="Última sincronização" value={d.ultimaSync}/></DetailCard>
+              <DetailCard title="Grupo, responsável e SLA"><InfoRow label="Grupo atual" value={d.grupo}/><InfoRow label="Responsável" value={d.responsavel}/><InfoRow label="Atribuição" value={d.delegado?`Delegada — ${d.delegadoEm}`:(d.capturado?'Solicitação capturada':'Não capturada')}/><InfoRow label="SLA" value={d.sla}/><InfoRow label="Data limite" value={d.dataLimite}/><InfoRow label="Status do SLA" value={d.statusSla}/></DetailCard>
             </div>
             <div className="csati-detail-lower">
               <DetailCard title="Classificação do serviço no CSATI"><InfoRow label="Portfólio" value={d.portfolio}/><InfoRow label="Serviço" value={d.servico}/><InfoRow label="Atividade" value={d.atividade}/><InfoRow label="Contrato" value={d.contrato}/><InfoRow label="Impacto" value={d.impacto}/><InfoRow label="Urgência" value={d.urgencia}/></DetailCard>
