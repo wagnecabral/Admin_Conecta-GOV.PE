@@ -1,16 +1,22 @@
-# Portal UI Kit — Padrão Digital de Pernambuco
+# Portal Conecta GOV.PE — Solicitação de uso de API
 
 ## Overview
-High-fidelity interactive prototype of the Governo de Pernambuco citizen portal, built to the Padrão Digital PE design system spec. Covers the main portal screens: homepage, service listing, service detail, and a form flow.
+Protótipo navegável do fluxo de consulta e solicitação de uso de APIs no Conecta GOV.PE, seguindo o padrão visual do Governo de Pernambuco.
 
 ## Design Width
 1440px desktop, responsive to 430px mobile.
 
 ## Screens
-1. **Homepage** — GovBar + Header + featured services hero + service grid
-2. **Serviços** — Service category listing with filters
-3. **Detalhe do Serviço** — Individual service page with steps
-4. **Formulário** — Multi-step form with validation states
+1. **Catálogo** — Consulta de categorias e APIs
+2. **Detalhamento da API** — Operações, origem, requisitos e contatos
+3. **Autenticação GOV.BR** — Simulação da identificação do solicitante
+4. **Formulário** — Identificação, escopo técnico, finalidade, LGPD e revisão
+5. **Protocolo** — Simulação do envio ao Solicita e encaminhamento ao SEI
+6. **Minhas Solicitações** — Registro e acompanhamento do protocolo gerado
+
+## Navegação de demonstração
+
+No Catálogo de APIs, selecione uma categoria, abra o detalhamento de uma API e clique em **Solicitar uso da API**. Para simular a autenticação GOV.BR, utilize o CPF `046.318.094-18` e qualquer senha.
 
 ## Files
 - `index.html` — Main interactive prototype entry point

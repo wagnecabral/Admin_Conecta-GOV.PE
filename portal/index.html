@@ -14,7 +14,22 @@ html, body, #root { min-height:100%; }
 body { font-family:'Inter',sans-serif; background:#F4F5F7; color:#28272C; }
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-thumb { background:#CED2D7; border-radius:3px; }
-button, input, select { font-family:'Inter',sans-serif; }
+button, input, select, textarea { font-family:'Inter',sans-serif; }
+.request-shell { max-width:1080px; margin:0 auto; width:100%; }
+.request-layout { display:grid; grid-template-columns:250px minmax(0,1fr); gap:20px; align-items:start; }
+.request-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.request-grid .full { grid-column:1/-1; }
+.request-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:24px; padding-top:20px; border-top:1px solid #E7E9EB; }
+.request-actions-right { display:flex; gap:10px; margin-left:auto; }
+.summary-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+@media (max-width: 820px) {
+  .request-layout { grid-template-columns:1fr; }
+  .request-grid, .summary-grid { grid-template-columns:1fr; }
+  .request-grid .full { grid-column:auto; }
+  .request-actions { align-items:stretch; flex-direction:column; }
+  .request-actions-right { width:100%; margin-left:0; flex-direction:column-reverse; }
+  .request-actions button, .request-actions-right button { width:100%; justify-content:center; }
+}
 </style>
 </head>
 <body>
@@ -56,10 +71,10 @@ function Header({ activePage, onNav, onAdminClick }) {
   return (
     <div style={{ background:'#FFFFFF', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:72, borderBottom:'1px solid #E7E9EB' }}>
       <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-        <img src="../assets/ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+        <img src="../catalogo/assets/ati_logo.png" alt="ATI" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
         <div style={{ width:1, height:36, background:'#E7E9EB' }}/>
-        <img src="../assets/Brasao.png" alt="Brasão de Pernambuco" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
-        <img src="../assets/Governo.png" alt="Governo de Pernambuco" style={{ height:36, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+        <img src="../catalogo/assets/Brasao.png" alt="Brasão de Pernambuco" style={{ height:44, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+        <img src="../catalogo/assets/Governo.png" alt="Governo de Pernambuco" style={{ height:36, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
       </div>
       <nav style={{ display:'flex', gap:0, alignItems:'stretch', height:72 }}>
         {navItems.map(item => {
@@ -175,12 +190,12 @@ function Footer() {
         </div>
         <div style={{ borderTop:'1px solid rgba(248,250,252,0.2)', padding:'20px 0', display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
           <div style={{ display:'flex', alignItems:'center', gap:20 }}>
-            <img src="../assets/ati_logo.png" alt="ATI" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../catalogo/assets/ati_logo.png" alt="ATI" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
             <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
-            <img src="../assets/Brasao.png" alt="Brasão" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
-            <img src="../assets/Governo.png" alt="Governo PE" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../catalogo/assets/Brasao.png" alt="Brasão" style={{ height:48, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../catalogo/assets/Governo.png" alt="Governo PE" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
             <div style={{ width:1, height:40, background:'rgba(248,250,252,0.25)' }}/>
-            <img src="../assets/liga_digital.png" alt="Liga Digital" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
+            <img src="../catalogo/assets/liga_digital.png" alt="Liga Digital" style={{ height:40, width:'auto', objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'} />
           </div>
         </div>
         <div style={{ borderTop:'1px solid rgba(248,250,252,0.08)', padding:'14px 0 18px' }}>
@@ -208,9 +223,9 @@ const APIS_CAT = [
   { id:8, nome:'Programas Habitacionais', orgaoId:'6', versao:'v1.1', status:'Ativo', descricao:'Inscrições e consultas em programas habitacionais do estado.', operacoes:'POST /inscricoes — realiza inscrição\nGET /inscricoes/{cpf} — consulta', baseSistema:'SEDS — Sistema Habitacional', comoAcessar:'API Key fornecida pela SEDS mediante solicitação.', detalhamento:'HTTPS. Retorna: inscrição, programa, situação, posição na fila.', contatos:[{nome:'SEDS TI', email:'ti@seds.pe.gov.br'}], categoria:'Social', atualizado:'20/02/2025' },
 ];
 
-function DetailPage({ api, onBack }) {
+function DetailPage({ api, onBack, onRequest }) {
   const orgao = ORGAOS_CAT[api.orgaoId];
-  const accessSteps = ['Selecionar a API desejada no Catálogo do Portal Conecta GOV.PE.','No Portal de Serviços (PE GOV), preencher o formulário de requisição e anexar a documentação técnica necessária.','A solicitação será validada pelo órgão cedente da API e pela equipe do Conecta GOV.PE.','Assinar o Termo de Responsabilidade em conformidade com a LGPD.','Após a aprovação, as credenciais de acesso serão disponibilizadas.','Realizar a integração com a API e utilizar os dados compartilhados na solução autorizada.'];
+  const accessSteps = ['Selecionar a API desejada no Catálogo do Portal Conecta GOV.PE.','Clicar em Solicitar uso da API e autenticar-se com a conta GOV.BR.','Preencher e enviar o formulário de solicitação no próprio Conecta GOV.PE.','O Solicita criará o protocolo e encaminhará a demanda ao SEI.','Acompanhar a análise e as comunicações em Minhas Solicitações.','Após a aprovação, utilizar as credenciais disponibilizadas para realizar a integração.'];
   const SectionHeader = ({ title }) => (<div style={{ background:'#EEF1F6', padding:'9px 16px', borderBottom:`1px solid ${C.divider}` }}><span style={{ fontSize:13, fontWeight:600, color:C.text }}>{title}</span></div>);
   const SectionBody = ({ children }) => (<div style={{ background:C.white, padding:'12px 16px', fontSize:13, color:C.brand, lineHeight:1.75 }}>{children}</div>);
   const operacoes = (api.operacoes||'').split('\n').filter(Boolean);
@@ -228,7 +243,7 @@ function DetailPage({ api, onBack }) {
           <div style={{ fontSize:13, color:C.textSec, marginBottom:1 }}>{orgao?.name} ({orgao?.short})</div>
           <div style={{ fontSize:13, color:C.textSec, marginBottom:10 }}>Versão {api.versao} • Atualizado em {api.atualizado}</div>
           <p style={{ fontSize:13.5, color:C.brand, lineHeight:1.6, maxWidth:720, marginBottom:16 }}>{api.descricao}</p>
-          <button style={{ height:38, padding:'0 20px', borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:600, border:'none', cursor:'pointer' }}>Solicitar API</button>
+          <button onClick={()=>onRequest(api)} style={{ height:38, padding:'0 20px', borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:600, border:'none', cursor:'pointer' }}>Solicitar uso da API</button>
         </div>
         <div style={{ border:`1px solid ${C.divider}`, borderRadius:8, overflow:'hidden' }}>
           <div style={{ borderBottom:`1px solid ${C.divider}` }}>
@@ -266,6 +281,7 @@ function DetailPage({ api, onBack }) {
 
 function CatalogPage({ onSelectApi }) {
   const [search, setSearch] = React.useState('');
+  const [selectedCategory, setSelectedCategory] = React.useState(null);
   const CATEGORIAS_CATALOG = [
     { titulo:'Consulta de Categorias de Serviços', count:3, versao:'Versão 1.0', apis:APIS_CAT.filter(a=>a.categoria==='Serviços') },
     { titulo:'Dados Fiscais e Tributários', count:2, versao:'Versão 1.5', apis:APIS_CAT.filter(a=>a.categoria==='Fiscal') },
@@ -290,13 +306,24 @@ function CatalogPage({ onSelectApi }) {
             <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:14 }}>Categorias</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px,1fr))', gap:12 }}>
               {filtered.map((cat,i)=>(
-                <div key={i} onClick={()=>{ const firstApi=cat.apis[0]; if(firstApi) onSelectApi(firstApi); }} style={{ background:C.white, border:`1px solid ${C.divider}`, borderRadius:10, padding:'18px 20px', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{ e.currentTarget.style.borderColor=C.brandBorder; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,52,183,0.08)'; }} onMouseLeave={e=>{ e.currentTarget.style.borderColor=C.divider; e.currentTarget.style.boxShadow='none'; }}>
+                <div key={i} onClick={()=>setSelectedCategory(cat)} style={{ background:selectedCategory?.titulo===cat.titulo?'#F0F5FF':C.white, border:`1px solid ${selectedCategory?.titulo===cat.titulo?C.brand:C.divider}`, borderRadius:10, padding:'18px 20px', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{ e.currentTarget.style.borderColor=C.brandBorder; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,52,183,0.08)'; }} onMouseLeave={e=>{ e.currentTarget.style.borderColor=selectedCategory?.titulo===cat.titulo?C.brand:C.divider; e.currentTarget.style.boxShadow='none'; }}>
                   <div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:6, lineHeight:1.4 }}>{cat.titulo}</div>
-                  <div style={{ fontSize:12, color:C.textSec }}>{cat.count} • {cat.versao}</div>
+                  <div style={{ fontSize:12, color:C.textSec }}>{cat.apis.length} {cat.apis.length===1?'API':'APIs'} • {cat.versao}</div>
                 </div>
               ))}
             </div>
           </div>
+          {selectedCategory && <div style={{ marginTop:28, paddingTop:22, borderTop:`1px solid ${C.divider}` }}>
+            <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:5 }}>APIs da categoria</div>
+            <div style={{ fontSize:12.5, color:C.textSec, marginBottom:14 }}>{selectedCategory.titulo}</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:12 }}>
+              {selectedCategory.apis.map(api=><button key={api.id} onClick={()=>onSelectApi(api)} style={{ textAlign:'left', background:'#fff', border:`1px solid ${C.divider}`, borderRadius:9, padding:'16px 18px', cursor:'pointer' }} onMouseEnter={e=>e.currentTarget.style.borderColor=C.brand} onMouseLeave={e=>e.currentTarget.style.borderColor=C.divider}>
+                <div style={{ display:'flex', justifyContent:'space-between', gap:10, marginBottom:7 }}><span style={{ fontSize:14, fontWeight:700, color:C.brandDark }}>{api.nome}</span><span style={{ fontSize:11, color:C.success, background:C.successBg, border:`1px solid ${C.successBorder}`, borderRadius:100, padding:'2px 8px', height:'fit-content' }}>{api.status}</span></div>
+                <div style={{ fontSize:12.5, color:C.textSec, lineHeight:1.5, marginBottom:10 }}>{api.descricao}</div>
+                <div style={{ fontSize:11.5, fontWeight:600, color:C.brand }}>Ver detalhamento →</div>
+              </button>)}
+            </div>
+          </div>}
         </div>
       </div>
     </div>
@@ -307,11 +334,11 @@ function CatalogPage({ onSelectApi }) {
 function ComoAcessar({ onNav }) {
   const steps = [
     { n:1, title:'Selecionar API', desc:'Selecionar a API desejada no Catálogo do Portal Conecta GOV.PE.' },
-    { n:2, title:'Preencher formulário', desc:'No Portal de Serviços (PE GOV), preencher o formulário de requisição e anexar a documentação técnica necessária.' },
-    { n:3, title:'Validação', desc:'A solicitação será validada pelo órgão cedente da API e pela equipe do Conecta GOV.PE.' },
-    { n:4, title:'Termo de Responsabilidade', desc:'Assinar o Termo de Responsabilidade em conformidade com a LGPD.' },
-    { n:5, title:'Credenciais de acesso', desc:'Após a aprovação, as credenciais de acesso serão disponibilizadas.' },
-    { n:6, title:'Integração', desc:'Realizar a integração com a API e utilizar os dados compartilhados na solução autorizada.' },
+    { n:2, title:'Autenticar com GOV.BR', desc:'Clicar em Solicitar uso da API e acessar o formulário com a conta GOV.BR.' },
+    { n:3, title:'Preencher e enviar', desc:'Informar os dados técnicos, a estimativa de uso, a finalidade e os requisitos de conformidade no próprio Conecta GOV.PE.' },
+    { n:4, title:'Gerar protocolo', desc:'O Conecta enviará os dados ao Solicita, que criará o protocolo e encaminhará a demanda ao SEI.' },
+    { n:5, title:'Acompanhar', desc:'Consultar a situação e o histórico da solicitação na área Minhas Solicitações.' },
+    { n:6, title:'Usar a API', desc:'Após a aprovação, utilizar as credenciais disponibilizadas para realizar a integração.' },
   ];
   const Check = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#2B6418"/><polyline points="7 12 10.5 15.5 17 9" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>);
   return (
@@ -410,8 +437,8 @@ function QuemSomos() {
 /* ── SSO Modal ───────────────────────────────────────────── */
 const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
-function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado }) {
-  const [tela, setTela] = React.useState('selecao');
+function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado, requestMode=false }) {
+  const [tela, setTela] = React.useState(requestMode?'govbr':'selecao');
   const [cpf, setCpf] = React.useState('');
   const [senha, setSenha] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -456,6 +483,7 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutentic
         <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', marginTop:8, letterSpacing:'0.5px' }}>ACESSO À CONTA ÚNICA DO GOVERNO FEDERAL</div>
       </div>
       <div style={{ width:'100%', maxWidth:440 }}>
+        {requestMode && <div style={{ background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,.22)', borderRadius:7, padding:'10px 13px', fontSize:12.5, color:'#fff', marginBottom:22, lineHeight:1.5 }}>Entre com sua conta GOV.BR para continuar a solicitação da API. No protótipo, use o CPF <strong>046.318.094-18</strong> e qualquer senha.</div>}
         {erro && <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>{erro}</div>}
         <div style={{ marginBottom:28 }}>
           <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
@@ -466,7 +494,7 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutentic
           <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} style={{ ...fSt('rgba(255,255,255,0.5)'), color:'#fff', caretColor:'#fff' }} onFocus={e=>e.target.style.borderBottomColor='#fff'} onBlur={e=>e.target.style.borderBottomColor='rgba(255,255,255,0.5)'} onKeyDown={e=>e.key==='Enter'&&handleEntrar()}/>
         </div>
         <button onClick={handleEntrar} disabled={loading} style={{ width:140, height:42, borderRadius:100, background:loading?'rgba(255,255,255,0.2)':'#FFCD07', border:'none', color:loading?'#fff':'#1351B4', fontSize:14, fontWeight:700, cursor:loading?'not-allowed':'pointer', display:'block', margin:'0 auto' }}>{loading?'...':'Entrar'}</button>
-        <div style={{ textAlign:'center', marginTop:28 }}><button onClick={handleVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.5)' }}>← Voltar</button></div>
+        <div style={{ textAlign:'center', marginTop:28 }}><button onClick={requestMode?onClose:handleVoltar} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'rgba(255,255,255,0.65)' }}>← {requestMode?'Voltar ao detalhamento':'Voltar'}</button></div>
       </div>
     </div>
   );
@@ -504,9 +532,9 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
         <span style={{ color:'#F8FAFC', fontSize:12, fontWeight:500 }}>Governo de Pernambuco</span>
       </div>
       <div style={{ background:'#fff', borderBottom:`1px solid ${C.divider}`, height:64, display:'flex', alignItems:'center', padding:'0 24px', gap:14 }}>
-        <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+        <img src="../catalogo/assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
         <div style={{ width:1, height:28, background:C.divider }}/>
-        <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+        <img src="../catalogo/assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
       </div>
       <div style={{ flex:1, background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
         <div style={{ background:'#fff', borderRadius:12, border:`1px solid ${C.divider}`, padding:40, maxWidth:480, width:'100%', textAlign:'center', boxShadow:'0 4px 24px rgba(0,26,122,0.08)' }}>
@@ -538,6 +566,202 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
   );
 }
 
+/* ── Solicitação de uso de API ─────────────────────────────── */
+function FormField({ label, required, hint, children, full=false }) {
+  return (
+    <div className={full?'full':''} style={{ display:'flex', flexDirection:'column', gap:6 }}>
+      <label style={{ fontSize:13, fontWeight:600, color:C.text }}>
+        {label}{required && <span style={{ color:C.danger }}> *</span>}
+      </label>
+      {children}
+      {hint && <span style={{ fontSize:11.5, color:C.textSec, lineHeight:1.45 }}>{hint}</span>}
+    </div>
+  );
+}
+
+const fieldStyle = { width:'100%', minHeight:42, border:'1px solid #AEB4BD', borderRadius:5, padding:'9px 12px', fontSize:13.5, color:'#28272C', background:'#fff', outline:'none' };
+const readOnlyStyle = { ...fieldStyle, background:'#F0F2F5', color:'#494C57', cursor:'not-allowed' };
+
+function RequestStepper({ step }) {
+  const steps = ['Identificação','Escopo técnico','Finalidade e LGPD','Revisão e envio'];
+  return (
+    <aside style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:10, padding:'20px 18px', position:'sticky', top:18 }}>
+      <div style={{ fontSize:12, fontWeight:700, color:C.textSec, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:16 }}>Etapas da solicitação</div>
+      {steps.map((label,i)=>{
+        const done=i<step, active=i===step;
+        return (
+          <div key={label} style={{ display:'flex', gap:10, position:'relative', paddingBottom:i<steps.length-1?22:0 }}>
+            {i<steps.length-1 && (
+              <div style={{ position:'absolute', left:12, top:25, bottom:0, width:2, background:done?C.brand:'#D9DEE5' }}/>
+            )}
+            <div style={{ width:26, height:26, borderRadius:'50%', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:done||active?'#fff':C.textSec, background:done||active?C.brand:'#EEF1F5', border:active?`3px solid ${C.brandBorder}`:'none', boxSizing:'border-box', zIndex:1 }}>{done?'✓':i+1}</div>
+            <div style={{ paddingTop:4, fontSize:13, fontWeight:active?700:500, color:active?C.brand:done?C.text:C.textSec, lineHeight:1.35 }}>{label}</div>
+          </div>
+        );
+      })}
+      <div style={{ marginTop:20, paddingTop:16, borderTop:`1px solid ${C.divider}`, fontSize:11.5, color:C.textSec, lineHeight:1.55 }}>
+        Os dados serão enviados ao Solicita, que criará o protocolo e encaminhará o processo ao SEI.
+      </div>
+    </aside>
+  );
+}
+
+function SolicitacaoApiForm({ api, usuario, onCancel, onSubmitted }) {
+  const orgaoCedente = ORGAOS_CAT[api.orgaoId];
+  const [step,setStep] = React.useState(0);
+  const [error,setError] = React.useState('');
+  const [sending,setSending] = React.useState(false);
+  const [submitted,setSubmitted] = React.useState(null);
+  const [form,setForm] = React.useState({
+    nomeAplicacao:'', sigla:'', descricao:'',
+    orgao:usuario.orgao||'', unidade:'', cargo:'', email:usuario.email||'', telefone:'',
+    hml:true, prd:false, ipHml:'', ipPrd:'', volumetria:'', justificativa:'',
+    tipoDados:'publicos', hipotese:'', outroHipotese:'', usoDados:'', politicas:'', sistemas:'', resultados:'', previsaoLegal:'', duracao:'', observacoes:'', declaracao:false
+  });
+  const update = (key,value) => setForm(prev=>({...prev,[key]:value}));
+  const requiredByStep = [
+    [['orgao','Órgão ou entidade solicitante'],['nomeAplicacao','Nome da aplicação'],['sigla','Sigla'],['descricao','Descrição da aplicação'],['email','E-mail']],
+    [['volumetria','Volumetria anual'],['justificativa','Justificativa da demanda']],
+    [['usoDados','Como os dados serão utilizados'],['politicas','Políticas públicas impactadas'],['sistemas','Serviços ou sistemas integrados'],['resultados','Resultados pretendidos para o cidadão'],['previsaoLegal','Previsão legal ou vínculo']],
+  ];
+  const validate = () => {
+    const missing=(requiredByStep[step]||[]).find(([key])=>!String(form[key]||'').trim());
+    if(missing){ setError(`Preencha o campo “${missing[1]}” para continuar.`); return false; }
+    if(step===1 && !form.hml && !form.prd){ setError('Selecione ao menos um ambiente.'); return false; }
+    if(step===1 && form.hml && !form.ipHml.trim()){ setError('Informe o IP ou CIDR de saída para homologação.'); return false; }
+    if(step===1 && form.prd && !form.ipPrd.trim()){ setError('Informe o IP ou CIDR de saída para produção.'); return false; }
+    if(step===2 && form.tipoDados!=='publicos' && !form.hipotese){ setError('Selecione a hipótese de tratamento de dados pessoais.'); return false; }
+    setError(''); return true;
+  };
+  const next = () => { if(validate()){ setStep(s=>Math.min(3,s+1)); window.scrollTo({top:0,behavior:'smooth'}); } };
+  const back = () => { setError(''); setStep(s=>Math.max(0,s-1)); window.scrollTo({top:0,behavior:'smooth'}); };
+  const submit = () => {
+    if(!form.declaracao){ setError('Confirme a veracidade das informações antes de enviar.'); return; }
+    setError(''); setSending(true);
+    setTimeout(()=>{
+      const seq=String(Math.floor(100000+Math.random()*899999));
+      const check=String(Math.floor(10+Math.random()*89));
+      const protocol=`0030409428.${seq}/2026-${check}`;
+      const request={ id:Date.now(), protocolo:protocol, api:api.nome, orgaoCedente:orgaoCedente?.short||'ATI', dataSolicitacao:'10/09/2026', dataAtualizacao:'10/09/2026', status:'Em Análise', formData:form, historico:[{ tipo:'processo', msg:'Solicitação recebida pelo Conecta GOV.PE, protocolada no Solicita e encaminhada ao SEI.', data:'10/09/2026, 14:35' }] };
+      setSending(false); setSubmitted(request); onSubmitted(request);
+    },1300);
+  };
+  const TextInput = ({name, ...props}) => <input {...props} value={form[name]} onChange={e=>update(name,e.target.value)} style={{...fieldStyle,...(props.readOnly?readOnlyStyle:{})}}/>;
+  const TextArea = ({name, ...props}) => <textarea {...props} value={form[name]} onChange={e=>update(name,e.target.value)} style={{...fieldStyle,minHeight:92,resize:'vertical',lineHeight:1.5}}/>;
+
+  if(submitted) return (
+    <div style={{ minHeight:'calc(100vh - 104px)', background:C.bg, padding:'36px 24px' }}>
+      <div style={{ maxWidth:760, margin:'0 auto', background:'#fff', border:`1px solid ${C.divider}`, borderRadius:12, padding:'38px 40px', boxShadow:'0 5px 25px rgba(0,26,122,.08)' }}>
+        <div style={{ width:58, height:58, borderRadius:'50%', background:C.successBg, border:`2px solid ${C.successBorder}`, color:C.success, display:'flex', alignItems:'center', justifyContent:'center', fontSize:27, fontWeight:700, marginBottom:18 }}>✓</div>
+        <h1 style={{ fontSize:24, color:C.brandDark, marginBottom:8 }}>Solicitação enviada com sucesso</h1>
+        <p style={{ fontSize:14, color:C.textSec, lineHeight:1.6, marginBottom:24 }}>O Solicita criou o protocolo e encaminhou a solicitação ao SEI. Você poderá acompanhar todas as atualizações em Minhas Solicitações.</p>
+        <div style={{ background:'#F5F8FF', border:`1px solid ${C.brandBorder}`, borderRadius:8, padding:'18px 20px', marginBottom:24 }}>
+          <div className="summary-grid">
+            {[['API solicitada',api.nome],['Órgão cedente',orgaoCedente?.name],['Protocolo',submitted.protocolo],['Situação','Em análise']].map(([k,v])=><div key={k}><div style={{ fontSize:11, color:C.textSec, marginBottom:4 }}>{k}</div><div style={{ fontSize:13.5, fontWeight:700, color:k==='Protocolo'?C.brandDark:C.text, fontFamily:k==='Protocolo'?'monospace':'inherit' }}>{v}</div></div>)}
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button onClick={()=>onCancel('requests')} style={{ height:42, padding:'0 20px', border:0, borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Acompanhar em Minhas Solicitações</button>
+          <button onClick={()=>onCancel('catalog')} style={{ height:42, padding:'0 20px', border:`1px solid ${C.border}`, borderRadius:5, background:'#fff', color:C.text, fontSize:14, fontWeight:600, cursor:'pointer' }}>Voltar ao catálogo</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ background:C.bg, padding:'26px 24px 44px', flex:1 }}>
+      <div className="request-shell">
+        <button onClick={()=>onCancel('detail')} style={{ background:'none', border:0, color:C.brand, cursor:'pointer', fontSize:12.5, marginBottom:14, padding:0 }}>← Voltar ao detalhamento da API</button>
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:12, color:C.textSec, marginBottom:4 }}>Solicitação de uso de API</div>
+          <h1 style={{ fontSize:25, color:C.brandDark, marginBottom:6 }}>{api.nome}</h1>
+          <p style={{ fontSize:13.5, color:C.textSec }}>Preencha as informações para que o Solicita gere o protocolo e encaminhe a demanda ao SEI.</p>
+        </div>
+        <div className="request-layout">
+          <RequestStepper step={step}/>
+          <section style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:10, padding:'26px 28px', minWidth:0 }}>
+            {error && <div role="alert" style={{ background:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:6, padding:'11px 14px', color:C.danger, fontSize:13, marginBottom:20 }}>{error}</div>}
+
+            {step===0 && <>
+              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Identificação do solicitante e da aplicação</h2>
+              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Seus dados pessoais foram identificados pela autenticação GOV.BR.</p>
+              <div className="request-grid">
+                <FormField label="Nome do solicitante"><input value={usuario.nome} readOnly style={readOnlyStyle}/></FormField>
+                <FormField label="CPF"><input value={usuario.cpf} readOnly style={readOnlyStyle}/></FormField>
+                <FormField label="E-mail" required><TextInput name="email" type="email" maxLength="150"/></FormField>
+                <FormField label="Telefone"><TextInput name="telefone" placeholder="(81) 99999-9999" maxLength="15"/></FormField>
+                <FormField label="Órgão ou entidade solicitante" required full><select value={form.orgao} onChange={e=>update('orgao',e.target.value)} style={fieldStyle}><option value="">Selecione</option><option>Agência Estadual de Tecnologia da Informação (ATI)</option><option>Secretaria da Fazenda (SEFAZ)</option><option>Secretaria de Planejamento, Gestão e Desenvolvimento Regional (SEPLAG)</option><option>Outro órgão ou entidade</option></select></FormField>
+                <FormField label="Unidade administrativa"><TextInput name="unidade" maxLength="120" placeholder="Informe a unidade"/></FormField>
+                <FormField label="Cargo ou função"><TextInput name="cargo" maxLength="100" placeholder="Informe o cargo ou função"/></FormField>
+                <FormField label="API solicitada" full><input value={`${api.nome} — ${api.versao}`} readOnly style={readOnlyStyle}/></FormField>
+                <FormField label="Nome da aplicação" required><TextInput name="nomeAplicacao" minLength="3" maxLength="120" placeholder="Ex.: Portal de Serviços PE"/></FormField>
+                <FormField label="Sigla" required hint="De 2 a 15 caracteres."><TextInput name="sigla" minLength="2" maxLength="15" placeholder="Ex.: PSPE"/></FormField>
+                <FormField label="Descrição da aplicação" required full hint="Descreva resumidamente a finalidade da aplicação. Máximo de 1.000 caracteres."><TextArea name="descricao" minLength="20" maxLength="1000"/></FormField>
+              </div>
+            </>}
+
+            {step===1 && <>
+              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Escopo técnico e estimativa de uso</h2>
+              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Informe os ambientes, endereços de saída e a estimativa de consumo da API.</p>
+              <div className="request-grid">
+                <FormField label="Ambientes solicitados" required full>
+                  <div style={{ display:'flex', gap:20, minHeight:42, alignItems:'center', border:`1px solid ${C.border}`, borderRadius:5, padding:'0 12px' }}>
+                    <label style={{ fontSize:13, display:'flex', gap:8, alignItems:'center' }}><input type="checkbox" checked={form.hml} onChange={e=>update('hml',e.target.checked)}/> Homologação (HML)</label>
+                    <label style={{ fontSize:13, display:'flex', gap:8, alignItems:'center' }}><input type="checkbox" checked={form.prd} onChange={e=>update('prd',e.target.checked)}/> Produção (PRD)</label>
+                  </div>
+                </FormField>
+                {form.hml && <FormField label="IP ou faixa CIDR de HML" required hint="Informe um endereço válido de saída da rede."><TextInput name="ipHml" maxLength="50" placeholder="Ex.: 200.100.50.10/32"/></FormField>}
+                {form.prd && <FormField label="IP ou faixa CIDR de PRD" required hint="Informe um endereço válido de saída da rede."><TextInput name="ipPrd" maxLength="50" placeholder="Ex.: 200.100.50.20/32"/></FormField>}
+                <FormField label="Volumetria anual estimada" required><TextInput name="volumetria" type="number" min="1" placeholder="Ex.: 1200000"/></FormField>
+                <FormField label="Justificativa da demanda" required full hint="Considere usuários, frequência de acesso e possíveis picos de sazonalidade."><TextArea name="justificativa" minLength="20" maxLength="1000"/></FormField>
+              </div>
+            </>}
+
+            {step===2 && <>
+              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Finalidade e conformidade legal</h2>
+              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Os campos de LGPD são exibidos conforme a natureza dos dados tratados pela API.</p>
+              <div className="request-grid">
+                <FormField label="Natureza dos dados" required full><select value={form.tipoDados} onChange={e=>update('tipoDados',e.target.value)} style={fieldStyle}><option value="publicos">Dados públicos</option><option value="pessoais">Dados pessoais</option><option value="sensiveis">Dados pessoais sensíveis</option></select></FormField>
+                {form.tipoDados!=='publicos' && <FormField label="Hipótese de tratamento" required full><select value={form.hipotese} onChange={e=>update('hipotese',e.target.value)} style={fieldStyle}><option value="">Selecione</option><option>Execução de políticas públicas</option><option>Cumprimento de obrigação legal ou regulatória</option><option>Execução de contrato ou procedimentos preliminares</option><option>Outra hipótese</option></select></FormField>}
+                {form.hipotese==='Outra hipótese' && <FormField label="Especifique a hipótese" required full><TextInput name="outroHipotese" maxLength="500"/></FormField>}
+                <FormField label="Como os dados serão utilizados" required full><TextArea name="usoDados" minLength="30" maxLength="2000" placeholder="Ex.: validação cadastral, obtenção automática de dados ou atuação integrada do Estado."/></FormField>
+                <FormField label="Políticas públicas impactadas" required><TextArea name="politicas" maxLength="1000" placeholder="Ex.: Juntos pela Educação"/></FormField>
+                <FormField label="Serviços públicos ou sistemas integrados" required><TextArea name="sistemas" maxLength="1000" placeholder="Ex.: Portal de Serviços PE.GOV"/></FormField>
+                <FormField label="Resultados pretendidos para o cidadão" required full><TextArea name="resultados" minLength="20" maxLength="1000"/></FormField>
+                <FormField label="Previsão legal ou vínculo" required><TextArea name="previsaoLegal" maxLength="1000" placeholder="Lei, decreto, contrato, convênio ou termo de parceria."/></FormField>
+                <FormField label="Duração do tratamento"><TextArea name="duracao" maxLength="1000" placeholder={form.tipoDados==='publicos'?'Opcional para dados públicos.':'Informe o prazo de armazenamento e a justificativa.'}/></FormField>
+                <FormField label="Observações adicionais" full><TextArea name="observacoes" maxLength="2000"/></FormField>
+              </div>
+            </>}
+
+            {step===3 && <>
+              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Revisão e envio ao Solicita</h2>
+              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:20 }}>Confira os principais dados. Ao enviar, o protocolo será criado automaticamente e encaminhado ao SEI.</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                {[
+                  ['Solicitante',[['Nome',usuario.nome],['CPF',usuario.cpf],['E-mail',form.email],['Órgão',form.orgao]]],
+                  ['Aplicação e API',[['Aplicação',form.nomeAplicacao],['Sigla',form.sigla],['API',api.nome],['Versão',api.versao]]],
+                  ['Escopo técnico',[['Ambiente',`${form.hml?'HML':''}${form.hml&&form.prd?' e ':''}${form.prd?'PRD':''}`],['IP HML',form.ipHml||'Não solicitado'],['IP PRD',form.ipPrd||'Não solicitado'],['Volumetria anual',Number(form.volumetria||0).toLocaleString('pt-BR')+' requisições']]],
+                  ['Finalidade',[['Natureza dos dados',form.tipoDados==='publicos'?'Dados públicos':form.tipoDados==='pessoais'?'Dados pessoais':'Dados pessoais sensíveis'],['Políticas públicas',form.politicas],['Sistemas integrados',form.sistemas],['Previsão legal',form.previsaoLegal]]]
+                ].map(([title,items])=><div key={title} style={{ border:`1px solid ${C.divider}`, borderRadius:8, overflow:'hidden' }}><div style={{ background:'#EEF1F6', padding:'9px 14px', fontSize:13, fontWeight:700 }}>{title}</div><div className="summary-grid" style={{ padding:'14px' }}>{items.map(([k,v])=><div key={k}><div style={{ fontSize:10.5, color:C.textSec, marginBottom:3 }}>{k}</div><div style={{ fontSize:12.5, color:C.text, fontWeight:600, lineHeight:1.45 }}>{v||'Não informado'}</div></div>)}</div></div>)}
+              </div>
+              <label style={{ display:'flex', alignItems:'flex-start', gap:9, marginTop:20, padding:'13px 14px', border:`1px solid ${C.border}`, borderRadius:7, fontSize:12.5, color:C.text, lineHeight:1.5, cursor:'pointer' }}><input type="checkbox" checked={form.declaracao} onChange={e=>update('declaracao',e.target.checked)} style={{ marginTop:3 }}/><span>Declaro que as informações prestadas são verdadeiras e que possuo autorização para solicitar o uso desta API em nome do órgão ou entidade informado.</span></label>
+            </>}
+
+            <div className="request-actions">
+              <button onClick={()=>onCancel('detail')} style={{ height:40, padding:'0 16px', border:0, background:'transparent', color:C.textSec, fontSize:13, cursor:'pointer' }}>Cancelar</button>
+              <div className="request-actions-right">
+                {step>0 && <button onClick={back} style={{ height:40, padding:'0 18px', border:`1px solid ${C.border}`, borderRadius:5, background:'#fff', color:C.text, fontSize:13, fontWeight:600, cursor:'pointer' }}>Voltar</button>}
+                {step<3 ? <button onClick={next} style={{ height:40, padding:'0 22px', border:0, borderRadius:5, background:C.brand, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Continuar</button> : <button onClick={submit} disabled={sending} style={{ height:40, padding:'0 22px', border:0, borderRadius:5, background:sending?'#7A91C9':C.brand, color:'#fff', fontSize:13, fontWeight:700, cursor:sending?'wait':'pointer' }}>{sending?'Enviando ao Solicita...':'Enviar solicitação'}</button>}
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    DADOS SIMULADOS — Solicitações do cidadão (perfil GOV.BR)
    Conforme FEATURE.06 e Ata de 17/06/2026: a API do Solicita (SEI)
@@ -545,10 +769,10 @@ function AcessoNegadoScreen({ cpf, onVoltar }) {
    Cancelado. Não existe status nativo "Pendente" no momento.
 ══════════════════════════════════════════════════════════════ */
 const GOVBR_USUARIOS = {
-  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', email:'maria.gracas@email.com.br', tipo:'orgao', tipoLabel:'Órgão Público' },
-  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', email:'roberto.neto@empresa.pe.gov.br', tipo:'empresa', tipoLabel:'Empresa' },
-  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', email:'juliana.costa@email.com.br', tipo:'orgao', tipoLabel:'Órgão Público' },
-  '046.318.094-18': { nome:'Wagne Goveia Cabral', cpf:'046.318.094-18', email:'wagnecabral@hotmail.com', tipo:'orgao', tipoLabel:'Órgão Público' },
+  '111.222.333-44': { nome:'Maria das Graças Silva', cpf:'111.222.333-44', email:'maria.gracas@email.com.br', orgao:'Secretaria de Planejamento, Gestão e Desenvolvimento Regional (SEPLAG)', tipo:'orgao', tipoLabel:'Órgão Público' },
+  '555.666.777-88': { nome:'Roberto Albuquerque Neto', cpf:'555.666.777-88', email:'roberto.neto@empresa.pe.gov.br', orgao:'Outro órgão ou entidade', tipo:'empresa', tipoLabel:'Empresa' },
+  '999.000.111-22': { nome:'Juliana Ferreira Costa', cpf:'999.000.111-22', email:'juliana.costa@email.com.br', orgao:'Secretaria da Fazenda (SEFAZ)', tipo:'orgao', tipoLabel:'Órgão Público' },
+  '046.318.094-18': { nome:'Wagne Goveia Cabral', cpf:'046.318.094-18', email:'wagnecabral@hotmail.com', orgao:'Agência Estadual de Tecnologia da Informação (ATI)', tipo:'orgao', tipoLabel:'Órgão Público' },
 };
 
 /*
@@ -639,8 +863,8 @@ const GOVBR_SOLICITACOES = {
    CA.11 — Ícones do histórico: Informação, Comunicação, Carta,
            Remessa, Processo Gerado.
 ───────────────────────────────────────────────────────────── */
-function MinhasSolicitacoes({ usuario, onSair }) {
-  const todasSolicitacoes = GOVBR_SOLICITACOES[usuario.cpf] || [];
+function MinhasSolicitacoes({ usuario, onSair, novasSolicitacoes=[] }) {
+  const todasSolicitacoes = [...novasSolicitacoes, ...(GOVBR_SOLICITACOES[usuario.cpf] || [])];
 
   // CA.03 — Filtro de Fase: apenas os 3 status oficiais do Solicita (SEI)
   const FASES_FILTRO = ['Em Análise', 'Concluído', 'Cancelado'];
@@ -772,10 +996,10 @@ function MinhasSolicitacoes({ usuario, onSair }) {
       {/* Header */}
       <div style={{ background:'#fff', borderBottom:'1px solid #E7E9EB', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
         <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-          <img src="../assets/ati_logo.png" alt="ATI" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+          <img src="../catalogo/assets/ati_logo.png" alt="ATI" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
           <div style={{ width:1, height:32, background:'#E7E9EB' }}/>
-          <img src="../assets/Brasao.png" alt="Brasão" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
-          <img src="../assets/Governo.png" alt="Gov PE" style={{ height:32, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+          <img src="../catalogo/assets/Brasao.png" alt="Brasão" style={{ height:40, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
+          <img src="../catalogo/assets/Governo.png" alt="Gov PE" style={{ height:32, width:'auto', objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
           <div style={{ width:1, height:32, background:'#E7E9EB' }}/>
           <span style={{ fontSize:14, fontWeight:700, color:'#001A7A' }}>Conecta Gov.PE</span>
         </div>
@@ -958,9 +1182,9 @@ function MinhasSolicitacoes({ usuario, onSair }) {
       {/* Footer */}
       <div style={{ background:'#0034B7', padding:'20px 24px', marginTop:'auto' }}>
         <div style={{ maxWidth:900, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'flex-end', gap:20 }}>
-          <img src="../assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
+          <img src="../catalogo/assets/ati_logo.png" alt="ATI" style={{ height:36, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
           <div style={{ width:1, height:32, background:'rgba(255,255,255,0.25)' }}/>
-          <img src="../assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
+          <img src="../catalogo/assets/Governo.png" alt="Gov PE" style={{ height:28, objectFit:'contain', filter:'brightness(0) invert(1)' }} onError={e=>e.target.style.display='none'}/>
         </div>
         <div style={{ maxWidth:900, margin:'8px auto 0', borderTop:'1px solid rgba(255,255,255,0.15)', paddingTop:12 }}>
           <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Todos os direitos reservados | ATI – Agência Estadual de Tecnologia da Informação</span>
@@ -974,12 +1198,19 @@ function MinhasSolicitacoes({ usuario, onSair }) {
 function App() {
   const [page, setPage] = React.useState('Início');
   const [showSsoModal, setShowSsoModal] = React.useState(false);
+  const [authContext, setAuthContext] = React.useState('area');
   const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null);
   const [detailApi, setDetailApi] = React.useState(null);
   const [govbrUsuario, setGovbrUsuario] = React.useState(null);
+  const [novasSolicitacoes, setNovasSolicitacoes] = React.useState([]);
   const [usuariosCadastrados, setUsuariosCadastrados] = React.useState([...USUARIOS_AUTORIZADOS]);
 
-  const handleAdminClick = () => { setShowSsoModal(true); };
+  const handleAdminClick = () => { setAuthContext('area'); setShowSsoModal(true); };
+  const handleRequestApi = (api) => {
+    setDetailApi(api);
+    if(govbrUsuario){ setPage('__request__'); }
+    else { setAuthContext('request'); setShowSsoModal(true); }
+  };
 
   const handleAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
@@ -998,23 +1229,44 @@ function App() {
     if(usuario){
       setGovbrUsuario(usuario);
     } else {
-      setGovbrUsuario({ nome:'Cidadão', cpf:cpfLimpo, email:'', tipo:'orgao', tipoLabel:'Órgão Público' });
+      setGovbrUsuario({ nome:'Cidadão', cpf:cpfLimpo, email:'', orgao:'', tipo:'orgao', tipoLabel:'Órgão Público' });
     }
     setShowSsoModal(false);
+    setPage(authContext==='request'?'__request__':'__requests__');
   };
 
-  if(govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} onSair={()=>setGovbrUsuario(null)}/>;
+  if(page==='__requests__' && govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} novasSolicitacoes={novasSolicitacoes} onSair={()=>{setGovbrUsuario(null);setPage('Início');}}/>;
   if(telaAcessoNegado) return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
+
+  if(page==='__request__' && govbrUsuario && detailApi) return (
+    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
+      <GovBar/>
+      <Header activePage="Catálogo de APIs" onNav={p=>{setPage(p);}} onAdminClick={handleAdminClick}/>
+      <SolicitacaoApiForm
+        api={detailApi}
+        usuario={govbrUsuario}
+        onSubmitted={sol=>setNovasSolicitacoes(prev=>[sol,...prev])}
+        onCancel={target=>{
+          if(target==='requests') setPage('__requests__');
+          else if(target==='catalog') { setDetailApi(null); setPage('Catálogo de APIs'); }
+          else setPage('__detail__');
+        }}
+      />
+      <Footer/>
+    </div>
+  );
 
   if(page === '__detail__') return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
       <GovBar/>
       <Header activePage="Catálogo de APIs" onNav={p=>{ setDetailApi(null); setPage(p); }} onAdminClick={handleAdminClick}/>
       <main style={{ flex:1 }}>
-        <DetailPage api={detailApi} onBack={()=>{ setDetailApi(null); setPage('Catálogo de APIs'); }}/>
+        <DetailPage api={detailApi} onBack={()=>{ setDetailApi(null); setPage('Catálogo de APIs'); }} onRequest={handleRequestApi}/>
       </main>
       <Footer/>
-      {showSsoModal && <SsoModal onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>}
+      {showSsoModal && (
+        <SsoModal requestMode={authContext==='request'} onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>
+      )}
     </div>
   );
 
@@ -1040,6 +1292,7 @@ function App() {
           onAcessoNegado={()=>{setShowSsoModal(false);}}
           onAcessoAutorizado={handleAutenticar}
           onGovBrAutenticado={handleGovBrAutenticar}
+          requestMode={authContext==='request'}
         />
       )}
     </div>
