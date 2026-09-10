@@ -10,7 +10,7 @@ Protótipo navegável do fluxo de consulta e solicitação de uso de APIs no Con
 1. **Catálogo** — Consulta de categorias e APIs
 2. **Detalhamento da API** — Operações, origem, requisitos e contatos
 3. **Autenticação GOV.BR** — Simulação da identificação do solicitante
-4. **Formulário** — Identificação, escopo técnico, finalidade, LGPD e revisão
+4. **Formulário** — Identificação dinâmica de órgão público ou empresa, responsáveis de negócio e técnico, aplicação, escopo técnico, finalidade, LGPD e revisão
 5. **Protocolo** — Simulação do envio ao Solicita e encaminhamento ao SEI
 6. **Minhas Solicitações** — Registro e acompanhamento do protocolo gerado
 

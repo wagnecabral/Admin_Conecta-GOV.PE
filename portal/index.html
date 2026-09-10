@@ -583,7 +583,7 @@ const fieldStyle = { width:'100%', minHeight:42, border:'1px solid #AEB4BD', bor
 const readOnlyStyle = { ...fieldStyle, background:'#F0F2F5', color:'#494C57', cursor:'not-allowed' };
 
 function RequestStepper({ step }) {
-  const steps = ['Identificação','Escopo técnico','Finalidade e LGPD','Revisão e envio'];
+  const steps = ['Identificação','Aplicação e escopo técnico','Finalidade e LGPD','Revisão e envio'];
   return (
     <aside style={{ background:'#fff', border:`1px solid ${C.divider}`, borderRadius:10, padding:'20px 18px', position:'sticky', top:18 }}>
       <div style={{ fontSize:12, fontWeight:700, color:C.textSec, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:16 }}>Etapas da solicitação</div>
@@ -614,19 +614,42 @@ function SolicitacaoApiForm({ api, usuario, onCancel, onSubmitted }) {
   const [submitted,setSubmitted] = React.useState(null);
   const [form,setForm] = React.useState({
     nomeAplicacao:'', sigla:'', descricao:'',
-    orgao:usuario.orgao||'', unidade:'', cargo:'', email:usuario.email||'', telefone:'',
+    tipoSolicitante:usuario.tipo==='empresa'?'Empresa':'Órgão público', cnpj:'', nomeEmpresa:'',
+    nomeResponsavelNegocio:usuario.nome||'', cpfResponsavelNegocio:usuario.cpf||'', email:usuario.email||'', telefone:'',
+    cargoResponsavelNegocio:'', areaDemandante:'', matriculaResponsavelNegocio:'',
+    nomeResponsavelTecnico:'', emailResponsavelTecnico:'', telefoneResponsavelTecnico:'', cargoResponsavelTecnico:'', matriculaResponsavelTecnico:'',
+    orgaoDemandante:usuario.orgao||'',
     hml:true, prd:false, ipHml:'', ipPrd:'', volumetria:'', justificativa:'',
     tipoDados:'publicos', hipotese:'', outroHipotese:'', usoDados:'', politicas:'', sistemas:'', resultados:'', previsaoLegal:'', duracao:'', observacoes:'', declaracao:false
   });
   const update = (key,value) => setForm(prev=>({...prev,[key]:value}));
+  const changeTipoSolicitante = value => setForm(prev=>({
+    ...prev,
+    tipoSolicitante:value,
+    ...(value==='Empresa'
+      ? { orgaoDemandante:'', matriculaResponsavelNegocio:'', matriculaResponsavelTecnico:'' }
+      : { nomeEmpresa:'' })
+  }));
   const requiredByStep = [
-    [['orgao','Órgão ou entidade solicitante'],['nomeAplicacao','Nome da aplicação'],['sigla','Sigla'],['descricao','Descrição da aplicação'],['email','E-mail']],
-    [['volumetria','Volumetria anual'],['justificativa','Justificativa da demanda']],
+    [['tipoSolicitante','Tipo solicitante'],['cnpj','CNPJ'],['nomeResponsavelNegocio','Nome completo'],['cpfResponsavelNegocio','CPF responsável negócio'],['email','Email'],['telefone','Telefone'],['cargoResponsavelNegocio','Cargo função'],['areaDemandante','Área demandante'],['nomeResponsavelTecnico','Nome completo responsável técnico'],['emailResponsavelTecnico','Email responsável técnico'],['telefoneResponsavelTecnico','Telefone responsável técnico'],['cargoResponsavelTecnico','Cargo função responsável técnico']],
+    [['nomeAplicacao','Nome da aplicação'],['sigla','Sigla'],['descricao','Descrição da aplicação'],['volumetria','Volumetria anual'],['justificativa','Justificativa da demanda']],
     [['usoDados','Como os dados serão utilizados'],['politicas','Políticas públicas impactadas'],['sistemas','Serviços ou sistemas integrados'],['resultados','Resultados pretendidos para o cidadão'],['previsaoLegal','Previsão legal ou vínculo']],
   ];
   const validate = () => {
     const missing=(requiredByStep[step]||[]).find(([key])=>!String(form[key]||'').trim());
     if(missing){ setError(`Preencha o campo “${missing[1]}” para continuar.`); return false; }
+    if(step===0 && form.tipoSolicitante==='Empresa' && !form.nomeEmpresa.trim()){ setError('Preencha o campo “Nome empresa” para continuar.'); return false; }
+    if(step===0 && form.tipoSolicitante==='Órgão público' && !form.orgaoDemandante.trim()){ setError('Preencha o campo “Órgão demandante” para continuar.'); return false; }
+    if(step===0 && form.tipoSolicitante==='Órgão público' && !form.matriculaResponsavelTecnico.trim()){ setError('Preencha o campo “Matrícula responsável técnico” para continuar.'); return false; }
+    if(step===0 && form.tipoSolicitante==='Órgão público' && !form.matriculaResponsavelNegocio.trim()){ setError('Preencha o campo “Matrícula responsável negócio” para continuar.'); return false; }
+    if(step===0 && form.cnpj.replace(/\D/g,'').length!==14){ setError('Informe um CNPJ válido, com 14 dígitos.'); return false; }
+    if(step===0 && form.cpfResponsavelNegocio.replace(/\D/g,'').length!==11){ setError('Informe um CPF válido, com 11 dígitos.'); return false; }
+    if(step===0 && form.nomeResponsavelNegocio.trim().length<3){ setError('O nome do responsável pelo negócio deve ter pelo menos 3 caracteres.'); return false; }
+    if(step===0 && !/^\S+@\S+\.\S+$/.test(form.email)){ setError('Informe um e-mail válido para o responsável pelo negócio.'); return false; }
+    if(step===0 && form.telefone.replace(/\D/g,'').length<10){ setError('Informe um telefone válido para o responsável pelo negócio.'); return false; }
+    if(step===0 && form.nomeResponsavelTecnico.trim().length<3){ setError('O nome do responsável técnico deve ter pelo menos 3 caracteres.'); return false; }
+    if(step===0 && !/^\S+@\S+\.\S+$/.test(form.emailResponsavelTecnico)){ setError('Informe um e-mail válido para o responsável técnico.'); return false; }
+    if(step===0 && form.telefoneResponsavelTecnico.replace(/\D/g,'').length<10){ setError('Informe um telefone válido para o responsável técnico.'); return false; }
     if(step===1 && !form.hml && !form.prd){ setError('Selecione ao menos um ambiente.'); return false; }
     if(step===1 && form.hml && !form.ipHml.trim()){ setError('Informe o IP ou CIDR de saída para homologação.'); return false; }
     if(step===1 && form.prd && !form.ipPrd.trim()){ setError('Informe o IP ou CIDR de saída para produção.'); return false; }
@@ -648,6 +671,8 @@ function SolicitacaoApiForm({ api, usuario, onCancel, onSubmitted }) {
   };
   const TextInput = ({name, ...props}) => <input {...props} value={form[name]} onChange={e=>update(name,e.target.value)} style={{...fieldStyle,...(props.readOnly?readOnlyStyle:{})}}/>;
   const TextArea = ({name, ...props}) => <textarea {...props} value={form[name]} onChange={e=>update(name,e.target.value)} style={{...fieldStyle,minHeight:92,resize:'vertical',lineHeight:1.5}}/>;
+  const formatCnpj = value => { const n=value.replace(/\D/g,'').slice(0,14); return n.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2'); };
+  const formatPhone = value => { const n=value.replace(/\D/g,'').slice(0,11); if(n.length<=2)return n?`(${n}`:''; if(n.length<=6)return `(${n.slice(0,2)}) ${n.slice(2)}`; if(n.length<=10)return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`; return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`; };
 
   if(submitted) return (
     <div style={{ minHeight:'calc(100vh - 104px)', background:C.bg, padding:'36px 24px' }}>
@@ -683,27 +708,39 @@ function SolicitacaoApiForm({ api, usuario, onCancel, onSubmitted }) {
             {error && <div role="alert" style={{ background:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:6, padding:'11px 14px', color:C.danger, fontSize:13, marginBottom:20 }}>{error}</div>}
 
             {step===0 && <>
-              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Identificação do solicitante e da aplicação</h2>
-              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Seus dados pessoais foram identificados pela autenticação GOV.BR.</p>
+              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Identificação</h2>
+              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Confirme os dados que serão enviados ao Solicita para identificação do solicitante e geração do protocolo. O nome completo e o CPF são preenchidos pelo GOV.BR e não podem ser alterados.</p>
               <div className="request-grid">
-                <FormField label="Nome do solicitante"><input value={usuario.nome} readOnly style={readOnlyStyle}/></FormField>
-                <FormField label="CPF"><input value={usuario.cpf} readOnly style={readOnlyStyle}/></FormField>
-                <FormField label="E-mail" required><TextInput name="email" type="email" maxLength="150"/></FormField>
-                <FormField label="Telefone"><TextInput name="telefone" placeholder="(81) 99999-9999" maxLength="15"/></FormField>
-                <FormField label="Órgão ou entidade solicitante" required full><select value={form.orgao} onChange={e=>update('orgao',e.target.value)} style={fieldStyle}><option value="">Selecione</option><option>Agência Estadual de Tecnologia da Informação (ATI)</option><option>Secretaria da Fazenda (SEFAZ)</option><option>Secretaria de Planejamento, Gestão e Desenvolvimento Regional (SEPLAG)</option><option>Outro órgão ou entidade</option></select></FormField>
-                <FormField label="Unidade administrativa"><TextInput name="unidade" maxLength="120" placeholder="Informe a unidade"/></FormField>
-                <FormField label="Cargo ou função"><TextInput name="cargo" maxLength="100" placeholder="Informe o cargo ou função"/></FormField>
-                <FormField label="API solicitada" full><input value={`${api.nome} — ${api.versao}`} readOnly style={readOnlyStyle}/></FormField>
-                <FormField label="Nome da aplicação" required><TextInput name="nomeAplicacao" minLength="3" maxLength="120" placeholder="Ex.: Portal de Serviços PE"/></FormField>
-                <FormField label="Sigla" required hint="De 2 a 15 caracteres."><TextInput name="sigla" minLength="2" maxLength="15" placeholder="Ex.: PSPE"/></FormField>
-                <FormField label="Descrição da aplicação" required full hint="Descreva resumidamente a finalidade da aplicação. Máximo de 1.000 caracteres."><TextArea name="descricao" minLength="20" maxLength="1000"/></FormField>
+                <FormField label="Nome da API" full><input value={api.nome} readOnly style={readOnlyStyle}/></FormField>
+                <FormField label="Tipo solicitante" required><select value={form.tipoSolicitante} onChange={e=>changeTipoSolicitante(e.target.value)} style={fieldStyle}><option>Órgão público</option><option>Empresa</option></select></FormField>
+                <FormField label="CNPJ" required><input value={form.cnpj} onChange={e=>update('cnpj',formatCnpj(e.target.value))} inputMode="numeric" maxLength="18" placeholder="00.000.000/0000-00" style={fieldStyle}/></FormField>
+                {form.tipoSolicitante==='Empresa' && <FormField label="Nome empresa" required full><TextInput name="nomeEmpresa" minLength="2" maxLength="150" placeholder="Informe a razão social ou o nome da empresa"/></FormField>}
+                <FormField label="Nome completo" required><input value={form.nomeResponsavelNegocio} readOnly style={readOnlyStyle}/></FormField>
+                <FormField label="CPF responsável negócio" required><input value={form.cpfResponsavelNegocio} readOnly style={readOnlyStyle}/></FormField>
+                <FormField label="Email" required><TextInput name="email" type="email" minLength="5" maxLength="150"/></FormField>
+                <FormField label="Telefone" required><input value={form.telefone} onChange={e=>update('telefone',formatPhone(e.target.value))} inputMode="tel" maxLength="15" placeholder="(81) 99999-9999" style={fieldStyle}/></FormField>
+                <FormField label="Cargo função" required><TextInput name="cargoResponsavelNegocio" minLength="2" maxLength="100" placeholder="Informe o cargo ou função"/></FormField>
+                <FormField label="Área demandante" required><TextInput name="areaDemandante" minLength="2" maxLength="120" placeholder="Ex.: GGTI"/></FormField>
+                <div className="full" style={{ borderTop:`1px solid ${C.divider}`, paddingTop:20, marginTop:2 }}><h3 style={{ fontSize:15, color:C.text, marginBottom:4 }}>Responsável técnico</h3><p style={{ fontSize:12, color:C.textSec }}>Informe quem responderá tecnicamente pela integração e pelo consumo da API.</p></div>
+                <FormField label="Nome completo responsável técnico" required><TextInput name="nomeResponsavelTecnico" minLength="3" maxLength="150"/></FormField>
+                <FormField label="Email responsável técnico" required><TextInput name="emailResponsavelTecnico" type="email" minLength="5" maxLength="150"/></FormField>
+                <FormField label="Telefone responsável técnico" required><input value={form.telefoneResponsavelTecnico} onChange={e=>update('telefoneResponsavelTecnico',formatPhone(e.target.value))} inputMode="tel" maxLength="15" placeholder="(81) 99999-9999" style={fieldStyle}/></FormField>
+                <FormField label="Cargo função responsável técnico" required><TextInput name="cargoResponsavelTecnico" minLength="2" maxLength="100"/></FormField>
+                {form.tipoSolicitante==='Órgão público' && <>
+                  <FormField label="Órgão demandante" required full><TextInput name="orgaoDemandante" minLength="2" maxLength="150" placeholder="Informe o órgão ou entidade"/></FormField>
+                  <FormField label="Matrícula responsável técnico" required><TextInput name="matriculaResponsavelTecnico" minLength="1" maxLength="30" inputMode="numeric"/></FormField>
+                  <FormField label="Matrícula responsável negócio" required><TextInput name="matriculaResponsavelNegocio" minLength="1" maxLength="30" inputMode="numeric" placeholder="Informe a matrícula"/></FormField>
+                </>}
               </div>
             </>}
 
             {step===1 && <>
-              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Escopo técnico e estimativa de uso</h2>
-              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Informe os ambientes, endereços de saída e a estimativa de consumo da API.</p>
+              <h2 style={{ fontSize:19, color:C.text, marginBottom:5 }}>Aplicação, escopo técnico e estimativa de uso</h2>
+              <p style={{ fontSize:12.5, color:C.textSec, marginBottom:22 }}>Informe a aplicação que consumirá a API, os ambientes, endereços de saída e a estimativa de consumo.</p>
               <div className="request-grid">
+                <FormField label="Nome da aplicação" required><TextInput name="nomeAplicacao" minLength="3" maxLength="120" placeholder="Ex.: Portal de Serviços PE"/></FormField>
+                <FormField label="Sigla" required hint="De 2 a 15 caracteres."><TextInput name="sigla" minLength="2" maxLength="15" placeholder="Ex.: PSPE"/></FormField>
+                <FormField label="Descrição da aplicação" required full hint="Descreva resumidamente a finalidade da aplicação. Entre 20 e 1.000 caracteres."><TextArea name="descricao" minLength="20" maxLength="1000"/></FormField>
                 <FormField label="Ambientes solicitados" required full>
                   <div style={{ display:'flex', gap:20, minHeight:42, alignItems:'center', border:`1px solid ${C.border}`, borderRadius:5, padding:'0 12px' }}>
                     <label style={{ fontSize:13, display:'flex', gap:8, alignItems:'center' }}><input type="checkbox" checked={form.hml} onChange={e=>update('hml',e.target.checked)}/> Homologação (HML)</label>
@@ -739,7 +776,8 @@ function SolicitacaoApiForm({ api, usuario, onCancel, onSubmitted }) {
               <p style={{ fontSize:12.5, color:C.textSec, marginBottom:20 }}>Confira os principais dados. Ao enviar, o protocolo será criado automaticamente e encaminhado ao SEI.</p>
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                 {[
-                  ['Solicitante',[['Nome',usuario.nome],['CPF',usuario.cpf],['E-mail',form.email],['Órgão',form.orgao]]],
+                  ['Identificação',[['Tipo solicitante',form.tipoSolicitante],['CNPJ',form.cnpj],...(form.tipoSolicitante==='Empresa'?[['Nome empresa',form.nomeEmpresa]]:[]),['Nome completo',form.nomeResponsavelNegocio],['CPF responsável negócio',form.cpfResponsavelNegocio],['Email',form.email],['Telefone',form.telefone],['Cargo função',form.cargoResponsavelNegocio],['Área demandante',form.areaDemandante],...(form.tipoSolicitante==='Órgão público'?[['Órgão demandante',form.orgaoDemandante],['Matrícula responsável negócio',form.matriculaResponsavelNegocio]]:[])]],
+                  ['Responsável técnico',[['Nome completo',form.nomeResponsavelTecnico],['Email',form.emailResponsavelTecnico],['Telefone',form.telefoneResponsavelTecnico],['Cargo função',form.cargoResponsavelTecnico],...(form.tipoSolicitante==='Órgão público'?[['Matrícula responsável técnico',form.matriculaResponsavelTecnico]]:[])]],
                   ['Aplicação e API',[['Aplicação',form.nomeAplicacao],['Sigla',form.sigla],['API',api.nome],['Versão',api.versao]]],
                   ['Escopo técnico',[['Ambiente',`${form.hml?'HML':''}${form.hml&&form.prd?' e ':''}${form.prd?'PRD':''}`],['IP HML',form.ipHml||'Não solicitado'],['IP PRD',form.ipPrd||'Não solicitado'],['Volumetria anual',Number(form.volumetria||0).toLocaleString('pt-BR')+' requisições']]],
                   ['Finalidade',[['Natureza dos dados',form.tipoDados==='publicos'?'Dados públicos':form.tipoDados==='pessoais'?'Dados pessoais':'Dados pessoais sensíveis'],['Políticas públicas',form.politicas],['Sistemas integrados',form.sistemas],['Previsão legal',form.previsaoLegal]]]
