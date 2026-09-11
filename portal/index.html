@@ -1272,7 +1272,7 @@ function App() {
     const cpfLimpo = cpf.trim();
     if(usuariosCadastrados.includes(cpfLimpo)){
       setShowSsoModal(false);
-      try { window.location.assign(new URL('../gerenciar-apis/index.html', window.location.href).href); }
+      try { window.location.assign(new URL('../backoffice/index.html', window.location.href).href); }
       catch(e) { alert('Acesso autorizado! Redirecionando para o backoffice...'); }
     } else {
       setUsuariosCadastrados(prev => prev.includes(cpfLimpo) ? prev : [...prev, cpfLimpo]);
