@@ -41,6 +41,20 @@ input,select,textarea,button { font-family:'Inter',sans-serif; }
   .csati-filter-primary,.csati-filter-secondary,.csati-detail-grid,.csati-detail-lower,.csati-history-grid { grid-template-columns:1fr; }
   .csati-filter-actions { justify-content:flex-start !important; margin-left:0 !important; }
 }
+/* Modal de solicitação — HU.09.05 */
+.sol-dialog{padding:0;border:1px solid #CED2D7;border-radius:8px;width:min(940px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);margin:auto;color:#28272C;background:#fff;box-shadow:0 16px 56px #001a7a33;overflow:hidden}
+.sol-dialog::backdrop{background:rgba(8,20,50,.55)}
+.sol-shell{display:flex;flex-direction:column;max-height:calc(100dvh - 36px)}
+.sol-header{display:flex;justify-content:space-between;gap:20px;padding:20px 24px 12px;flex-shrink:0}.sol-header h2{font-size:20px;color:#001A7A;margin:0 0 6px}.sol-header p{font-size:12px;color:#596579}
+.sol-dialog button{font:inherit;cursor:pointer}.sol-dialog button:focus-visible{outline:3px solid #5797f0;outline-offset:2px}
+.sol-close{border:1px solid #CED2D7;background:#fff;color:#0034B7;border-radius:4px;width:36px;height:36px;font-size:24px!important;flex-shrink:0}
+.sol-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding:0 24px 16px;flex-shrink:0}.sol-summary dt{font-size:11px;color:#596579;margin-bottom:3px}.sol-summary dd{font-size:13px;overflow-wrap:anywhere;margin:0}
+.sol-tabs{display:flex;gap:22px;padding:0 24px;border-bottom:1px solid #CED2D7;flex-shrink:0}.sol-tabs button{background:#fff;color:#596579;padding:13px 4px;border:0;border-bottom:3px solid transparent;font-size:14px}.sol-tabs button[aria-selected=true]{color:#0034B7;border-bottom-color:#0034B7;font-weight:600}
+.sol-body{overflow-y:auto;min-height:0;padding:22px 24px;overscroll-behavior:contain}.sol-body h3{font-size:16px;margin:0 0 18px;color:#172845}.sol-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 20px}.sol-field dt{font-size:12px;color:#344566;margin-bottom:6px}.sol-field dd{font-size:13px;font-weight:400;margin:0;padding:11px 12px;border:1px solid #D6DDE8;border-radius:4px;background:#F8FAFC;min-height:40px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.sol-full{grid-column:1/-1}.sol-subheading{margin-top:24px!important;padding-top:20px;border-top:1px solid #E7E9EB}.sol-notice{padding:14px;background:#FFF6CE;border:1px solid #FFE082;border-radius:4px;font-size:13px;line-height:1.6;margin-bottom:18px}
+.sol-footer{padding:14px 24px;border-top:1px solid #E7E9EB;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}.sol-footer span{font-size:12px;color:#596579}.sol-footer button{padding:9px 20px;border:1px solid #0034B7;border-radius:4px;background:#0034B7;color:#fff;font-size:13px}
+.sol-dialog [hidden]{display:none!important}.sol-detail-action{padding:7px 10px;border:1px solid #99B9EB;border-radius:4px;background:#fff;color:#0034B7;font-size:12px;cursor:pointer;white-space:nowrap}.sol-detail-action:hover{background:#E6F3FF}.sol-detail-action:focus-visible{outline:2px solid #0034B7;outline-offset:2px}
+@media(max-width:600px){.sol-dialog{width:calc(100vw - 12px);max-height:calc(100dvh - 12px)}.sol-shell{max-height:calc(100dvh - 16px)}.sol-header,.sol-body{padding:14px}.sol-header h2{font-size:17px}.sol-summary{padding:0 14px 12px;gap:10px}.sol-tabs{padding:0 14px}.sol-grid{grid-template-columns:minmax(0,1fr)}.sol-footer{padding:10px 14px}.sol-footer span{display:none}.sol-footer{justify-content:flex-end}.sol-close,.sol-footer button,.sol-tabs button{min-height:44px}.sol-filters{grid-template-columns:1fr!important}.sol-dates{flex-wrap:wrap}.sol-dates>div{flex:1 1 160px!important}}
+
 </style>
 </head>
 <body>
@@ -2573,10 +2587,96 @@ const DADOS_USO_APIS = [
   { protocolo:'2025.000019-9', api:'Matrícula Escolar',       orgaoResponsavel:'SEE',    solicitante:'SEFAZ',            tipo:'Órgão público',   dataSolicitacao:'10/04/2025', situacao:'Concluída'  },
   { protocolo:'2025.000020-0', api:'Licença Ambiental',       orgaoResponsavel:'SEPLAG', solicitante:'GovTech PE Ltda',  tipo:'Empresa privada', dataSolicitacao:'14/04/2025', situacao:'Concluída'  },];
 
+/* HU.09.04–06: fixtures demonstrativas, com o mesmo contrato formData do portal.
+   O protótipo não persiste solicitações nem realiza chamadas ao Solicita/SEI. */
+const FORMULARIO_DEMO_SOLICITACAO = Object.freeze({
+  tipoSolicitante:'Órgão público',cnpj:'00.000.000/0000-00',
+  nomeResponsavelNegocio:'Responsável de negócio demonstrativo',cpfResponsavelNegocio:'000.000.000-00',
+  email:'negocio@example.org',telefone:'(81) 00000-0000',cargoResponsavelNegocio:'Analista de requisitos',areaDemandante:'Serviços Digitais',
+  nomeResponsavelTecnico:'Responsável técnico demonstrativo',emailResponsavelTecnico:'tecnico@example.org',telefoneResponsavelTecnico:'(81) 00000-0000',cargoResponsavelTecnico:'Analista de sistemas',
+  orgaoDemandante:'Agência Estadual de Tecnologia da Informação (ATI)',matriculaResponsavelTecnico:'00123456',matriculaResponsavelNegocio:'0012346',
+  nomeAplicacao:'Portal de Serviços PE',sigla:'PSPE',descricao:'Portal para consulta de serviços públicos e orientação ao cidadão sobre requisitos, etapas e canais de atendimento.',
+  hml:true,prd:false,ipHml:'192.0.2.10/32',ipPrd:'',volumetria:'1200000',
+  justificativa:'Consultar o catálogo para apresentar informações atualizadas. A estimativa considera acessos recorrentes e períodos de maior procura pelos serviços.',
+  tipoDados:'publicos',hipotese:'',outroHipotese:'',usoDados:'Apresentar automaticamente os serviços na busca e nas páginas de orientação do portal.',
+  politicas:'Transformação digital e ampliação do acesso aos serviços públicos.',sistemas:'Portal de Serviços PE GOV e Catálogo de Serviços.',
+  resultados:'Facilitar a localização de serviços e reduzir dúvidas sobre documentação, etapas e canais de atendimento.',
+  previsaoLegal:'Termo de cooperação demonstrativo entre os órgãos envolvidos.',duracao:'',observacoes:''
+});
+DADOS_USO_APIS.forEach(d=>{d.origem='legado';});
+DADOS_USO_APIS.push(
+  {protocolo:'0030409428.001669/2026-87',api:'Catálogo de Serviços',orgaoResponsavel:'ATI',solicitante:'ATI',tipo:'Órgão público',dataSolicitacao:'20/08/2026',situacao:'Em análise',origem:'digital',formData:FORMULARIO_DEMO_SOLICITACAO},
+  {protocolo:'0030409428.001666/2026-43',api:'Consulta de CPF',orgaoResponsavel:'SEFAZ',solicitante:'GovTech PE Ltda',tipo:'Empresa privada',dataSolicitacao:'19/08/2026',situacao:'Em análise',origem:'digital',formData:Object.freeze({...FORMULARIO_DEMO_SOLICITACAO,tipoSolicitante:'Empresa',nomeEmpresa:'GovTech PE Ltda',orgaoDemandante:'',matriculaResponsavelTecnico:'',matriculaResponsavelNegocio:'',nomeAplicacao:'Consulta cadastral demonstrativa',sigla:'CCD',descricao:'Aplicação demonstrativa para consultar e conferir os dados cadastrais informados pelo usuário.',hml:true,prd:true,ipPrd:'198.51.100.10/32',tipoDados:'pessoais',hipotese:'Execução de contrato ou procedimentos preliminares',usoDados:'Conferir os dados cadastrais informados pelo usuário no atendimento.',sistemas:'Sistema demonstrativo de atendimento cadastral',duracao:'Prazo demonstrativo de 12 meses, sujeito às regras do serviço.'})}
+);
+
+function DetalhamentoSolicitacao({solicitacao:d,onClose}) {
+  const [aba,setAba]=React.useState('identificacao');
+  const dialogRef=React.useRef(null),bodyRef=React.useRef(null);
+  const initialClose=React.useRef(onClose);
+  React.useEffect(()=>{
+    const dialog=dialogRef.current,previous=document.activeElement;
+    dialog.showModal();
+    return ()=>{dialog.close();if(previous&&previous.isConnected)previous.focus();};
+  },[]);
+  const f=d.formData||{},legado=d.origem==='legado';
+  const isEmpresa=f.tipoSolicitante==='Empresa'||d.tipo==='Empresa privada';
+  const campo=(label,value,full=false,required=false)=> <div className={'sol-field'+(full?' sol-full':'')} key={label}><dt>{label}</dt><dd>{value!==undefined&&value!==null&&String(value).trim()!==''?String(value):legado?'Não disponível no registro anterior':required?'Dados não disponíveis':'Não informado'}</dd></div>;
+  const trocarAba=(next)=>{setAba(next);if(bodyRef.current)bodyRef.current.scrollTop=0;};
+  const keyboardTab=(e)=>{let next;if(e.key==='ArrowLeft'||e.key==='ArrowRight')next=aba==='identificacao'?'tecnicos':'identificacao';if(e.key==='Home')next='identificacao';if(e.key==='End')next='tecnicos';if(next){e.preventDefault();trocarAba(next);dialogRef.current.querySelector('#sol-tab-'+next).focus();}};
+  return <dialog className="sol-dialog" ref={dialogRef} aria-labelledby="sol-title" onCancel={e=>{e.preventDefault();initialClose.current();}}>
+    <div className="sol-shell">
+      <header className="sol-header"><div><h2 id="sol-title">Detalhamento da solicitação</h2><p>Somente leitura · Dados demonstrativos</p></div><button type="button" className="sol-close" onClick={onClose} aria-label="Fechar detalhamento">×</button></header>
+      <dl className="sol-summary"><div><dt>Número do Protocolo</dt><dd>{d.protocolo}</dd></div><div><dt>API solicitada</dt><dd>{d.api}</dd></div><div><dt>Data da Solicitação</dt><dd>{d.dataSolicitacao}</dd></div><div><dt>Situação</dt><dd>{d.situacao}</dd></div></dl>
+      <div className="sol-tabs" role="tablist" aria-label="Dados da solicitação">
+        {[['identificacao','Identificação'],['tecnicos','Dados técnicos']].map(([key,label])=><button key={key} id={'sol-tab-'+key} role="tab" aria-selected={aba===key} aria-controls={'sol-panel-'+key} tabIndex={aba===key?0:-1} onClick={()=>trocarAba(key)} onKeyDown={keyboardTab}>{label}</button>)}
+      </div>
+      <div className="sol-body" ref={bodyRef}>
+        <section id="sol-panel-identificacao" role="tabpanel" aria-labelledby="sol-tab-identificacao" hidden={aba!=='identificacao'}>
+          <h3>Identificação</h3>
+          {legado&&<p className="sol-notice">Solicitação do fluxo anterior. São exibidos os dados disponíveis no relatório.</p>}
+          <dl className="sol-grid">
+            {campo('Nome da API',d.api,true)}
+            {campo('Tipo solicitante',f.tipoSolicitante||d.tipo)}{campo('CNPJ',f.cnpj,false,true)}
+            {isEmpresa&&campo('Nome empresa',f.nomeEmpresa||d.solicitante,true,true)}
+            {campo('Nome completo',f.nomeResponsavelNegocio,false,true)}{campo('CPF responsável negócio',f.cpfResponsavelNegocio,false,true)}
+            {campo('Email',f.email,false,true)}{campo('Telefone',f.telefone,false,true)}
+            {campo('Cargo função',f.cargoResponsavelNegocio,false,true)}{campo('Área demandante',f.areaDemandante,false,true)}
+          </dl>
+          <h3 className="sol-subheading">Responsável técnico</h3><dl className="sol-grid">
+            {campo('Nome completo responsável técnico',f.nomeResponsavelTecnico,false,true)}{campo('Email responsável técnico',f.emailResponsavelTecnico,false,true)}
+            {campo('Telefone responsável técnico',f.telefoneResponsavelTecnico,false,true)}{campo('Cargo função responsável técnico',f.cargoResponsavelTecnico,false,true)}
+            {!isEmpresa&&<>{campo('Órgão demandante',f.orgaoDemandante|| (legado?d.solicitante:undefined),true,true)}{campo('Matrícula responsável técnico',f.matriculaResponsavelTecnico,false,true)}{campo('Matrícula responsável negócio',f.matriculaResponsavelNegocio,false,true)}</>}
+          </dl>
+        </section>
+        <section id="sol-panel-tecnicos" role="tabpanel" aria-labelledby="sol-tab-tecnicos" hidden={aba!=='tecnicos'}>
+          {legado?<p className="sol-notice">Documento técnico digital não disponível para esta solicitação. Consulte o documento anexado ao processo de origem.</p>:!d.formData?<p className="sol-notice" role="alert">Não foi possível disponibilizar o detalhamento técnico desta solicitação.</p>:<>
+            <h3>Aplicação, escopo técnico e estimativa de uso</h3><dl className="sol-grid">
+              {campo('Nome da aplicação',f.nomeAplicacao,false,true)}{campo('Sigla',f.sigla,false,true)}{campo('Descrição da aplicação',f.descricao,true,true)}
+              {campo('Ambientes solicitados',[f.hml?'Homologação (HML)':'',f.prd?'Produção (PRD)':''].filter(Boolean).join(' · '),true,true)}
+              {f.hml&&campo('IP ou faixa CIDR de HML',f.ipHml,false,true)}{f.prd&&campo('IP ou faixa CIDR de PRD',f.ipPrd,false,true)}
+              {campo('Volumetria anual estimada',f.volumetria?Number(f.volumetria).toLocaleString('pt-BR')+' requisições por ano':null,false,true)}{campo('Justificativa da demanda',f.justificativa,true,true)}
+            </dl><h3 className="sol-subheading">Utilização dos dados e resultados esperados</h3><dl className="sol-grid">
+              {campo('Natureza dos dados',({publicos:'Dados públicos',pessoais:'Dados pessoais',sensiveis:'Dados pessoais sensíveis'})[f.tipoDados]||f.tipoDados,true,true)}
+              {f.tipoDados!=='publicos'&&campo('Hipótese de tratamento',f.hipotese,true,true)}{f.hipotese==='Outra hipótese'&&campo('Especifique a hipótese',f.outroHipotese,true,true)}
+              {campo('Como os dados serão utilizados',f.usoDados,true,true)}{campo('Políticas públicas impactadas',f.politicas,false,true)}{campo('Serviços públicos ou sistemas integrados',f.sistemas,false,true)}
+              {campo('Resultados pretendidos para o cidadão',f.resultados,true,true)}{campo('Previsão legal ou vínculo',f.previsaoLegal,false,true)}{campo('Duração do tratamento',f.duracao)}{campo('Observações adicionais',f.observacoes,true)}
+            </dl>
+          </>}
+        </section>
+      </div>
+      <footer className="sol-footer"><span>Consulta das informações enviadas</span><button type="button" onClick={onClose}>Fechar</button></footer>
+    </div>
+  </dialog>;
+}
+
 function RelUso({ showToast }) {
   const [loading,   setLoading]   = React.useState(false);
-  const [buscado,   setBuscado]   = React.useState(false);
-  const [resultado, setResultado] = React.useState([]);
+  const [buscado,   setBuscado]   = React.useState(true);
+  const [selecionada,setSelecionada]=React.useState(null);
+  const [erroFiltro,setErroFiltro]=React.useState('');
+  const [ordemDesc,setOrdemDesc]=React.useState(true);
+  const [aplicados,setAplicados]=React.useState({});
+  const [resultado, setResultado] = React.useState(()=>[...DADOS_USO_APIS].sort((a,b)=>b.dataSolicitacao.split('/').reverse().join('').localeCompare(a.dataSolicitacao.split('/').reverse().join(''))));
   const [f, setF] = React.useState({
     apiNome:    '',
     protocolo:  '',
@@ -2599,15 +2699,15 @@ function RelUso({ showToast }) {
 
   const getDados = () => DADOS_USO_APIS.filter(d=>{
     if(f.apiNome && d.api  !== f.apiNome) return false;
-    if(f.protocolo && !d.protocolo.toLowerCase().includes(f.protocolo.trim().toLowerCase())) return false;
+    if(f.protocolo.trim() && d.protocolo.replace(/\D/g,'') !== f.protocolo.replace(/\D/g,'')) return false;
     if(f.tipo    && d.tipo !== f.tipo)    return false;
     if(f.dataInicio){
-      const ini = new Date(f.dataInicio);
+      const ini = new Date(f.dataInicio+'T00:00:00');
       const rec = parseDate(d.dataSolicitacao);
       if(rec && rec < ini) return false;
     }
     if(f.dataFim){
-      const fim = new Date(f.dataFim);
+      const fim = new Date(f.dataFim+'T00:00:00');
       const rec = parseDate(d.dataSolicitacao);
       if(rec && rec > fim) return false;
     }
@@ -2615,7 +2715,7 @@ function RelUso({ showToast }) {
   });
 
   const filtrosLabel = () => {
-    const p=[];
+    const p=[]; const f=aplicados;
     if(f.apiNome)    p.push('API: '+f.apiNome);
     if(f.protocolo)  p.push('Nº de Protocolo: '+f.protocolo);
     if(f.tipo)       p.push('Tipo: '+f.tipo);
@@ -2633,10 +2733,15 @@ function RelUso({ showToast }) {
     };
   };
 
-  const handleBuscar = () => { setResultado(getDados()); setBuscado(true); };
+  const sortDados=(dados,desc)=>[...dados].sort((a,b)=>(desc?parseDate(b.dataSolicitacao)-parseDate(a.dataSolicitacao):parseDate(a.dataSolicitacao)-parseDate(b.dataSolicitacao))||a.protocolo.localeCompare(b.protocolo));
+  const handleBuscar = () => {
+    if(f.protocolo.trim()&&(!/^[\d.\/\-\s]+$/.test(f.protocolo)||!f.protocolo.replace(/\D/g,''))){setErroFiltro('Informe um número de protocolo válido.');return;}
+    if(f.dataInicio&&f.dataFim&&f.dataInicio>f.dataFim){setErroFiltro('A data inicial não pode ser posterior à data final.');return;}
+    setErroFiltro('');setAplicados({...f});setResultado(sortDados(getDados(),ordemDesc));setBuscado(true);
+  };
   const handleLimpar = () => {
     setF({apiNome:'',protocolo:'',tipo:'',dataInicio:'',dataFim:''});
-    setResultado([]); setBuscado(false);
+    setErroFiltro('');setAplicados({});setOrdemDesc(true);setResultado(sortDados(DADOS_USO_APIS,true));setBuscado(true);
   };
 
   /* Badge tipo */
@@ -2679,20 +2784,14 @@ function RelUso({ showToast }) {
     doc.text(`Filtros: ${filtrosLabel()}`,14,24);
     doc.text(`Total: ${dados.length} solicitação(ões)`,14,29);
     doc.autoTable({
-      head:[['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação']],
-      body:dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.situacao]),
+      head:[['Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação']],
+      body:dados.map((d,i)=>[d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.situacao]),
       startY:33,
       styles:{fontSize:9,cellPadding:3},
       headStyles:{fillColor:[0,26,122],textColor:255,fontStyle:'bold'},
       alternateRowStyles:{fillColor:[230,243,255]},
       columnStyles:{
-        0:{cellWidth:10},
-        1:{cellWidth:34},
-        2:{cellWidth:58},
-        3:{cellWidth:42},
-        4:{cellWidth:32},
-        5:{cellWidth:30},
-        6:{cellWidth:25},
+        0:{cellWidth:54},1:{cellWidth:58},2:{cellWidth:42},3:{cellWidth:40},4:{cellWidth:30},5:{cellWidth:25},
       },
       didDrawPage:()=>{
         doc.setFontSize(7); doc.setTextColor(120);
@@ -2713,11 +2812,11 @@ function RelUso({ showToast }) {
       [`Filtros: ${filtrosLabel()}`],
       [`Total: ${dados.length} solicitação(ões)`],
       [],
-      ['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação'],
+      ['Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação'],
     ];
-    const linhas=dados.map((d,i)=>[i+1,d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.situacao]);
+    const linhas=dados.map((d,i)=>[d.protocolo,d.api,d.solicitante,d.tipo,d.dataSolicitacao,d.situacao]);
     const ws=utils.aoa_to_sheet([...cab,...linhas]);
-    ws['!cols']=[{wch:4},{wch:22},{wch:42},{wch:32},{wch:20},{wch:22},{wch:16}];
+    ws['!cols']=[{wch:30},{wch:42},{wch:32},{wch:20},{wch:22},{wch:16}];
     const wb=utils.book_new(); utils.book_append_sheet(wb,ws,'Solicitação de APIs');
     const buf=write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2764,10 +2863,10 @@ function RelUso({ showToast }) {
       </div>
 
       {/* Card filtros */}
-      <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+      <div onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();handleBuscar();}}} style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,padding:'18px 20px',marginBottom:16,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
 
         {/* Linha 1: API + Nº de Protocolo + Tipo */}
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
+        <div className="sol-filters" style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:16,marginBottom:14}}>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>API</label>
             <Sel value={f.apiNome} onChange={v=>setFil('apiNome',v)}>
@@ -2777,9 +2876,9 @@ function RelUso({ showToast }) {
           </div>
           <div>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Nº de Protocolo</label>
-            <input type="text" value={f.protocolo}
+            <input type="text" aria-label="Número do Protocolo" maxLength={50} value={f.protocolo}
               onChange={e=>setFil('protocolo',e.target.value)}
-              placeholder="Ex.: 2025.000001-1"
+              placeholder="Informe o protocolo completo"
               style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div>
@@ -2793,14 +2892,14 @@ function RelUso({ showToast }) {
         </div>
 
         {/* Linha 2: Data Início + Data Fim + botões */}
-        <div style={{display:'flex',gap:16,alignItems:'flex-end'}}>
+        <div className="sol-dates" style={{display:'flex',gap:16,alignItems:'flex-end'}}>
           <div style={{flex:'0 0 200px'}}>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Início</label>
-            <input type="date" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <input type="date" aria-label="Data Início" value={f.dataInicio} onChange={e=>setFil('dataInicio',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div style={{flex:'0 0 200px'}}>
             <label style={{display:'block',fontSize:12,fontWeight:500,color:'#494C57',marginBottom:5}}>Data Fim</label>
-            <input type="date" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
+            <input type="date" aria-label="Data Fim" value={f.dataFim} onChange={e=>setFil('dataFim',e.target.value)} style={iSt} onFocus={onFocus} onBlur={onBlur}/>
           </div>
           <div style={{marginLeft:'auto',display:'flex',gap:8}}>
             <button onClick={handleLimpar}
@@ -2819,6 +2918,7 @@ function RelUso({ showToast }) {
         </div>
       </div>
 
+      {erroFiltro&&<p role="alert" style={{color:'#AD2636',marginBottom:14,fontSize:13}}>{erroFiltro}</p>}
       {/* Resultado */}
       {buscado && (
         <div style={{background:'#fff',border:'1px solid #E7E9EB',borderRadius:6,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
@@ -2856,26 +2956,26 @@ function RelUso({ showToast }) {
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr>
-                    {['#','Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação'].map(h=>(
+                    {['Nº de Protocolo','API','Solicitante','Tipo de Solicitante','Data da Solicitação','Situação','Ações'].map(h=>(
                       <th key={h} style={{padding:'9px 14px',textAlign:'left',fontSize:11,fontWeight:600,color:'#494C57',borderBottom:'1px solid #E7E9EB',background:'#F8FAFC',whiteSpace:'nowrap'}}>
-                        {h}
+                        {h==='Data da Solicitação'?<button type="button" onClick={()=>{setOrdemDesc(!ordemDesc);setResultado(sortDados(resultado,!ordemDesc));}} style={{border:0,background:'transparent',color:'#0034B7',font:'inherit',cursor:'pointer'}}>Data da Solicitação {ordemDesc?'↓':'↑'}</button>:h}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {resultado.map((d,i)=>(
-                    <tr key={i}
+                    <tr key={d.protocolo}
                       style={{borderBottom:'1px solid #E7E9EB',transition:'background 0.1s'}}
                       onMouseEnter={e=>e.currentTarget.style.background='#F0F5FF'}
                       onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                      <td style={{padding:'9px 14px',fontSize:12,color:'#888'}}>{i+1}</td>
-                      <td style={{padding:'9px 14px',fontSize:12,fontFamily:'monospace',fontWeight:600,color:'#0034B7',whiteSpace:'nowrap'}}>{d.protocolo}</td>
-                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:500,color:'#28272C'}}>{d.api}</td>
+                      <td style={{padding:'9px 14px',fontSize:12,fontFamily:'monospace',fontWeight:400,color:'#0034B7',whiteSpace:'nowrap'}}>{d.protocolo}</td>
+                      <td style={{padding:'9px 14px',fontSize:13,fontWeight:400,color:'#28272C'}}>{d.api}</td>
                       <td style={{padding:'9px 14px',fontSize:13,color:'#28272C'}}>{d.solicitante}</td>
                       <td style={{padding:'9px 14px'}}><TipoBadge tipo={d.tipo}/></td>
                       <td style={{padding:'9px 14px',fontSize:12,color:'#494C57'}}>{d.dataSolicitacao}</td>
                       <td style={{padding:'9px 14px'}}><SituacaoBadge situacao={d.situacao}/></td>
+                      <td style={{padding:'9px 14px'}}><button type="button" className="sol-detail-action" onClick={()=>setSelecionada(d)} aria-label={'Detalhar solicitação '+d.protocolo}>Detalhar solicitação</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -2884,6 +2984,7 @@ function RelUso({ showToast }) {
           )}
         </div>
       )}
+      {selecionada&&<DetalhamentoSolicitacao key={selecionada.protocolo} solicitacao={selecionada} onClose={()=>setSelecionada(null)}/>}
       <ScriptLoader/>
     </div>
   );
