@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../assets/cedente-store.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body, #root { min-height:100%; }
@@ -67,6 +68,7 @@ function GovBar() {
 
 /* ── Header ──────────────────────────────────────────────── */
 function Header({ activePage, onNav, onAdminClick }) {
+  const [cedenteOpen,setCedenteOpen]=React.useState(false);
   const navItems = ['Início','Como Acessar APIs','Catálogo de APIs','Interoperabilidade','Quem somos'];
   return (
     <div style={{ background:'#FFFFFF', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:72, borderBottom:'1px solid #E7E9EB' }}>
@@ -87,6 +89,10 @@ function Header({ activePage, onNav, onAdminClick }) {
           );
         })}
       </nav>
+      <div style={{position:'relative'}} onKeyDown={e=>{if(e.key==='Escape')setCedenteOpen(false);}}>
+        <button type="button" aria-expanded={cedenteOpen} aria-controls="cedente-menu" onClick={()=>setCedenteOpen(v=>!v)} style={{background:'#fff',border:0,color:'#0034B7',padding:'12px',fontSize:13,cursor:'pointer'}}>Cedente ▾</button>
+        {cedenteOpen&&<div id="cedente-menu" style={{position:'absolute',right:0,top:'100%',zIndex:100,background:'#fff',border:'1px solid #CED2D7',borderRadius:5,padding:14,width:230,boxShadow:'0 6px 20px #001a7a22'}}><a href="../cedente/index.html" style={{fontSize:13,color:'#0034B7'}}>Acessar pelo Expresso</a></div>}
+      </div>
       <div onClick={onAdminClick} style={{ padding:'0 16px', height:72, display:'flex', alignItems:'center', fontSize:13, fontWeight:400, color:'#28272C', borderBottom:'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}
         onMouseEnter={e=>{ e.currentTarget.style.color='#0034B7'; e.currentTarget.style.borderBottomColor='rgba(0,52,183,0.3)'; }}
         onMouseLeave={e=>{ e.currentTarget.style.color='#28272C'; e.currentTarget.style.borderBottomColor='transparent'; }}
@@ -248,7 +254,7 @@ function DetailPage({ api, onBack, onRequest }) {
         <div style={{ border:`1px solid ${C.divider}`, borderRadius:8, overflow:'hidden' }}>
           <div style={{ borderBottom:`1px solid ${C.divider}` }}>
             <SectionHeader title="Principais Operações"/>
-            <SectionBody>{operacoes.map((op,i)=>{ const method=op.match(/^(GET|POST|PUT|PATCH|DELETE)/)?.[1]; const rest=op.replace(/^(GET|POST|PUT|PATCH|DELETE)\s*/,''); const [endpoint,desc]=rest.split('—').map(s=>s.trim()); return (<div key={i} style={{ marginBottom:i<operacoes.length-1?6:0 }}>{method?<>{method==='GET'?'Consulta':method==='POST'?'Criação':method}: <code style={{ fontSize:12.5, background:'#F0F3F8', padding:'1px 5px', borderRadius:3 }}>{endpoint}</code>{desc?` — ${desc.toLowerCase()}`:''}</>:op}</div>); })}</SectionBody>
+            {api.operacoesDetalhadas?<SectionBody>{api.operacoesDetalhadas.map((op,i)=><div key={i} style={{marginBottom:18,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}><strong>{op.nome}</strong><div><b>Parâmetros de entrada:</b> {op.entrada||'Não informado'}</div><div><b>Parâmetros de saída:</b> {op.saida||'Não informado'}</div></div>)}</SectionBody>:<>            <SectionBody>{operacoes.map((op,i)=>{ const method=op.match(/^(GET|POST|PUT|PATCH|DELETE)/)?.[1]; const rest=op.replace(/^(GET|POST|PUT|PATCH|DELETE)\s*/,''); const [endpoint,desc]=rest.split('—').map(s=>s.trim()); return (<div key={i} style={{ marginBottom:i<operacoes.length-1?6:0 }}>{method?<>{method==='GET'?'Consulta':method==='POST'?'Criação':method}: <code style={{ fontSize:12.5, background:'#F0F3F8', padding:'1px 5px', borderRadius:3 }}>{endpoint}</code>{desc?` — ${desc.toLowerCase()}`:''}</>:op}</div>); })}</SectionBody></>}
           </div>
           <div style={{ borderBottom:`1px solid ${C.divider}` }}>
             <SectionHeader title="Base/Sistemas de Origem"/>
@@ -256,21 +262,21 @@ function DetailPage({ api, onBack, onRequest }) {
           </div>
           <div style={{ borderBottom:`1px solid ${C.divider}` }}>
             <SectionHeader title="Como acessar a API"/>
-            <SectionBody>{accessSteps.map((s,i)=>(<div key={i} style={{ marginBottom:i<accessSteps.length-1?4:0 }}>• {s}</div>))}</SectionBody>
+            <SectionBody>{(api.familia?[api.comoAcessar]:accessSteps).map((s,i)=>(<div key={i} style={{ marginBottom:i<accessSteps.length-1?4:0 }}>• {s}</div>))}</SectionBody>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr' }}>
             <div style={{ borderRight:`1px solid ${C.divider}` }}>
               <SectionHeader title="Detalhamento Técnico"/>
-              <SectionBody>
+              {api.familia?<SectionBody><div style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{api.detalhamento}</div></SectionBody>:<>              <SectionBody>
                 <div style={{ marginBottom:4 }}><strong style={{ color:C.text }}>Protocolo:</strong> REST/JSON</div>
                 <div style={{ marginBottom:10 }}><strong style={{ color:C.text }}>IP Fixo:</strong> Obrigatório</div>
                 <div style={{ marginBottom:6 }}><strong style={{ color:C.text }}>Campos Retornados (Payload)</strong></div>
                 {detalheLines.map((line,i)=>{ const colonIdx=line.indexOf(':'); if(colonIdx>0&&colonIdx<30){ const key=line.slice(0,colonIdx).trim(); const val=line.slice(colonIdx+1).trim(); return(<div key={i} style={{ marginBottom:4 }}><strong style={{ color:C.text }}>{key}:</strong> {val}</div>); } return <div key={i} style={{ marginBottom:4 }}>{line}.</div>; })}
-              </SectionBody>
+              </SectionBody></>}
             </div>
             <div>
               <SectionHeader title="Contatos"/>
-              <SectionBody>{api.contatos?.length>0?api.contatos.map((c,i)=>(<div key={i} style={{ marginBottom:8 }}><div style={{ fontWeight:600, color:C.text, marginBottom:2 }}>{c.nome} (Tecnologia)</div><div>{c.email}</div></div>)):<div>gestao.conecta.pe@ati.pe.gov.br</div>}</SectionBody>
+              <SectionBody>{api.contatos?.length>0?api.contatos.map((c,i)=>(<div key={i} style={{ marginBottom:8 }}><div style={{ fontWeight:600, color:C.text, marginBottom:2 }}>{c.nome}{c.funcao?` (${c.funcao})`:api.familia?'':' (Tecnologia)'}</div><div>{c.email}</div>{c.telefone&&<div>{c.telefone}</div>}</div>)):<div>{api.familia?'Não informado':'gestao.conecta.pe@ati.pe.gov.br'}</div>}</SectionBody>
             </div>
           </div>
         </div>
@@ -282,12 +288,12 @@ function DetailPage({ api, onBack, onRequest }) {
 function CatalogPage({ onSelectApi }) {
   const [search, setSearch] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState(null);
-  const CATEGORIAS_CATALOG = [
-    { titulo:'Consulta de Categorias de Serviços', count:3, versao:'Versão 1.0', apis:APIS_CAT.filter(a=>a.categoria==='Serviços') },
-    { titulo:'Dados Fiscais e Tributários', count:2, versao:'Versão 1.5', apis:APIS_CAT.filter(a=>a.categoria==='Fiscal') },
-    { titulo:'Segurança Pública', count:1, versao:'Versão 3.0', apis:APIS_CAT.filter(a=>a.categoria==='Segurança') },
-    { titulo:'Habitação e Desenvolvimento Social', count:1, versao:'Versão 1.1', apis:APIS_CAT.filter(a=>a.categoria==='Social') },
-  ];
+  const [cedenteApis,setCedenteApis]=React.useState(()=>{try{return window.CedenteStore.published();}catch(e){return [];}});
+  React.useEffect(()=>{const sync=()=>{try{setCedenteApis(window.CedenteStore.published());}catch(e){console.warn('Catálogo local indisponível',e);}};window.addEventListener('storage',sync);window.addEventListener('focus',sync);window.addEventListener('cedente-change',sync);return()=>{window.removeEventListener('storage',sync);window.removeEventListener('focus',sync);window.removeEventListener('cedente-change',sync);};},[]);
+  const allApis=[...APIS_CAT,...cedenteApis];
+  const titles={'Serviços':'Consulta de Categorias de Serviços','Fiscal':'Dados Fiscais e Tributários','Segurança':'Segurança Pública','Social':'Habitação e Desenvolvimento Social'};
+  const CATEGORIAS_CATALOG=[...new Set(allApis.map(a=>a.categoria))].map(c=>({titulo:titles[c]||c,versao:'APIs disponíveis',apis:allApis.filter(a=>a.categoria===c)}));
+  const currentCategory=CATEGORIAS_CATALOG.find(c=>c.titulo===selectedCategory?.titulo);
   const filtered = CATEGORIAS_CATALOG.filter(cat=>{ const q=search.toLowerCase(); return !q||cat.titulo.toLowerCase().includes(q)||cat.apis.some(a=>a.nome.toLowerCase().includes(q)); });
   return (
     <div style={{ background:C.bg, padding:'40px 24px', flex:1 }}>
@@ -313,11 +319,11 @@ function CatalogPage({ onSelectApi }) {
               ))}
             </div>
           </div>
-          {selectedCategory && <div style={{ marginTop:28, paddingTop:22, borderTop:`1px solid ${C.divider}` }}>
+          {currentCategory && <div style={{ marginTop:28, paddingTop:22, borderTop:`1px solid ${C.divider}` }}>
             <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:5 }}>APIs da categoria</div>
-            <div style={{ fontSize:12.5, color:C.textSec, marginBottom:14 }}>{selectedCategory.titulo}</div>
+            <div style={{ fontSize:12.5, color:C.textSec, marginBottom:14 }}>{currentCategory.titulo}</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:12 }}>
-              {selectedCategory.apis.map(api=><button key={api.id} onClick={()=>onSelectApi(api)} style={{ textAlign:'left', background:'#fff', border:`1px solid ${C.divider}`, borderRadius:9, padding:'16px 18px', cursor:'pointer' }} onMouseEnter={e=>e.currentTarget.style.borderColor=C.brand} onMouseLeave={e=>e.currentTarget.style.borderColor=C.divider}>
+              {currentCategory.apis.filter(api=>!search||api.nome.toLowerCase().includes(search.toLowerCase())||currentCategory.titulo.toLowerCase().includes(search.toLowerCase())).map(api=><button key={api.id} onClick={()=>onSelectApi(api)} style={{ textAlign:'left', background:'#fff', border:`1px solid ${C.divider}`, borderRadius:9, padding:'16px 18px', cursor:'pointer' }} onMouseEnter={e=>e.currentTarget.style.borderColor=C.brand} onMouseLeave={e=>e.currentTarget.style.borderColor=C.divider}>
                 <div style={{ display:'flex', justifyContent:'space-between', gap:10, marginBottom:7 }}><span style={{ fontSize:14, fontWeight:700, color:C.brandDark }}>{api.nome}</span><span style={{ fontSize:11, color:C.success, background:C.successBg, border:`1px solid ${C.successBorder}`, borderRadius:100, padding:'2px 8px', height:'fit-content' }}>{api.status}</span></div>
                 <div style={{ fontSize:12.5, color:C.textSec, lineHeight:1.5, marginBottom:10 }}>{api.descricao}</div>
                 <div style={{ fontSize:11.5, fontWeight:600, color:C.brand }}>Ver detalhamento →</div>
@@ -1252,7 +1258,7 @@ function MinhasSolicitacoes({ usuario, onSair, novasSolicitacoes=[] }) {
 
 /* ── App ─────────────────────────────────────────────────── */
 function App() {
-  const [page, setPage] = React.useState('Início');
+  const [page, setPage] = React.useState(location.hash==='#catalogo'?'Catálogo de APIs':'Início');
   const [showSsoModal, setShowSsoModal] = React.useState(false);
   const [authContext, setAuthContext] = React.useState('area');
   const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null);

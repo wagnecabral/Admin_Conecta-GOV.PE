@@ -333,6 +333,7 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
   const items = [
     { label:'Visão Geral',         key:'dashboard',  icon:'grid' },
     { label:'Gerenciar APIs',      key:'apis',       icon:'api' },
+    { label:'APIs de cedentes', key:'cedentes', icon:'api' },
     { label:'Gerenciar Categoria', key:'categorias', icon:'sort' },
     { label:'Controle de Acesso',  key:'usuarios',   icon:'users' },
     { label:'Relatórios',          key:'relatorios', icon:'relatorio',
@@ -3312,7 +3313,7 @@ function ScriptLoader() {
 ══════════════════════════════════════════════════════════════ */
 
 function App() {
-  const [section, setSection]   = React.useState('dashboard');
+  const [section, setSection]   = React.useState(location.hash==='#cedentes'?'cedentes':'dashboard');
   const [collapsed, setCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
   const [toast, setToast]       = React.useState(null);
 
@@ -3325,6 +3326,7 @@ function App() {
     'usuarios':  ['Início','Controle de Acesso'],
     'relatorios':['Início','Relatórios'],
     'rel_uso':   ["Início","Relatórios","Solicitação de API's"],
+    'cedentes':['Início','APIs de cedentes'],
     'rel_csati': ['Início','Relatórios','Acompanhamento CSATI'],
     'auditoria': ['Início','Auditoria'],
     'dashboard': ['Início'],
@@ -3353,6 +3355,7 @@ function App() {
 
         {section==='dashboard'  && <Dashboard onNav={setSection}/>}
         {section==='apis'       && <GerenciarApis showToast={showToast}/>}
+        {section==='cedentes' && <iframe title="Análise de APIs de cedentes" src="../cedente/index.html?perfil=administrador&embed=1" style={{border:0,flex:1,width:'100%',minHeight:0}}/>}
         {section==='categorias' && <GerenciarCategorias showToast={showToast}/>}
         {section==='usuarios'   && <ControleAcesso showToast={showToast}/>}
         {section==='rel_cadastradas' && <RelCadastradas showToast={showToast}/>}
