@@ -90,10 +90,11 @@ function Header({ activePage, onNav, onAdminClick }) {
         })}
       </nav>
       <button type="button" onClick={()=>onNav('Disponibilizar API')} style={{background:activePage==='Disponibilizar API'?'#EEF3FF':'#fff',border:'1px solid #0034B7',borderRadius:5,color:'#0034B7',padding:'10px 12px',fontSize:12.5,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Disponibilizar API</button>
-      <div onClick={onAdminClick} style={{ padding:'0 16px', height:72, display:'flex', alignItems:'center', fontSize:13, fontWeight:400, color:'#28272C', borderBottom:'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}
-        onMouseEnter={e=>{ e.currentTarget.style.color='#0034B7'; e.currentTarget.style.borderBottomColor='rgba(0,52,183,0.3)'; }}
-        onMouseLeave={e=>{ e.currentTarget.style.color='#28272C'; e.currentTarget.style.borderBottomColor='transparent'; }}
-      >Acessar</div>
+      <div style={{display:'flex',alignItems:'center',gap:4,height:72}}>
+        <div onClick={()=>onAdminClick('govbr')} style={{ padding:'0 10px', height:72, display:'flex', alignItems:'center', fontSize:12.5, fontWeight:500, color:'#28272C', borderBottom:'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap' }}>Acessar GOV.BR</div>
+        <span style={{color:'#C8CDD5'}}>|</span>
+        <div onClick={()=>onAdminClick('expresso')} style={{ padding:'0 10px', height:72, display:'flex', alignItems:'center', fontSize:12.5, fontWeight:500, color:'#28272C', borderBottom:'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap' }}>Acessar Backoffice</div>
+      </div>
     </div>
   );
 }
@@ -441,8 +442,8 @@ function QuemSomos() {
 /* ── SSO Modal ───────────────────────────────────────────── */
 const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
-function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado, requestMode=false }) {
-  const [tela, setTela] = React.useState(requestMode?'govbr':'selecao');
+function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado, requestMode=false, initialProvider=null }) {
+  const [tela, setTela] = React.useState(requestMode?'govbr':(initialProvider||'selecao'));
   const [cpf, setCpf] = React.useState('');
   const [senha, setSenha] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -456,7 +457,7 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutentic
     setLoading(true); setErro('');
     setTimeout(()=>{
       setLoading(false);
-      if(tela==='govbr' && requestMode){
+      if(tela==='govbr'){
         if(onGovBrAutenticado) onGovBrAutenticado(cpf);
       } else if(CPF_AUTORIZADOS.includes(cpf)){
         onAcessoAutorizado(cpf);
@@ -492,7 +493,7 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutentic
         <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', marginTop:8, letterSpacing:'0.5px' }}>ACESSO À CONTA ÚNICA DO GOVERNO FEDERAL</div>
       </div>
       <div style={{ width:'100%', maxWidth:440 }}>
-        {requestMode && <div style={{ background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,.22)', borderRadius:7, padding:'10px 13px', fontSize:12.5, color:'#fff', marginBottom:22, lineHeight:1.5 }}>Entre com sua conta GOV.BR para continuar a solicitação da API. No protótipo, use o CPF <strong>046.318.094-18</strong> e qualquer senha.</div>}
+        {<div style={{ background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,.22)', borderRadius:7, padding:'10px 13px', fontSize:12.5, color:'#fff', marginBottom:22, lineHeight:1.5 }}>{requestMode?'Entre com sua conta GOV.BR para continuar a solicitação da API.':'Entre com sua conta GOV.BR para acessar Minhas Solicitações.'} No protótipo, use o CPF <strong>046.318.094-18</strong> e qualquer senha.</div>}
         {erro && <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:6, padding:'10px 14px', fontSize:13, color:'#FFE082', marginBottom:24, textAlign:'center' }}>{erro}</div>}
         <div style={{ marginBottom:28 }}>
           <label style={{ display:'block', fontSize:14, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>CPF</label>
@@ -1279,9 +1280,9 @@ function DisponibilizarApi({ onNav, onApproval, onSubmitted }) {
   const [form,setForm]=React.useState({orgao:'',unidade:'',nome:'',cargo:'',email:'',telefone:'',api:'',finalidade:'',contatoTecnico:'',emailTecnico:'',complemento:'',rest:'',https:'',hml:'',prd:'',health:'',openapi:'',dadosHml:'',dicionario:'',codigos:'',credenciais:''});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   const requiredOk=()=> step===2 ? form.orgao&&form.nome&&form.cargo&&form.email : step===3 ? form.finalidade : true;
-  if(submitted) return <div style={{background:C.bg,padding:'42px 24px 64px',flex:1}}><div className="request-shell"><div style={{background:'#fff',border:'1px solid #DDE1E6',borderRadius:10,padding:40,textAlign:'center'}}><div style={{width:58,height:58,borderRadius:'50%',background:'#E8F5E9',color:'#1B5E20',display:'grid',placeItems:'center',fontSize:28,margin:'0 auto 18px'}}>✓</div><h1 style={{fontSize:24,marginBottom:10}}>Solicitação enviada para análise</h1><p style={{fontSize:14,color:C.textSec,lineHeight:1.65,maxWidth:680,margin:'0 auto 22px'}}>O interesse em disponibilizar uma API foi registrado no protótipo. A equipe responsável deverá analisar as informações e poderá solicitar complementações antes da formalização e da habilitação do perfil Cedente.</p><div style={{background:'#FFF8E1',border:'1px solid #F1D37A',borderRadius:7,padding:14,maxWidth:720,margin:'0 auto 24px',fontSize:12.5,textAlign:'left',lineHeight:1.55}}><strong>Importante:</strong> a forma definitiva de formalização e assinatura do termo de compromisso ainda está em definição. GOV.BR e SEI foram discutidos como possibilidades e não são tratados neste protótipo como decisão fechada.</div><div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}><button onClick={()=>onNav('Início')} style={{height:42,padding:'0 20px',border:'1px solid #9AA1AA',borderRadius:5,background:'#fff',color:C.text,fontWeight:600,cursor:'pointer'}}>Voltar ao início</button><button onClick={()=>onNav('__requests__')} style={{height:42,padding:'0 20px',border:0,borderRadius:5,background:C.brand,color:'#fff',fontWeight:600,cursor:'pointer'}}>Acompanhar em Minhas Solicitações</button><button onClick={()=>onApproval(form)} style={{height:42,padding:'0 20px',border:'1px solid #0034B7',borderRadius:5,background:'#fff',color:C.brand,fontWeight:600,cursor:'pointer'}}>Visualizar análise no Backoffice</button></div></div></div></div>;
+  if(submitted) return <div style={{background:C.bg,padding:'42px 24px 64px',flex:1}}><div className="request-shell"><div style={{background:'#fff',border:'1px solid #DDE1E6',borderRadius:10,padding:40,textAlign:'center'}}><div style={{width:58,height:58,borderRadius:'50%',background:'#E8F5E9',color:'#1B5E20',display:'grid',placeItems:'center',fontSize:28,margin:'0 auto 18px'}}>✓</div><h1 style={{fontSize:24,marginBottom:10}}>Solicitação enviada para análise</h1><p style={{fontSize:14,color:C.textSec,lineHeight:1.65,maxWidth:680,margin:'0 auto 22px'}}>O interesse em disponibilizar uma API foi registrado no protótipo. A equipe responsável deverá analisar as informações e poderá solicitar complementações antes da formalização e da habilitação do perfil Cedente.</p><div style={{background:'#FFF8E1',border:'1px solid #F1D37A',borderRadius:7,padding:14,maxWidth:720,margin:'0 auto 24px',fontSize:12.5,textAlign:'left',lineHeight:1.55}}><strong>Importante:</strong> a forma definitiva de formalização e assinatura do termo de compromisso ainda está em definição. GOV.BR e SEI foram discutidos como possibilidades e não são tratados neste protótipo como decisão fechada.</div><div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}><button onClick={()=>onNav('Início')} style={{height:42,padding:'0 20px',border:'1px solid #9AA1AA',borderRadius:5,background:'#fff',color:C.text,fontWeight:600,cursor:'pointer'}}>Voltar ao início</button><button onClick={()=>onNav('__govbr_requests__')} style={{height:42,padding:'0 20px',border:0,borderRadius:5,background:C.brand,color:'#fff',fontWeight:600,cursor:'pointer'}}>Acompanhar em Minhas Solicitações</button><button onClick={()=>onApproval(form)} style={{height:42,padding:'0 20px',border:'1px solid #0034B7',borderRadius:5,background:'#fff',color:C.brand,fontWeight:600,cursor:'pointer'}}>Visualizar análise no Backoffice</button></div></div></div></div>;
   return <div style={{background:C.bg,padding:'36px 24px 64px',flex:1}}><div className="request-shell">
-    <div style={{marginBottom:22}}><div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}><div><div style={{fontSize:12,color:C.brand,fontWeight:700,marginBottom:8}}>CONECTA GOV.PE</div><h1 style={{fontSize:28,marginBottom:10}}>Quero disponibilizar uma API</h1></div><button onClick={()=>onNav('__requests__')} style={{height:40,padding:'0 16px',border:'1px solid #0034B7',borderRadius:5,background:'#fff',color:C.brand,fontWeight:700,cursor:'pointer'}}>Minhas Solicitações</button></div><p style={{fontSize:14,color:C.textSec,lineHeight:1.65,maxWidth:820}}>Este fluxo registra o interesse de um órgão ou entidade em disponibilizar uma API no Portal Conecta GOV.PE. O envio desta solicitação <strong>não publica a API automaticamente</strong> e não habilita, por si só, o perfil Cedente.</p></div>
+    <div style={{marginBottom:22}}><div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}><div><div style={{fontSize:12,color:C.brand,fontWeight:700,marginBottom:8}}>CONECTA GOV.PE</div><h1 style={{fontSize:28,marginBottom:10}}>Quero disponibilizar uma API</h1></div></div><p style={{fontSize:14,color:C.textSec,lineHeight:1.65,maxWidth:820}}>Este fluxo registra o interesse de um órgão ou entidade em disponibilizar uma API no Portal Conecta GOV.PE. O envio desta solicitação <strong>não publica a API automaticamente</strong> e não habilita, por si só, o perfil Cedente.</p></div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:20}}>{['Requisitos','Identificação','Interesse','Revisão'].map((x,i)=>{const actual=i+1;return <div key={x} style={{padding:'10px 12px',borderRadius:6,background:actual===step?C.brand:'#fff',color:actual===step?'#fff':C.textSec,border:'1px solid '+(actual===step?C.brand:'#DDE1E6'),fontSize:12,fontWeight:600}}>{i+1}. {x}</div>})}</div>
     <div style={{background:'#fff',border:'1px solid #DDE1E6',borderRadius:10,padding:28}}>
       {step===1&&<><h2 style={{fontSize:20,marginBottom:6}}>Requisitos técnicos para disponibilização</h2><p style={{fontSize:13,color:C.textSec,lineHeight:1.65,marginBottom:18}}>Use esta etapa como uma verificação preliminar. A referência federal exige API REST, HTTPS, ambientes de Homologação e Produção, HealthCheck, documentação OpenAPI, exemplos de dados de homologação e dicionário de dados. Também prevê credenciais de HML/PRD, documentação técnica e especificação dos códigos de retorno.</p><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:18}}>{[['API REST','Integração exposta em padrão REST.'],['HTTPS','Endpoints disponibilizados por conexão segura HTTPS.'],['Homologação','Ambiente próprio para testes e validação.'],['Produção','Ambiente produtivo disponível para integração.'],['HealthCheck','Endpoint de monitoramento da disponibilidade.'],['OpenAPI','Documentação técnica no padrão OpenAPI/Swagger.'],['Dados de homologação','Exemplos ou massa de dados adequada para testes.'],['Dicionário de dados','Descrição dos dados, campos e significados.']].map(([t,d])=><div key={t} style={{display:'flex',gap:10,border:'1px solid #E2E5E9',borderRadius:7,padding:12}}><span style={{width:22,height:22,borderRadius:'50%',background:'#E8F5E9',color:'#1B5E20',display:'grid',placeItems:'center',fontSize:12,fontWeight:800,flex:'0 0 auto'}}>✓</span><div><strong style={{fontSize:12.5}}>{t}</strong><div style={{fontSize:11.5,color:C.textSec,lineHeight:1.45,marginTop:3}}>{d}</div></div></div>)}</div><div style={{padding:14,border:'1px solid #F1D37A',background:'#FFF8E1',borderRadius:7,fontSize:12.5,lineHeight:1.6}}><strong>Para a etapa técnica posterior:</strong> a referência do GOV.BR também solicita credenciais de Homologação e Produção e a especificação dos códigos de retorno (por exemplo, 200, 400 e 500). Neste protótipo, esses dados não são exigidos na manifestação inicial; serão tratados no cadastro técnico após aprovação e habilitação do Cedente.</div></>}
@@ -1341,6 +1342,7 @@ function App() {
   const [page, setPage] = React.useState(location.hash==='#catalogo'?'Catálogo de APIs':'Início');
   const [showSsoModal, setShowSsoModal] = React.useState(false);
   const [authContext, setAuthContext] = React.useState('area');
+  const [authProvider, setAuthProvider] = React.useState(null);
   const [telaAcessoNegado, setTelaAcessoNegado] = React.useState(null);
   const [detailApi, setDetailApi] = React.useState(null);
   const [govbrUsuario, setGovbrUsuario] = React.useState(null);
@@ -1349,11 +1351,11 @@ function App() {
   const [solicitacaoDisponibilizacao, setSolicitacaoDisponibilizacao] = React.useState(null);
   const [solicitacoesCedente, setSolicitacoesCedente] = React.useState([]);
 
-  const handleAdminClick = () => { setAuthContext('area'); setShowSsoModal(true); };
+  const handleAdminClick = (provider='expresso') => { setAuthContext(provider==='govbr'?'requests':'area'); setAuthProvider(provider); setShowSsoModal(true); };
   const handleRequestApi = (api) => {
     setDetailApi(api);
     if(govbrUsuario){ setPage('__request__'); }
-    else { setAuthContext('request'); setShowSsoModal(true); }
+    else { setAuthContext('request'); setAuthProvider('govbr'); setShowSsoModal(true); }
   };
 
   const handleAutenticar = (cpf) => {
@@ -1379,6 +1381,11 @@ function App() {
     setShowSsoModal(false);
     setPage(authContext==='request'?'__request__':'__requests__');
   };
+
+  if(page==='__govbr_requests__') {
+    if(govbrUsuario) { setTimeout(()=>setPage('__requests__'),0); }
+    else { setTimeout(()=>{setAuthContext('requests');setAuthProvider('govbr');setShowSsoModal(true);setPage('Início');},0); }
+  }
 
   if(page==='__approval__') return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
@@ -1421,7 +1428,7 @@ function App() {
       </main>
       <Footer/>
       {showSsoModal && (
-        <SsoModal requestMode={authContext==='request'} onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>
+        <SsoModal requestMode={authContext==='request'} initialProvider={authProvider} onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>
       )}
     </div>
   );
@@ -1449,7 +1456,7 @@ function App() {
           onAcessoNegado={()=>{setShowSsoModal(false);}}
           onAcessoAutorizado={handleAutenticar}
           onGovBrAutenticado={handleGovBrAutenticar}
-          requestMode={authContext==='request'}
+          requestMode={authContext==='request'} initialProvider={authProvider}
         />
       )}
     </div>
