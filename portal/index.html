@@ -89,7 +89,6 @@ function Header({ activePage, onNav, onAdminClick }) {
           );
         })}
       </nav>
-      <button type="button" onClick={()=>onNav('Disponibilizar API')} style={{background:activePage==='Disponibilizar API'?'#EEF3FF':'#fff',border:'1px solid #0034B7',borderRadius:5,color:'#0034B7',padding:'10px 12px',fontSize:12.5,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Disponibilizar API</button>
       <div style={{display:'flex',alignItems:'center',gap:4,height:72}}>
         <div onClick={()=>onAdminClick('govbr')} style={{ padding:'0 10px', height:72, display:'flex', alignItems:'center', fontSize:12.5, fontWeight:500, color:'#28272C', borderBottom:'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap' }}>Acessar GOV.BR</div>
         <span style={{color:'#C8CDD5'}}>|</span>
