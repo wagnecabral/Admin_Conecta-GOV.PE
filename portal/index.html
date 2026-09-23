@@ -1305,12 +1305,7 @@ function DisponibilizarApi({ onNav, onApproval, onSubmitted }) {
 
 
 function MinhasSolicitacoesDisponibilizacao({ solicitacoes=[], onBack, embedded=false }) {
-  const exemplos=[
-    {id:'CED-2026-0003',api:'API de Consulta de Benefícios',orgao:'Secretaria de Exemplo',data:'23/09/2026',status:'Em análise',parecer:'Solicitação recebida e encaminhada para análise técnica preliminar.'},
-    {id:'CED-2026-0002',api:'API de Cadastro Institucional',orgao:'Órgão Estadual de Exemplo',data:'18/09/2026',status:'Aprovada',parecer:'Solicitação aprovada para prosseguir à etapa de formalização das responsabilidades do Cedente.'},
-    {id:'CED-2026-0001',api:'API de Serviços Municipais',orgao:'Município de Exemplo',data:'12/09/2026',status:'Ajuste solicitado',parecer:'Complementar a identificação do responsável técnico e a finalidade do compartilhamento.'}
-  ];
-  const itens=[...solicitacoes,...exemplos];
+  const itens=solicitacoes;
   const [filtro,setFiltro]=React.useState('Todos');
   const [aberta,setAberta]=React.useState(null);
   const badge=(s)=>s==='Aprovada'?['#E8F5E9','#1B5E20']:s==='Rejeitada'?['#FDECEA','#B3261E']:s==='Ajuste solicitado'?['#FFF3E0','#9A4E00']:['#EEF3FF','#0034B7'];
@@ -1358,7 +1353,8 @@ function App() {
   const [novasSolicitacoes, setNovasSolicitacoes] = React.useState([]);
   const [usuariosCadastrados, setUsuariosCadastrados] = React.useState([...USUARIOS_AUTORIZADOS]);
   const [solicitacaoDisponibilizacao, setSolicitacaoDisponibilizacao] = React.useState(null);
-  const [solicitacoesCedente, setSolicitacoesCedente] = React.useState([]);
+  const [solicitacoesCedente, setSolicitacoesCedente] = React.useState(()=>window.CedenteStore?.readDisponibilizacoes?.()||[]);
+  React.useEffect(()=>{const sync=()=>setSolicitacoesCedente(window.CedenteStore?.readDisponibilizacoes?.()||[]);window.addEventListener('disponibilizacao-change',sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener('disponibilizacao-change',sync);window.removeEventListener('storage',sync);};},[]);
 
   const handleAdminClick = (provider='expresso') => { setAuthContext(provider==='govbr'?'requests':'area'); setAuthProvider(provider); setShowSsoModal(true); };
   const handleRequestApi = (api) => {
@@ -1448,7 +1444,7 @@ function App() {
     'Catálogo de APIs': <CatalogPage onSelectApi={api=>{ setDetailApi(api); setPage('__detail__'); }}/>,
     'Interoperabilidade':<Interoperabilidade/>,
     'Quem somos':       <QuemSomos/>,
-    'Disponibilizar API':<DisponibilizarApi onNav={setPage} onSubmitted={dados=>{const item={id:'CED-2026-'+String(solicitacoesCedente.length+4).padStart(4,'0'),api:dados.api||'API ainda não definida',orgao:dados.orgao,data:new Date().toLocaleDateString('pt-BR'),status:'Em análise',parecer:'Solicitação recebida e encaminhada para análise técnica preliminar.',dados};setSolicitacaoDisponibilizacao(dados);setSolicitacoesCedente(prev=>[item,...prev]);}} onApproval={dados=>{setSolicitacaoDisponibilizacao(dados);setPage('__approval__');}}/>,
+    'Disponibilizar API':<DisponibilizarApi onNav={setPage} onSubmitted={dados=>{const item=window.CedenteStore.submitDisponibilizacao(dados,govbrUsuario?.cpf||'04631809418');setSolicitacaoDisponibilizacao(dados);setSolicitacoesCedente(window.CedenteStore.readDisponibilizacoes());}} onApproval={dados=>{setSolicitacaoDisponibilizacao(dados);setPage('__approval__');}}/>,
   };
 
   return (
