@@ -333,7 +333,7 @@ const Sidebar = ({ collapsed, onToggle, activeSection, onNav }) => {
   const items = [
     { label:'Visão Geral',         key:'dashboard',  icon:'grid' },
     { label:'Gerenciar APIs',      key:'apis',       icon:'api' },
-    { label:'Análise da solicitação para disponibilizar API', key:'cedentes', icon:'api' },
+    { label:'Solicitações de Disponibilização', key:'cedentes', icon:'api' },
     { label:'Gerenciar Categoria', key:'categorias', icon:'sort' },
     { label:'Controle de Acesso',  key:'usuarios',   icon:'users' },
     { label:'Relatórios',          key:'relatorios', icon:'relatorio',
@@ -3312,6 +3312,43 @@ function ScriptLoader() {
    APP PRINCIPAL
 ══════════════════════════════════════════════════════════════ */
 
+function SolicitacoesDisponibilizacao({showToast}) {
+  const [situacao,setSituacao]=React.useState('Todas');
+  const [nome,setNome]=React.useState('');
+  const [selecionada,setSelecionada]=React.useState(null);
+  const [parecer,setParecer]=React.useState('');
+  const [decisao,setDecisao]=React.useState('');
+  const dados=[
+    {id:'SOL-2026-0005',api:'API TESTE CEDENTE 18/09/2026',orgao:'ATI',data:'18/09/2026 15:10',situacao:'Em análise',unidade:'Gerência de Sistemas',solicitante:'Usuário Cedente',cargo:'Analista',email:'cedente@ati.pe.gov.br',telefone:'(81) 3183-0000',contato:'Responsável Técnico',emailTec:'tecnico@ati.pe.gov.br'},
+    {id:'SOL-2026-0004',api:'API EXEMPLO SAÚDE',orgao:'SES-PE',data:'16/09/2026 10:43',situacao:'Aprovada'},
+    {id:'SOL-2026-0003',api:'API EXEMPLO EDUCAÇÃO',orgao:'SEE-PE',data:'14/09/2026 09:21',situacao:'Rejeitada'},
+    {id:'SOL-2026-0002',api:'API EXEMPLO SERVIÇOS',orgao:'ATI',data:'11/09/2026 14:05',situacao:'Ajuste solicitado'},
+    {id:'SOL-2026-0001',api:'API EXEMPLO MUNICIPAL',orgao:'Município',data:'08/09/2026 11:30',situacao:'Aprovada'}
+  ];
+  const lista=dados.filter(x=>(situacao==='Todas'||x.situacao===situacao)&&(!nome||x.api.toLowerCase().includes(nome.toLowerCase())));
+  const badge=s=>s==='Aprovada'?['#EAFBD7','#2B6418','#86D562']:s==='Rejeitada'?['#FDECEC','#B42318','#F3AAAA']:s==='Ajuste solicitado'?['#FFF6CE','#8A5700','#FFE082']:['#FFF0C2','#7A5200','#FFE082'];
+  const decidir=(st)=>{if((st==='Rejeitada'||st==='Ajuste solicitado')&&!parecer.trim()){showToast&&showToast('Informe o parecer / justificativa.','error');return;} setDecisao(st); showToast&&showToast('Decisão registrada: '+st+'.');};
+  if(selecionada){const x=selecionada;return <div style={{flex:1,overflow:'auto',background:'#F5F7FA',padding:'28px 32px'}}>
+    <button onClick={()=>{setSelecionada(null);setParecer('');setDecisao('')}} style={{border:0,background:'transparent',color:C.brand,fontWeight:600,cursor:'pointer',padding:0,marginBottom:18}}>← Voltar para solicitações</button>
+    <div style={{fontSize:11,fontWeight:700,color:C.brand,textTransform:'uppercase',letterSpacing:'.4px'}}>BACKOFFICE · GESTÃO DE CEDENTES</div>
+    <h1 style={{fontSize:26,margin:'8px 0'}}>Análise da solicitação para disponibilizar API</h1>
+    <p style={{fontSize:13,color:C.textSecondary,maxWidth:980,lineHeight:1.6}}>Analise a manifestação de interesse, verifique os requisitos técnicos preliminares e registre a decisão. A aprovação desta etapa não publica a API; ela permite avançar para a formalização das responsabilidades do Cedente.</p>
+    <div style={{margin:'18px 0'}}><span style={{background:badge(decisao||x.situacao)[0],color:badge(decisao||x.situacao)[1],border:'1px solid '+badge(decisao||x.situacao)[2],padding:'6px 13px',borderRadius:18,fontSize:12,fontWeight:600}}>{decisao||x.situacao}</span></div>
+    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:18,alignItems:'start'}}>
+      <div style={{background:'#fff',border:'1px solid #DDE3EA',borderRadius:8,overflow:'hidden'}}><h2 style={{fontSize:16,padding:'18px 20px',borderBottom:'1px solid #E7E9EB'}}>Dados da solicitação</h2>{[['Órgão / entidade',x.orgao,'Unidade / setor',x.unidade||'—'],['Solicitante',x.solicitante||'—','Cargo / função',x.cargo||'—'],['E-mail institucional',x.email||'—','Telefone',x.telefone||'—'],['API',x.api,'Contato técnico',x.contato||'—'],['E-mail técnico',x.emailTec||'—','Nº da solicitação',x.id]].map((r,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr',borderBottom:i<4?'1px solid #E7E9EB':'none'}}><div style={{padding:'13px 16px'}}><div style={{fontSize:11,color:C.textSecondary}}>{r[0]}</div><strong style={{fontSize:13}}>{r[1]}</strong></div><div style={{padding:'13px 16px'}}><div style={{fontSize:11,color:C.textSecondary}}>{r[2]}</div><strong style={{fontSize:13}}>{r[3]}</strong></div></div>)}</div>
+      <div style={{background:'#fff',border:'1px solid #DDE3EA',borderRadius:8,padding:18}}><h2 style={{fontSize:17,marginBottom:8}}>Decisão da análise</h2><p style={{fontSize:12.5,color:C.textSecondary,lineHeight:1.5,marginBottom:14}}>Registre um parecer ou orientação. Para solicitar ajustes ou rejeitar, a justificativa é obrigatória.</p><label style={{fontSize:12,fontWeight:600}}>Parecer / justificativa</label><textarea value={parecer} onChange={e=>setParecer(e.target.value)} maxLength={1500} rows={7} placeholder="Descreva a análise, orientações ou justificativa..." style={{width:'100%',marginTop:7,border:'1px solid #BFC8D4',borderRadius:5,padding:10,fontFamily:'inherit',fontSize:13,resize:'vertical'}}/><div style={{textAlign:'right',fontSize:10.5,color:C.textSecondary}}>{parecer.length}/1500</div><div style={{display:'grid',gap:9,marginTop:14}}><button onClick={()=>decidir('Aprovada')} style={{height:40,border:0,borderRadius:5,background:'#176B2C',color:'#fff',fontWeight:700,cursor:'pointer'}}>Aprovar solicitação</button><button onClick={()=>decidir('Ajuste solicitado')} style={{height:40,border:'1px solid #D47B00',borderRadius:5,background:'#FFF9EC',color:'#995500',fontWeight:700,cursor:'pointer'}}>Solicitar ajustes</button><button onClick={()=>decidir('Rejeitada')} style={{height:40,border:'1px solid #C62828',borderRadius:5,background:'#fff',color:'#B42318',fontWeight:700,cursor:'pointer'}}>Rejeitar solicitação</button></div></div>
+    </div></div>}
+  return <div style={{flex:1,overflow:'auto',background:'#F5F7FA',padding:'28px 32px'}}>
+    <div style={{fontSize:11,fontWeight:700,color:C.brand,textTransform:'uppercase',letterSpacing:'.4px'}}>BACKOFFICE · GESTÃO DE CEDENTES</div>
+    <h1 style={{fontSize:26,margin:'8px 0'}}>Análise da solicitação para disponibilizar API</h1>
+    <p style={{fontSize:13,color:C.textSecondary,lineHeight:1.6,marginBottom:22}}>Analise as manifestações de interesse para disponibilização de APIs, verifique os requisitos técnicos preliminares e registre a decisão.</p>
+    <div style={{background:'#fff',border:'1px solid #DDE3EA',borderRadius:8,padding:18,marginBottom:18}}>
+      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:14}}><label style={{fontSize:12}}>Nome da API<input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Pesquisar pelo nome da API" style={{width:'100%',height:40,marginTop:7,border:'1px solid #BFC8D4',borderRadius:5,padding:'0 10px'}}/></label><label style={{fontSize:12}}>Situação<select value={situacao} onChange={e=>setSituacao(e.target.value)} style={{width:'100%',height:40,marginTop:7,border:'1px solid #BFC8D4',borderRadius:5,padding:'0 10px'}}>{['Todas','Em análise','Ajuste solicitado','Aprovada','Rejeitada'].map(v=><option key={v}>{v}</option>)}</select></label><label style={{fontSize:12}}>Data inicial<input type="date" style={{width:'100%',height:40,marginTop:7,border:'1px solid #BFC8D4',borderRadius:5,padding:'0 10px'}}/></label><label style={{fontSize:12}}>Data final<input type="date" style={{width:'100%',height:40,marginTop:7,border:'1px solid #BFC8D4',borderRadius:5,padding:'0 10px'}}/></label></div>
+    </div>
+    <div style={{background:'#fff',border:'1px solid #DDE3EA',borderRadius:8,overflow:'hidden'}}><div style={{padding:'15px 18px',borderBottom:'1px solid #E7E9EB',fontSize:13,fontWeight:600}}>Resultado da pesquisa ({lista.length} solicitações)</div><div style={{display:'grid',gridTemplateColumns:'150px 2fr 1fr 150px 150px 100px',gap:12,padding:'12px 16px',background:'#F2F5FA',fontSize:11.5,fontWeight:700}}><span>Nº da Solicitação</span><span>Nome da API</span><span>Órgão / Entidade</span><span>Data da Solicitação</span><span>Situação</span><span>Ações</span></div>{lista.map((x,i)=>{const b=badge(x.situacao);return <div key={x.id} style={{display:'grid',gridTemplateColumns:'150px 2fr 1fr 150px 150px 100px',gap:12,padding:'13px 16px',alignItems:'center',borderTop:i?'1px solid #E7E9EB':'none',fontSize:12}}><span>{x.id}</span><span>{x.api}</span><span>{x.orgao}</span><span>{x.data}</span><span><span style={{background:b[0],color:b[1],border:'1px solid '+b[2],padding:'5px 10px',borderRadius:15,fontSize:11}}>{x.situacao}</span></span><button onClick={()=>setSelecionada(x)} style={{height:32,border:'1px solid #AFC4EA',borderRadius:5,background:'#fff',color:C.brand,fontWeight:600,cursor:'pointer'}}>{x.situacao==='Em análise'?'Analisar':'Visualizar'}</button></div>})}</div>
+  </div>;
+}
+
 function App() {
   const [section, setSection]   = React.useState(location.hash==='#cedentes'?'cedentes':'dashboard');
   const [collapsed, setCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
@@ -3326,7 +3363,7 @@ function App() {
     'usuarios':  ['Início','Controle de Acesso'],
     'relatorios':['Início','Relatórios'],
     'rel_uso':   ["Início","Relatórios","Solicitação de API's"],
-    'cedentes':['Início','Análise da solicitação para disponibilizar API'],
+    'cedentes':['Início','Solicitações de Disponibilização'],
     'rel_csati': ['Início','Relatórios','Acompanhamento CSATI'],
     'auditoria': ['Início','Auditoria'],
     'dashboard': ['Início'],
@@ -3355,7 +3392,7 @@ function App() {
 
         {section==='dashboard'  && <Dashboard onNav={setSection}/>}
         {section==='apis'       && <GerenciarApis showToast={showToast}/>}
-        {section==='cedentes' && <iframe title="Análise da solicitação para disponibilizar API" src="../portal/index.html?backoffice=disponibilizacao#analise-disponibilizacao" style={{border:0,flex:1,width:'100%',minHeight:0}}/>}
+        {section==='cedentes' && <SolicitacoesDisponibilizacao showToast={showToast}/>}
         {section==='categorias' && <GerenciarCategorias showToast={showToast}/>}
         {section==='usuarios'   && <ControleAcesso showToast={showToast}/>}
         {section==='rel_cadastradas' && <RelCadastradas showToast={showToast}/>}
