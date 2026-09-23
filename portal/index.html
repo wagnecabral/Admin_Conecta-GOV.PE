@@ -924,7 +924,7 @@ const GOVBR_SOLICITACOES = {
    CA.11 — Ícones do histórico: Informação, Comunicação, Carta,
            Remessa, Processo Gerado.
 ───────────────────────────────────────────────────────────── */
-function MinhasSolicitacoes({ usuario, onSair, novasSolicitacoes=[] }) {
+function MinhasSolicitacoes({ usuario, onSair, novasSolicitacoes=[], solicitacoesDisponibilizacao=[], modo='uso', onMudarModo }) {
   const todasSolicitacoes = [...novasSolicitacoes, ...(GOVBR_SOLICITACOES[usuario.cpf] || [])];
 
   // CA.03 — Filtro de Fase: apenas os 3 status oficiais do Solicita (SEI)
@@ -1085,14 +1085,22 @@ function MinhasSolicitacoes({ usuario, onSair, novasSolicitacoes=[] }) {
       {/* Conteúdo */}
       <div style={{ flex:1, padding:'28px 24px', maxWidth:900, width:'100%', margin:'0 auto' }}>
 
-        {/* CA.02 — Título e subtítulo */}
-        <div style={{ marginBottom:20 }}>
-          <h1 style={{ fontSize:22, fontWeight:700, color:'#001A7A', marginBottom:4 }}>Minhas Solicitações</h1>
-          <div style={{ fontSize:13, color:'#494C57' }}>
-            <span>Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE.</span>
+        {/* CA.02 — Título, subtítulo e menu de tipo de solicitação */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:20, marginBottom:20, flexWrap:'wrap' }}>
+          <div>
+            <h1 style={{ fontSize:22, fontWeight:700, color:'#001A7A', marginBottom:4 }}>Minhas Solicitações</h1>
+            <div style={{ fontSize:13, color:'#494C57' }}>
+              <span>{modo==='uso'?'Acompanhe suas solicitações de acesso às APIs do Conecta Gov.PE.':'Acompanhe suas solicitações para disponibilizar APIs no Portal Conecta Gov.PE.'}</span>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <button onClick={()=>onMudarModo&&onMudarModo('uso')} style={{height:36,padding:'0 14px',borderRadius:6,border:modo==='uso'?'1px solid #0034B7':'1px solid #CED2D7',background:modo==='uso'?'#0034B7':'#fff',color:modo==='uso'?'#fff':'#0034B7',fontSize:12,fontWeight:700,cursor:'pointer'}}>Uso de API</button>
+            <button onClick={()=>onMudarModo&&onMudarModo('disponibilizacao')} style={{height:36,padding:'0 14px',borderRadius:6,border:modo==='disponibilizacao'?'1px solid #0034B7':'1px solid #CED2D7',background:modo==='disponibilizacao'?'#0034B7':'#fff',color:modo==='disponibilizacao'?'#fff':'#0034B7',fontSize:12,fontWeight:700,cursor:'pointer'}}>Disponibilização de API</button>
           </div>
         </div>
 
+        {modo==='disponibilizacao' && <MinhasSolicitacoesDisponibilizacao solicitacoes={solicitacoesDisponibilizacao} embedded={true}/>}
+        <div style={{display:modo==='uso'?'block':'none'}}>
         {/* Filtros */}
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, flexWrap:'wrap', justifyContent:'space-between' }}>
           {/* CA.03 — Filtro de Fase: Todas as fases / Em análise / Concluído / Cancelado */}
@@ -1240,6 +1248,8 @@ function MinhasSolicitacoes({ usuario, onSair, novasSolicitacoes=[] }) {
 
 
       </div>
+
+        </div>
 
       {/* Footer */}
       <div style={{ background:'#0034B7', padding:'20px 24px', marginTop:'auto' }}>
@@ -1396,9 +1406,9 @@ function App() {
     </div>
   );
 
-  if(page==='__cedente_requests__') return <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}><GovBar/><Header activePage="Disponibilizar API" onNav={setPage} onAdminClick={handleAdminClick}/><MinhasSolicitacoesDisponibilizacao solicitacoes={solicitacoesCedente} onBack={()=>setPage('Disponibilizar API')}/><Footer/></div>;
+  
 
-  if(page==='__requests__' && govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} novasSolicitacoes={novasSolicitacoes} onSair={()=>{setGovbrUsuario(null);setPage('Início');}}/>;
+  if((page==='__requests__'||page==='__cedente_requests__') && govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} novasSolicitacoes={novasSolicitacoes} solicitacoesDisponibilizacao={solicitacoesCedente} modo={page==='__cedente_requests__'?'disponibilizacao':'uso'} onMudarModo={m=>setPage(m==='uso'?'__requests__':'__cedente_requests__')} onSair={()=>{setGovbrUsuario(null);setPage('Início');}}/>;
   if(telaAcessoNegado) return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
 
   if(page==='__request__' && govbrUsuario && detailApi) return (
