@@ -1413,6 +1413,9 @@ function App() {
   const [solicitacoesCedente, setSolicitacoesCedente] = React.useState(()=>window.CedenteStore?.readDisponibilizacoes?.()||[]);
   React.useEffect(()=>{const sync=()=>setSolicitacoesCedente(window.CedenteStore?.readDisponibilizacoes?.()||[]);window.addEventListener('disponibilizacao-change',sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener('disponibilizacao-change',sync);window.removeEventListener('storage',sync);};},[]);
 
+  const perfilCedenteKey='conecta-perfis-cedente-v1';
+  const possuiPerfilCedente=cpf=>{try{return JSON.parse(localStorage.getItem(perfilCedenteKey)||'{}')[cpf.replace(/\\D/g,'')]===true;}catch(e){return false;}};
+  const registrarPerfilCedente=cpf=>{try{const perfis=JSON.parse(localStorage.getItem(perfilCedenteKey)||'{}');perfis[cpf.replace(/\\D/g,'')]=true;localStorage.setItem(perfilCedenteKey,JSON.stringify(perfis));}catch(e){console.warn('Não foi possível persistir o perfil simulado',e);}};
   const handleAdminClick = (provider='expresso') => { setAuthContext(provider==='govbr'?'requests':'area'); setAuthProvider(provider); setShowSsoModal(true); };
   const handleNav = (destino) => { if(destino==='Disponibilizar API'){setPage('Disponibilizar API');return;} setPage(destino); };
   const iniciarCedente=()=>{if(!cedenteUsuario){setAuthContext('cedente');setAuthProvider('expresso');setShowSsoModal(true);}else{setPage('__cedente_requests__');}};
@@ -1424,7 +1427,8 @@ function App() {
 
   const handleAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
-    if(authContext==='cedente'){setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
+    if(authContext==='cedente'){registrarPerfilCedente(cpfLimpo);setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
+    if(possuiPerfilCedente(cpfLimpo)){setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
     if(usuariosCadastrados.includes(cpfLimpo)){
       setShowSsoModal(false);
       try { window.location.assign(new URL('../backoffice/index.html', window.location.href).href); }
