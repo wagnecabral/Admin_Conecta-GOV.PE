@@ -68,8 +68,8 @@ function GovBar() {
 
 /* ── Header ──────────────────────────────────────────────── */
 function Header({ activePage, onNav, onAdminClick }) {
-  const [cedenteOpen,setCedenteOpen]=React.useState(false);
-  const navItems = ['Início','Como Acessar APIs','Catálogo de APIs','Interoperabilidade','Quem somos'];
+  
+  const navItems = ['Início','Como Acessar APIs','Catálogo de APIs','Interoperabilidade','Quem somos','Disponibilizar API'];
   return (
     <div style={{ background:'#FFFFFF', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:72, borderBottom:'1px solid #E7E9EB' }}>
       <div style={{ display:'flex', alignItems:'center', gap:14 }}>
@@ -85,7 +85,7 @@ function Header({ activePage, onNav, onAdminClick }) {
             <div key={item} onClick={()=>onNav(item)} style={{ padding:'0 16px', height:72, display:'flex', alignItems:'center', fontSize:13, fontWeight:isActive?600:400, color:isActive?'#0034B7':'#28272C', borderBottom:isActive?'3px solid #0034B7':'3px solid transparent', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}
               onMouseEnter={e=>{ if(!isActive){ e.currentTarget.style.color='#0034B7'; e.currentTarget.style.borderBottomColor='rgba(0,52,183,0.3)'; }}}
               onMouseLeave={e=>{ if(!isActive){ e.currentTarget.style.color='#28272C'; e.currentTarget.style.borderBottomColor='transparent'; }}}
-            >{item}</div>
+            >{item==='Disponibilizar API'?'Quero disponibilizar uma API':item}</div>
           );
         })}
       </nav>
@@ -112,7 +112,7 @@ function Hero({ onNav }) {
           <button onClick={()=>onNav('Como Acessar APIs')} style={{ height:42, padding:'0 22px', borderRadius:5, background:C.brand, color:'#fff', fontSize:14, fontWeight:600, border:'none', cursor:'pointer' }}>Como acessar APIs</button>
           
           <button onClick={()=>onNav('Catálogo de APIs')} style={{ height:42, padding:'0 22px', borderRadius:5, background:'transparent', color:'#F8FAFC', fontSize:14, fontWeight:600, border:'1.5px solid rgba(248,250,252,0.5)', cursor:'pointer' }}>Consultar APIs</button>
-        </div><div style={{marginTop:20}}><button onClick={()=>onNav('Disponibilizar API')} style={{background:'transparent',border:0,color:'#EAF0FF',textDecoration:'underline',cursor:'pointer',fontSize:13}}>Representa um órgão público? Quero disponibilizar uma API →</button></div>
+        </div>
       </div>
     </div>
   );
@@ -441,7 +441,7 @@ function QuemSomos() {
 /* ── SSO Modal ───────────────────────────────────────────── */
 const USUARIOS_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
 
-function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado, requestMode=false, initialProvider=null }) {
+function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutenticado, requestMode=false, cedenteMode=false, initialProvider=null }) {
   const [tela, setTela] = React.useState(requestMode?'govbr':(initialProvider||'selecao'));
   const [cpf, setCpf] = React.useState('');
   const [senha, setSenha] = React.useState('');
@@ -450,7 +450,7 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutentic
   const CPF_AUTORIZADOS = ['046.318.094-18','123.456.789-90','234.567.890-77'];
   const formatCpf = v => { const n=v.replace(/\D/g,'').slice(0,11); if(n.length<=3)return n; if(n.length<=6)return n.slice(0,3)+'.'+n.slice(3); if(n.length<=9)return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6); return n.slice(0,3)+'.'+n.slice(3,6)+'.'+n.slice(6,9)+'-'+n.slice(9); };
   const resetForm = () => { setCpf(''); setSenha(''); setErro(''); };
-  const handleVoltar = () => { resetForm(); setTela('selecao'); };
+  const handleVoltar = () => { resetForm(); if(cedenteMode){onClose();return;} setTela('selecao'); };
   const handleEntrar = () => {
     if(!cpf||!senha){ setErro('Preencha CPF e senha para continuar.'); return; }
     setLoading(true); setErro('');
@@ -458,7 +458,7 @@ function SsoModal({ onClose, onAcessoNegado, onAcessoAutorizado, onGovBrAutentic
       setLoading(false);
       if(tela==='govbr'){
         if(onGovBrAutenticado) onGovBrAutenticado(cpf);
-      } else if(CPF_AUTORIZADOS.includes(cpf)){
+      } else if(cedenteMode || CPF_AUTORIZADOS.includes(cpf)){
         onAcessoAutorizado(cpf);
       } else {
         onAcessoNegado(cpf);
@@ -1346,7 +1346,7 @@ function AreaSolicitanteCedente({usuario,solicitacoes,onNova,onVer,onSair,onCorr
  const [aba,setAba]=React.useState('visao');
  const minhas=solicitacoes.filter(x=>String(x.cpf||'').replace(/\D/g,'')===String(usuario.cpf||'').replace(/\D/g,''));
  const pendentes=minhas.filter(x=>x.status==='Ajuste solicitado').length;
- const itens=[['visao','Visão Geral','▦'],['nova','Disponibilizar API','＋'],['solicitacoes','Minhas Solicitações','☷'],['notificacoes','Notificações','♧']];
+ const itens=[['visao','Visão Geral','▦'],['nova','Disponibilizar API','＋'],['solicitacoes','Minhas Solicitações','☷']];
  const ir=dest=>{if(dest==='nova')onNova();else setAba(dest)};
  return <div style={{display:'flex',flex:1,minHeight:'calc(100vh - 140px)',background:'#F5F7FA'}}>
   <aside style={{width:240,background:'#fff',borderRight:'1px solid #E1E5EB',padding:'22px 12px',flexShrink:0}}>
@@ -1357,7 +1357,7 @@ function AreaSolicitanteCedente({usuario,solicitacoes,onNova,onVer,onSair,onCorr
   <main style={{flex:1,padding:'30px 34px',minWidth:0}}>
    <div style={{fontSize:12,color:'#666',marginBottom:8}}>Conecta GOV.PE / Área do Cedente</div>
    <h1 style={{fontSize:25,color:'#001A7A',marginBottom:8}}>{aba==='visao'?'Visão Geral':aba==='solicitacoes'?'Minhas Solicitações':'Notificações'}</h1>
-   <p style={{fontSize:13,color:'#555',marginBottom:24}}>Perfil SOLICITANTE CEDENTE · Acesso Expresso/GOV.PE (simulado) · Solicitações vinculadas exclusivamente ao usuário autenticado.</p>
+   <div style={{height:12}}/>
    {aba==='visao'&&<>
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:14,marginBottom:22}}>
      {[['Minhas solicitações',minhas.length],['Em análise',minhas.filter(x=>x.status==='Em análise').length],['Ajustes pendentes',pendentes]].map(([label,n])=><div key={label} style={{background:'#fff',padding:20,border:'1px solid #DDE3EA',borderRadius:8}}><div style={{fontSize:12,color:'#555'}}>{label}</div><div style={{fontSize:30,fontWeight:700,color:'#0034B7',marginTop:7}}>{n}</div></div>)}
@@ -1389,7 +1389,7 @@ function App() {
   React.useEffect(()=>{const sync=()=>setSolicitacoesCedente(window.CedenteStore?.readDisponibilizacoes?.()||[]);window.addEventListener('disponibilizacao-change',sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener('disponibilizacao-change',sync);window.removeEventListener('storage',sync);};},[]);
 
   const handleAdminClick = (provider='expresso') => { setAuthContext(provider==='govbr'?'requests':'area'); setAuthProvider(provider); setShowSsoModal(true); };
-  const handleNav = (destino) => { if(destino==='Disponibilizar API'&&!cedenteUsuario){setAuthContext('cedente');setAuthProvider('expresso');setShowSsoModal(true);return;} setPage(destino); };
+  const handleNav = (destino) => { if(destino==='Disponibilizar API'){if(!cedenteUsuario){setAuthContext('cedente');setAuthProvider('expresso');setShowSsoModal(true);}else{setPage('__cedente_requests__');}return;} setPage(destino); };
   const handleRequestApi = (api) => {
     setDetailApi(api);
     if(govbrUsuario){ setPage('__request__'); }
@@ -1437,7 +1437,7 @@ function App() {
 
   
 
-  if(page==='__cedente_requests__' && cedenteUsuario) return <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}><GovBar/><Header activePage="Disponibilizar API" onNav={handleNav} onAdminClick={handleAdminClick}/><AreaSolicitanteCedente usuario={cedenteUsuario} solicitacoes={solicitacoesCedente} onNova={()=>{setEdicaoCedente(null);setPage('Disponibilizar API');}} onCorrigir={item=>{setEdicaoCedente(item);setPage('Disponibilizar API');}} onSair={()=>{setCedenteUsuario(null);setPage('Início');}}/><Footer/></div>;
+  if(page==='__cedente_requests__' && cedenteUsuario) return <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}><GovBar/><AreaSolicitanteCedente usuario={cedenteUsuario} solicitacoes={solicitacoesCedente} onNova={()=>{setEdicaoCedente(null);setPage('Disponibilizar API');}} onCorrigir={item=>{setEdicaoCedente(item);setPage('Disponibilizar API');}} onSair={()=>{setCedenteUsuario(null);setPage('Início');}}/><Footer/></div>;
   if(page==='__requests__' && govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} novasSolicitacoes={novasSolicitacoes} solicitacoesDisponibilizacao={solicitacoesCedente.filter(x=>String(x.cpf||'').replace(/\D/g,'')===String(govbrUsuario.cpf||'').replace(/\D/g,''))} modo={page==='__cedente_requests__'?'disponibilizacao':'uso'} onMudarModo={m=>setPage(m==='uso'?'__requests__':'__cedente_requests__')} onSair={()=>{setGovbrUsuario(null);setPage('Início');}}/>;
   if(telaAcessoNegado) return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
 
@@ -1468,7 +1468,7 @@ function App() {
       </main>
       <Footer/>
       {showSsoModal && (
-        <SsoModal requestMode={authContext==='request'} initialProvider={authProvider} onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>
+        <SsoModal requestMode={authContext==='request'} cedenteMode={authContext==='cedente'} initialProvider={authProvider} onClose={()=>setShowSsoModal(false)} onAcessoNegado={()=>{setShowSsoModal(false);}} onAcessoAutorizado={handleAutenticar} onGovBrAutenticado={handleGovBrAutenticar}/>
       )}
     </div>
   );
@@ -1496,7 +1496,7 @@ function App() {
           onAcessoNegado={()=>{setShowSsoModal(false);}}
           onAcessoAutorizado={handleAutenticar}
           onGovBrAutenticado={handleGovBrAutenticar}
-          requestMode={authContext==='request'} initialProvider={authProvider}
+          requestMode={authContext==='request'} cedenteMode={authContext==='cedente'} initialProvider={authProvider}
         />
       )}
     </div>
