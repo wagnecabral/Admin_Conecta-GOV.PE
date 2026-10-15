@@ -15,7 +15,7 @@
  function resubmitDisponibilizacao(id,form,cpf){
    const arr=readDisponibilizacoes(),r=arr.find(x=>x.id===id);
    if(!r)throw Error('Solicitação não encontrada.');
-   if(String(r.cpf||'').replace(/\\D/g,'')!==String(cpf||'').replace(/\\D/g,''))throw Error('Esta solicitação pertence a outro usuário.');
+   if(String(r.cpf||'').replace(/\D/g,'')!==String(cpf||'').replace(/\D/g,''))throw Error('Esta solicitação pertence a outro usuário.');
    if(r.status!=='Ajuste solicitado')throw Error('Somente solicitações com ajustes solicitados podem ser reenviadas.');
    const now=new Date().toISOString();
    Object.assign(r,{api:form.api||'API ainda não definida',orgao:form.orgao||'',unidade:form.unidade||'',solicitante:form.nome||'',cargo:form.cargo||'',email:form.email||'',telefone:form.telefone||'',contato:form.contatoTecnico||'',emailTec:form.emailTecnico||'',finalidade:form.finalidade||'',complemento:form.complemento||'',status:'Em análise',parecer:'Complementação enviada; aguardando nova análise.'});
