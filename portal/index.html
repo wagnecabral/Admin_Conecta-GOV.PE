@@ -1342,6 +1342,36 @@ function AprovacaoDisponibilizacao({ solicitacao, onBack, onStatusChange }) {
   </div></div>;
 }
 
+function AreaSolicitanteCedente({usuario,solicitacoes,onNova,onVer,onSair,onCorrigir}){
+ const [aba,setAba]=React.useState('visao');
+ const minhas=solicitacoes.filter(x=>String(x.cpf||'').replace(/\D/g,'')===String(usuario.cpf||'').replace(/\D/g,''));
+ const pendentes=minhas.filter(x=>x.status==='Ajuste solicitado').length;
+ const itens=[['visao','Visão Geral','▦'],['nova','Disponibilizar API','＋'],['solicitacoes','Minhas Solicitações','☷'],['notificacoes','Notificações','♧']];
+ const ir=dest=>{if(dest==='nova')onNova();else setAba(dest)};
+ return <div style={{display:'flex',flex:1,minHeight:'calc(100vh - 140px)',background:'#F5F7FA'}}>
+  <aside style={{width:240,background:'#fff',borderRight:'1px solid #E1E5EB',padding:'22px 12px',flexShrink:0}}>
+   <div style={{fontSize:11,fontWeight:800,color:'#0034B7',padding:'8px 12px 20px'}}>SOLICITANTE CEDENTE</div>
+   {itens.map(([id,label,ico])=><button key={id} onClick={()=>ir(id)} style={{display:'flex',gap:12,alignItems:'center',width:'100%',padding:'13px 12px',textAlign:'left',background:aba===id?'#EEF3FF':'transparent',border:0,borderRadius:6,color:aba===id?'#0034B7':'#28272C',fontWeight:aba===id?700:500,cursor:'pointer',fontSize:13}}><span>{ico}</span>{label}{id==='notificacoes'&&pendentes>0?<span style={{background:'#B42318',color:'#fff',borderRadius:12,padding:'1px 6px',fontSize:10}}>{pendentes}</span>:null}</button>)}
+   <button onClick={onSair} style={{marginTop:30,padding:'12px',background:'transparent',border:0,color:'#555',cursor:'pointer'}}>↩ Sair da área</button>
+  </aside>
+  <main style={{flex:1,padding:'30px 34px',minWidth:0}}>
+   <div style={{fontSize:12,color:'#666',marginBottom:8}}>Conecta GOV.PE / Área do Cedente</div>
+   <h1 style={{fontSize:25,color:'#001A7A',marginBottom:8}}>{aba==='visao'?'Visão Geral':aba==='solicitacoes'?'Minhas Solicitações':'Notificações'}</h1>
+   <p style={{fontSize:13,color:'#555',marginBottom:24}}>Perfil SOLICITANTE CEDENTE · Acesso Expresso/GOV.PE (simulado) · Solicitações vinculadas exclusivamente ao usuário autenticado.</p>
+   {aba==='visao'&&<>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:14,marginBottom:22}}>
+     {[['Minhas solicitações',minhas.length],['Em análise',minhas.filter(x=>x.status==='Em análise').length],['Ajustes pendentes',pendentes]].map(([label,n])=><div key={label} style={{background:'#fff',padding:20,border:'1px solid #DDE3EA',borderRadius:8}}><div style={{fontSize:12,color:'#555'}}>{label}</div><div style={{fontSize:30,fontWeight:700,color:'#0034B7',marginTop:7}}>{n}</div></div>)}
+    </div>
+    <button onClick={onNova} style={{padding:'12px 20px',background:'#0034B7',border:0,borderRadius:5,color:'#fff',fontWeight:700,cursor:'pointer'}}>＋ Nova solicitação de disponibilização</button>
+    <div style={{marginTop:24}}><MinhasSolicitacoesDisponibilizacao embedded solicitacoes={minhas.slice(0,5)} onBack={()=>{}} onCorrigir={onCorrigir}/></div>
+   </>}
+   {aba==='solicitacoes'&&<MinhasSolicitacoesDisponibilizacao embedded solicitacoes={minhas} onBack={()=>setAba('visao')} onCorrigir={onCorrigir}/>}
+   {aba==='notificacoes'&&<div style={{background:'#fff',border:'1px solid #DDE3EA',borderRadius:8,padding:20}}>
+    {minhas.filter(x=>x.status==='Ajuste solicitado'||x.status==='Aprovada'||x.status==='Rejeitada').length===0?<p style={{fontSize:13}}>Não há decisões ou ajustes pendentes nas suas solicitações.</p>:minhas.filter(x=>x.status!=='Em análise').map(x=><div key={x.id} style={{borderBottom:'1px solid #eee',padding:'12px 0'}}><strong style={{fontSize:13}}>{x.api}</strong><p style={{fontSize:12,marginTop:5}}>Situação: {x.status}. {x.parecer||''}</p><button onClick={()=>ir('solicitacoes')} style={{color:'#0034B7',background:'none',border:0,cursor:'pointer',marginTop:6}}>Ver solicitação</button></div>)}
+   </div>}
+  </main>
+ </div>
+}
 function App() {
   const [page, setPage] = React.useState(location.hash==='#catalogo'?'Catálogo de APIs':'Início');
   const [showSsoModal, setShowSsoModal] = React.useState(false);
@@ -1368,7 +1398,7 @@ function App() {
 
   const handleAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
-    if(authContext==='cedente'){setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('Disponibilizar API');return;}
+    if(authContext==='cedente'){setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
     if(usuariosCadastrados.includes(cpfLimpo)){
       setShowSsoModal(false);
       try { window.location.assign(new URL('../backoffice/index.html', window.location.href).href); }
@@ -1407,7 +1437,7 @@ function App() {
 
   
 
-  if(page==='__cedente_requests__' && cedenteUsuario) return <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}><GovBar/><Header activePage="Disponibilizar API" onNav={handleNav} onAdminClick={handleAdminClick}/><MinhasSolicitacoesDisponibilizacao solicitacoes={solicitacoesCedente.filter(x=>String(x.cpf||'').replace(/\D/g,'')===String(cedenteUsuario.cpf||'').replace(/\D/g,''))} onBack={()=>setPage('Disponibilizar API')} onCorrigir={item=>{setEdicaoCedente(item);setPage('Disponibilizar API');}}/><Footer/></div>;
+  if(page==='__cedente_requests__' && cedenteUsuario) return <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}><GovBar/><Header activePage="Disponibilizar API" onNav={handleNav} onAdminClick={handleAdminClick}/><AreaSolicitanteCedente usuario={cedenteUsuario} solicitacoes={solicitacoesCedente} onNova={()=>{setEdicaoCedente(null);setPage('Disponibilizar API');}} onCorrigir={item=>{setEdicaoCedente(item);setPage('Disponibilizar API');}} onSair={()=>{setCedenteUsuario(null);setPage('Início');}}/><Footer/></div>;
   if(page==='__requests__' && govbrUsuario) return <MinhasSolicitacoes usuario={govbrUsuario} novasSolicitacoes={novasSolicitacoes} solicitacoesDisponibilizacao={solicitacoesCedente.filter(x=>String(x.cpf||'').replace(/\D/g,'')===String(govbrUsuario.cpf||'').replace(/\D/g,''))} modo={page==='__cedente_requests__'?'disponibilizacao':'uso'} onMudarModo={m=>setPage(m==='uso'?'__requests__':'__cedente_requests__')} onSair={()=>{setGovbrUsuario(null);setPage('Início');}}/>;
   if(telaAcessoNegado) return <AcessoNegadoScreen cpf={telaAcessoNegado} onVoltar={()=>setTelaAcessoNegado(null)}/>;
 
