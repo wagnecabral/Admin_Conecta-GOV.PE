@@ -12,6 +12,16 @@
    const r={id:'CED-'+new Date().getFullYear()+'-'+seq,cpf:cpf||'04631809418',api:form.api||'API ainda não definida',orgao:form.orgao||'',unidade:form.unidade||'',solicitante:form.nome||'',cargo:form.cargo||'',email:form.email||'',telefone:form.telefone||'',contato:form.contatoTecnico||'',emailTec:form.emailTecnico||'',finalidade:form.finalidade||'',complemento:form.complemento||'',data:now,status:'Em análise',parecer:'Solicitação recebida e encaminhada para análise do time do GAS.',historico:[{data:now,status:'Em análise',texto:'Solicitação enviada para análise.'}]};
    arr.unshift(r);saveDisponibilizacoes(arr);return r;
  }
+ function resubmitDisponibilizacao(id,form,cpf){
+   const arr=readDisponibilizacoes(),r=arr.find(x=>x.id===id);
+   if(!r)throw Error('Solicitação não encontrada.');
+   if(String(r.cpf||'').replace(/\\D/g,'')!==String(cpf||'').replace(/\\D/g,''))throw Error('Esta solicitação pertence a outro usuário.');
+   if(r.status!=='Ajuste solicitado')throw Error('Somente solicitações com ajustes solicitados podem ser reenviadas.');
+   const now=new Date().toISOString();
+   Object.assign(r,{api:form.api||'API ainda não definida',orgao:form.orgao||'',unidade:form.unidade||'',solicitante:form.nome||'',cargo:form.cargo||'',email:form.email||'',telefone:form.telefone||'',contato:form.contatoTecnico||'',emailTec:form.emailTecnico||'',finalidade:form.finalidade||'',complemento:form.complemento||'',status:'Em análise',parecer:'Complementação enviada; aguardando nova análise.'});
+   r.historico=[...(r.historico||[]),{data:now,status:'Em análise',texto:'Informações complementadas pelo SOLICITANTE CEDENTE e reenviadas.'}];
+   saveDisponibilizacoes(arr);return r;
+ }
  function decideDisponibilizacao(id,status,parecer){
    const arr=readDisponibilizacoes(),r=arr.find(x=>x.id===id);if(!r)throw Error('Solicitação não encontrada.');
    if((status==='Rejeitada'||status==='Ajuste solicitado')&&!String(parecer||'').trim())throw Error('Informe o parecer / justificativa.');
@@ -25,5 +35,5 @@
  function decide(id,approve,reason){const db=read(),r=db.registros.find(r=>r.id===id);if(!r||r.situacao!=='Aguardando análise')throw Error('Esta submissão já foi analisada. Atualize a listagem.');if(!approve&&(!reason||reason.trim().length<10||reason.trim().length>1500))throw Error('Informe uma justificativa entre 10 e 1.500 caracteres.');const now=new Date().toISOString();r.situacao=approve?'Aprovado':'Reprovado';r.justificativa=approve?'':reason.trim();r.analisado=now;r.analista='Administrador demonstrativo';r.historico.push({data:now,ator:r.analista,acao:approve?'Aprovado e publicado':'Reprovado',motivo:r.justificativa});if(approve){db.registros.filter(x=>x.familia===r.familia&&x.id!==id&&x.publicacao==='Publicado').forEach(x=>x.publicacao='Substituído');r.publicacao='Publicado';}db.notificacoes.unshift({id:crypto.randomUUID(),registro:id,orgaoId:r.orgaoId,data:now,lida:false,texto:approve?`A API ${r.nome} foi aprovada e publicada.`:`A API ${r.nome} foi reprovada. Consulte a justificativa.`});save(db);return r;}
  function published(){return read().registros.filter(r=>r.situacao==='Aprovado'&&r.publicacao==='Publicado').map(r=>({...r,status:'Ativo',atualizado:r.dataAtualizacao.split('-').reverse().join('/'),baseSistema:r.base,comoAcessar:r.acesso,detalhamento:r.tecnico,operacoesDetalhadas:r.operacoes,operacoes:r.operacoes.map(o=>o.nome+(o.entrada?'\nParâmetros de entrada: '+o.entrada:'')+(o.saida?'\nParâmetros de saída: '+o.saida:'')).join('\n'),contatos:r.contato&&Object.values(r.contato).some(Boolean)?[r.contato]:[]}));}
  function markRead(id){const db=read(),n=db.notificacoes.find(n=>n.id===id);if(n){n.lida=true;save(db);}}
- window.CedenteStore={KEY,DISP_KEY,orgaos,categorias,read,submit,decide,published,markRead,readDisponibilizacoes,submitDisponibilizacao,decideDisponibilizacao};
+ window.CedenteStore={KEY,DISP_KEY,orgaos,categorias,read,submit,decide,published,markRead,readDisponibilizacoes,submitDisponibilizacao,resubmitDisponibilizacao,decideDisponibilizacao};
 })();
