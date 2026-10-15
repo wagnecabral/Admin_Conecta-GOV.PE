@@ -6,9 +6,25 @@
  const DISP_KEY='conecta.disponibilizacao.v1';
  function readDisponibilizacoes(){try{const raw=localStorage.getItem(DISP_KEY);const arr=raw?JSON.parse(raw):[];return Array.isArray(arr)?arr:[];}catch(e){return [];}}
  function saveDisponibilizacoes(arr){localStorage.setItem(DISP_KEY,JSON.stringify(arr));window.dispatchEvent(new Event('disponibilizacao-change'));}
+ function saveDraftDisponibilizacao(form,cpf,id){
+ const arr=readDisponibilizacoes(),now=new Date().toISOString(),r=id?arr.find(x=>x.id===id):null;
+ if(r&&(r.status!=='Rascunho'||r.cpf!==cpf))throw Error('Rascunho indisponível.');
+ const values={cpf,api:form.api||'',orgao:form.orgao||'',unidade:form.unidade||'',solicitante:form.nome||'',cargo:form.cargo||'',email:form.email||'',telefone:form.telefone||'',contato:form.contatoTecnico||'',emailTec:form.emailTecnico||'',finalidade:form.finalidade||'',complemento:form.complemento||''};
+ if(r)Object.assign(r,values,{atualizado:now});
+ else arr.unshift({...values,id:'DRAFT-'+Date.now(),data:now,status:'Rascunho',historico:[]});
+ saveDisponibilizacoes(arr);return r||arr[0];
+ }
+ function enviarRascunhoDisponibilizacao(id,form,cpf){
+ const arr=readDisponibilizacoes(),r=arr.find(x=>x.id===id);
+ if(!r||r.status!=='Rascunho'||r.cpf!==cpf)throw Error('Rascunho indisponível.');
+ const seq=String(1+Math.max(0,...arr.filter(x=>x.id.startsWith('CED-')).map(x=>Number(x.id.split('-').pop())||0))).padStart(4,'0');
+ const now=new Date().toISOString();
+ Object.assign(r,{id:'CED-'+new Date().getFullYear()+'-'+seq,api:form.api||'',orgao:form.orgao||'',unidade:form.unidade||'',solicitante:form.nome||'',cargo:form.cargo||'',email:form.email||'',telefone:form.telefone||'',contato:form.contatoTecnico||'',emailTec:form.emailTecnico||'',finalidade:form.finalidade||'',complemento:form.complemento||'',data:now,status:'Em análise',parecer:'',historico:[...(r.historico||[]),{data:now,status:'Em análise',texto:'Enviada para análise.'}]});
+ saveDisponibilizacoes(arr);return r;
+ }
  function submitDisponibilizacao(form,cpf){
    const arr=readDisponibilizacoes(),now=new Date().toISOString();
-   const seq=String(arr.length+1).padStart(4,'0');
+   const seq=String(1+Math.max(0,...arr.filter(x=>x.id.startsWith('CED-')).map(x=>Number(x.id.split('-').pop())||0))).padStart(4,'0');
    const r={id:'CED-'+new Date().getFullYear()+'-'+seq,cpf:cpf||'04631809418',api:form.api||'API ainda não definida',orgao:form.orgao||'',unidade:form.unidade||'',solicitante:form.nome||'',cargo:form.cargo||'',email:form.email||'',telefone:form.telefone||'',contato:form.contatoTecnico||'',emailTec:form.emailTecnico||'',finalidade:form.finalidade||'',complemento:form.complemento||'',data:now,status:'Em análise',parecer:'Solicitação recebida e encaminhada para análise do time do GAS.',historico:[{data:now,status:'Em análise',texto:'Solicitação enviada para análise.'}]};
    arr.unshift(r);saveDisponibilizacoes(arr);return r;
  }
@@ -35,5 +51,5 @@
  function decide(id,approve,reason){const db=read(),r=db.registros.find(r=>r.id===id);if(!r||r.situacao!=='Aguardando análise')throw Error('Esta submissão já foi analisada. Atualize a listagem.');if(!approve&&(!reason||reason.trim().length<10||reason.trim().length>1500))throw Error('Informe uma justificativa entre 10 e 1.500 caracteres.');const now=new Date().toISOString();r.situacao=approve?'Aprovado':'Reprovado';r.justificativa=approve?'':reason.trim();r.analisado=now;r.analista='Administrador demonstrativo';r.historico.push({data:now,ator:r.analista,acao:approve?'Aprovado e publicado':'Reprovado',motivo:r.justificativa});if(approve){db.registros.filter(x=>x.familia===r.familia&&x.id!==id&&x.publicacao==='Publicado').forEach(x=>x.publicacao='Substituído');r.publicacao='Publicado';}db.notificacoes.unshift({id:crypto.randomUUID(),registro:id,orgaoId:r.orgaoId,data:now,lida:false,texto:approve?`A API ${r.nome} foi aprovada e publicada.`:`A API ${r.nome} foi reprovada. Consulte a justificativa.`});save(db);return r;}
  function published(){return read().registros.filter(r=>r.situacao==='Aprovado'&&r.publicacao==='Publicado').map(r=>({...r,status:'Ativo',atualizado:r.dataAtualizacao.split('-').reverse().join('/'),baseSistema:r.base,comoAcessar:r.acesso,detalhamento:r.tecnico,operacoesDetalhadas:r.operacoes,operacoes:r.operacoes.map(o=>o.nome+(o.entrada?'\nParâmetros de entrada: '+o.entrada:'')+(o.saida?'\nParâmetros de saída: '+o.saida:'')).join('\n'),contatos:r.contato&&Object.values(r.contato).some(Boolean)?[r.contato]:[]}));}
  function markRead(id){const db=read(),n=db.notificacoes.find(n=>n.id===id);if(n){n.lida=true;save(db);}}
- window.CedenteStore={KEY,DISP_KEY,orgaos,categorias,read,submit,decide,published,markRead,readDisponibilizacoes,submitDisponibilizacao,resubmitDisponibilizacao,decideDisponibilizacao};
+ window.CedenteStore={KEY,DISP_KEY,orgaos,categorias,read,submit,decide,published,markRead,readDisponibilizacoes,saveDraftDisponibilizacao,enviarRascunhoDisponibilizacao,submitDisponibilizacao,resubmitDisponibilizacao,decideDisponibilizacao};
 })();
