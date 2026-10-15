@@ -697,7 +697,25 @@ const UserDropdown = ({ onLogout }) => {
   );
 };
 
-const Topbar = ({ breadcrumbs }) => (
+function NotificacoesAdm({onAbrir}){
+ const [open,setOpen]=React.useState(false);
+ const [registros,setRegistros]=React.useState(()=>window.CedenteStore?.readDisponibilizacoes?.()||[]);
+ const [lidos,setLidos]=React.useState(()=>{try{return JSON.parse(localStorage.getItem('conecta.adm.notificacoes.lidas')||'[]')}catch(e){return []}});
+ React.useEffect(()=>{const sync=()=>setRegistros(window.CedenteStore?.readDisponibilizacoes?.()||[]);window.addEventListener('disponibilizacao-change',sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener('disponibilizacao-change',sync);window.removeEventListener('storage',sync)}},[]);
+ const eventos=registros.flatMap(r=>(r.historico||[]).filter(h=>h.status==='Em análise').map((h,i)=>({id:r.id+'-'+h.data+'-'+i,registro:r,titulo:i?'Solicitação de API reenviada':'Nova solicitação de disponibilização de API',texto:(r.api||'API não informada')+' — '+(r.solicitante||'Solicitante')+' ('+(r.orgao||'Órgão não informado')+')',data:h.data}))).sort((a,b)=>String(b.data).localeCompare(String(a.data)));
+ const pendentes=eventos.filter(e=>!lidos.includes(e.id)).length;
+ const abrir=e=>{const novo=[...new Set([...lidos,e.id])];setLidos(novo);localStorage.setItem('conecta.adm.notificacoes.lidas',JSON.stringify(novo));setOpen(false);onAbrir(e.registro.id)};
+ return <div style={{position:'relative'}}>
+  <button type="button" title="Notificações administrativas" aria-label={'Notificações administrativas: '+pendentes+' não lidas'} onClick={()=>setOpen(v=>!v)} style={{background:'transparent',border:0,cursor:'pointer',position:'relative',padding:'8px 12px',fontSize:23,color:'#28272C'}} >🔔<span style={{position:'absolute',top:0,right:0,fontSize:10,fontWeight:700,color:'#fff',background:'#B42318',borderRadius:12,padding:'1px 5px',display:pendentes?'block':'none'}}>{pendentes}</span></button>
+  {open&&<div style={{position:'absolute',right:0,top:'100%',width:370,maxHeight:430,overflowY:'auto',background:'#fff',border:'1px solid #DDE3EA',boxShadow:'0 8px 28px #001A7A22',zIndex:900,borderRadius:8}}>
+   <div style={{padding:15,fontWeight:700,borderBottom:'1px solid #E7E9EB'}}>Notificações · {pendentes} não lida(s)</div>
+   {eventos.length===0?<div style={{padding:18,fontSize:13}}>Nenhuma solicitação de disponibilização recebida.</div>:eventos.map(e=><button key={e.id} onClick={()=>abrir(e)} style={{display:'block',width:'100%',textAlign:'left',padding:14,border:0,borderBottom:'1px solid #ECEFF2',background:lidos.includes(e.id)?'#fff':'#F0F5FF',cursor:'pointer'}}>
+    <div style={{fontSize:12.5,fontWeight:700}}>{e.titulo}</div><div style={{fontSize:12,marginTop:5,lineHeight:1.5}}>A solicitação {e.registro.id} aguarda análise.</div><div style={{fontSize:11.5,color:'#555',marginTop:3}}>{e.texto}</div><div style={{fontSize:11,color:'#777',marginTop:5}}>{new Date(e.data).toLocaleString('pt-BR')}</div>
+   </button>)}
+  </div>}
+ </div>
+}
+const Topbar = ({ breadcrumbs, onAbrirNotificacao }) => (
   <div style={{ height:56, background:'#fff', borderBottom:`1px solid ${C.divider}`,
     display:'flex', alignItems:'center', justifyContent:'space-between',
     padding:'0 24px', flexShrink:0 }}>
@@ -710,7 +728,7 @@ const Topbar = ({ breadcrumbs }) => (
         </React.Fragment>
       ))}
     </div>
-    <UserDropdown/>
+    <div style={{display:'flex',alignItems:'center',gap:16}}><NotificacoesAdm onAbrir={onAbrirNotificacao}/><UserDropdown/></div>
   </div>
 );
 
@@ -3313,13 +3331,14 @@ function ScriptLoader() {
    APP PRINCIPAL
 ══════════════════════════════════════════════════════════════ */
 
-function SolicitacoesDisponibilizacao({showToast}) {
+function SolicitacoesDisponibilizacao({showToast,abrirId,onAberta}) {
   const [situacao,setSituacao]=React.useState('Todas');
   const [nome,setNome]=React.useState('');
   const [selecionada,setSelecionada]=React.useState(null);
   const [parecer,setParecer]=React.useState('');
   const [decisao,setDecisao]=React.useState('');
   const [dados,setDados]=React.useState(()=>window.CedenteStore?.readDisponibilizacoes?.()||[]);
+  React.useEffect(()=>{if(abrirId){const item=window.CedenteStore.readDisponibilizacoes().find(x=>x.id===abrirId);if(item){setSelecionada(item);setParecer('');setDecisao('');}}},[abrirId]);
   React.useEffect(()=>{const sync=()=>setDados(window.CedenteStore?.readDisponibilizacoes?.()||[]);window.addEventListener('disponibilizacao-change',sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener('disponibilizacao-change',sync);window.removeEventListener('storage',sync);};},[]);
   const lista=dados.filter(x=>(situacao==='Todas'||x.status===situacao)&&(!nome||String(x.api||'').toLowerCase().includes(nome.toLowerCase())));
   const badge=s=>s==='Aprovada'?['#EAFBD7','#2B6418','#86D562']:s==='Rejeitada'?['#FDECEC','#B42318','#F3AAAA']:s==='Ajuste solicitado'?['#FFF6CE','#8A5700','#FFE082']:['#FFF0C2','#7A5200','#FFE082'];
@@ -3349,6 +3368,7 @@ function App() {
   const [section, setSection]   = React.useState(location.hash==='#cedentes'?'cedentes':'dashboard');
   const [collapsed, setCollapsed] = React.useState(()=>localStorage.getItem('pe_sidebar')==='1');
   const [toast, setToast]       = React.useState(null);
+  const [notificacaoAbrir,setNotificacaoAbrir]=React.useState(null);
 
   const showToast=(msg,type='success')=>{ setToast({msg,type}); setTimeout(()=>setToast(null),4000); };
   const toggleSidebar=()=>{ const next=!collapsed; setCollapsed(next); localStorage.setItem('pe_sidebar',next?'1':'0'); };
@@ -3384,11 +3404,11 @@ function App() {
           <span style={{ color:'#FFCD37', fontSize:11 }}>★</span>
           <span style={{ color:'rgba(248,250,252,0.7)', fontSize:11 }}>Governo de Pernambuco</span>
         </div>
-        <Topbar breadcrumbs={breadcrumbMap[section]||['Início']}/>
+        <Topbar breadcrumbs={breadcrumbMap[section]||['Início']} onAbrirNotificacao={id=>{setNotificacaoAbrir(id);setSection('cedentes');}}/>
 
         {section==='dashboard'  && <Dashboard onNav={setSection}/>}
         {section==='apis'       && <GerenciarApis showToast={showToast}/>}
-        {section==='cedentes' && <SolicitacoesDisponibilizacao showToast={showToast}/>}
+        {section==='cedentes' && <SolicitacoesDisponibilizacao showToast={showToast} abrirId={notificacaoAbrir}/>}
         {section==='categorias' && <GerenciarCategorias showToast={showToast}/>}
         {section==='usuarios'   && <ControleAcesso showToast={showToast}/>}
         {section==='rel_cadastradas' && <RelCadastradas showToast={showToast}/>}
