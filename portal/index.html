@@ -1437,11 +1437,16 @@ function App() {
   const handleAutenticar = (cpf) => {
     const cpfLimpo = cpf.trim();
     if(authContext==='cedente'){registrarPerfilCedente(cpfLimpo);setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
-    if(possuiPerfilCedente(cpfLimpo)){setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
+    // O fluxo de acesso ADM deve validar a autorização administrativa primeiro.
+    // O perfil Cedente não substitui a permissão ADM nem bloqueia seu acesso.
     if(usuariosCadastrados.includes(cpfLimpo)){
       setShowSsoModal(false);
       try { window.location.assign(new URL('../backoffice/index.html', window.location.href).href); }
       catch(e) { alert('Acesso autorizado! Redirecionando para o backoffice...'); }
+    } else if(possuiPerfilCedente(cpfLimpo)){
+      setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});
+      setShowSsoModal(false);
+      setPage('__cedente_requests__');
     } else {
       setUsuariosCadastrados(prev => prev.includes(cpfLimpo) ? prev : [...prev, cpfLimpo]);
       setTelaAcessoNegado(cpfLimpo);
