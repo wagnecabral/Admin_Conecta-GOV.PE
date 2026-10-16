@@ -1435,11 +1435,11 @@ function App() {
   };
 
   const handleAutenticar = (cpf) => {
-    const cpfLimpo = cpf.trim();
+    const cpfLimpo = cpf.replace(/\D/g,'');
     if(authContext==='cedente'){registrarPerfilCedente(cpfLimpo);setCedenteUsuario({cpf:cpfLimpo,perfil:'SOLICITANTE CEDENTE'});setShowSsoModal(false);setPage('__cedente_requests__');return;}
     // O fluxo de acesso ADM deve validar a autorização administrativa primeiro.
     // O perfil Cedente não substitui a permissão ADM nem bloqueia seu acesso.
-    if(usuariosCadastrados.includes(cpfLimpo)){
+    if(usuariosCadastrados.some(c=>c.replace(/\D/g,'')===cpfLimpo)){
       setShowSsoModal(false);
       try { window.location.assign(new URL('../backoffice/index.html', window.location.href).href); }
       catch(e) { alert('Acesso autorizado! Redirecionando para o backoffice...'); }
